@@ -16,13 +16,12 @@ import styles from "./turismo.module.css";
 
    Novedades:
    · El nombre del hotel es el titular y se ajusta solo al ancho de la página.
-   · NOMBRE EDITABLE CON FORMULARIO (barra, menú móvil, pie y botón flotante).
-     Con onCompanyNameChange el valor nuevo sube al padre.
+   · El nombre viene del formulario (config.companyName), sin edición en la página.
    · Habitaciones con filtro y ficha, Boyacá cerca (índice desplegable),
      diario y formulario de consulta de estadía (demostración, sin envío).
    · Sin fotos, dibuja paisajes propios en SVG. Con fotos, úsalas:
        heroVideoUrl, heroImages[], card.image, impactImage
-   · Opcionales: facts[], nearby[], journal[], nameSuggestions[], email.
+   · Opcionales: facts[], nearby[], journal[], email.
    ========================================================================== */
 
 type TurCard = {
@@ -46,18 +45,13 @@ type TurExtras = {
   facts?: Fact[];
   nearby?: Nearby[];
   journal?: Note[];
-  nameSuggestions?: string[];
   email?: string;
 };
 
 type Props = {
   config: SiteConfig;
-  onCompanyNameChange?: (value: string) => void;
-  editableName?: boolean;
 };
 
-const NAME_MAX = 40;
-const NAME_MIN = 2;
 const SLIDE_MS = 6000;
 
 const DEFAULT_FACTS: Fact[] = [
@@ -112,8 +106,6 @@ const DEFAULT_JOURNAL: Note[] = [
     excerpt: "Mazorca, cuchuco y papas criollas: lo que hay detrás del desayuno de la casa.",
   },
 ];
-
-const DEFAULT_SUGGESTIONS = ["Casa Iguaque", "Posada del Páramo", "Hotel Cuatro Vientos"];
 
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -170,11 +162,6 @@ const I = {
   close: (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M2.5 2.5l9 9M11.5 2.5l-9 9" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
-  ),
-  pencil: (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M2.5 13.5 3 10l7.5-7.5 3 3L6 13l-3.5.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
     </svg>
   ),
   up: (
@@ -472,159 +459,16 @@ function Modal({ label, onClose, wide, children }: { label: string; onClose: () 
   );
 }
 
-/* ----------------------- Formulario para cambiar el nombre ------------------- */
-
-function NameForm({
-  current,
-  original,
-  suggestions,
-  onSave,
-  onCancel,
-}: {
-  current: string;
-  original: string;
-  suggestions: string[];
-  onSave: (value: string) => void;
-  onCancel: () => void;
-}) {
-  const [value, setValue] = useState(current);
-  const [error, setError] = useState("");
-  const clean = value.replace(/\s+/g, " ").trim();
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (clean.length < NAME_MIN) {
-      setError(`Escribe al menos ${NAME_MIN} letras para el nombre.`);
-      return;
-    }
-    if (clean.length > NAME_MAX) {
-      setError(`El nombre puede tener hasta ${NAME_MAX} caracteres.`);
-      return;
-    }
-    setError("");
-    onSave(clean);
-  };
-
-  return (
-    <form className={styles.dialogBody} onSubmit={submit} noValidate>
-      <div>
-        <p className={styles.label}>Tu sitio</p>
-        <h3 className={styles.dialogTitle}>Cambia el nombre del hotel</h3>
-        <p className={styles.dialogText}>Escríbelo una vez y se actualiza en todo el sitio: menú, portada, habitaciones y pie de página.</p>
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.fieldLabel} htmlFor="tur-name">
-          <span>Nombre del hotel</span>
-          <span className={styles.count}>
-            {value.length}/{NAME_MAX}
-          </span>
-        </label>
-        <input
-          id="tur-name"
-          data-autofocus
-          className={`${styles.input} ${styles.inputBig}${error ? ` ${styles.inputBad}` : ""}`}
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value.slice(0, NAME_MAX));
-            if (error) setError("");
-          }}
-          placeholder="Ej.: Casa Iguaque"
-          autoComplete="organization"
-          spellCheck={false}
-          maxLength={NAME_MAX}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? "tur-name-error" : "tur-name-help"}
-        />
-        {error ? (
-          <p className={styles.error} id="tur-name-error" role="alert">
-            {error}
-          </p>
-        ) : (
-          <p className={styles.help} id="tur-name-help">
-            Puedes usar letras, números y espacios.
-          </p>
-        )}
-      </div>
-
-      {suggestions.length ? (
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>¿Sin ideas? Prueba con uno de estos</span>
-          <div className={styles.chips}>
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={styles.chip}
-                onClick={() => {
-                  setValue(s);
-                  setError("");
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className={styles.preview} aria-live="polite">
-        <span className={styles.previewTag}>Vista previa</span>
-        <span className={styles.previewName}>{clean || "Tu hotel"}</span>
-      </div>
-
-      <div className={styles.formActions}>
-        <button type="submit" className={`${styles.btn} ${styles.btnSolid}`}>
-          Guardar nombre
-        </button>
-        <button type="button" className={styles.btn} onClick={onCancel}>
-          Cancelar
-        </button>
-        {original && original !== value ? (
-          <button type="button" className={styles.linkBtn} onClick={() => setValue(original)}>
-            Volver a “{original}”
-          </button>
-        ) : null}
-      </div>
-    </form>
-  );
-}
-
 /* ============================== Plantilla ==================================== */
 
-export function TurismoTemplate({ config, onCompanyNameChange, editableName = true }: Props) {
+export function TurismoTemplate({ config }: Props) {
   const copy = config.templateCopy;
   const extras = config as SiteConfig & TurExtras;
   const rootRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  /* ------------------------------ Nombre ------------------------------------ */
-  const [draftName, setDraftName] = useState<string | null>(null);
-  useEffect(() => setDraftName(null), [config.companyName]);
-
-  const companyName = (draftName ?? config.companyName ?? "").trim() || "Tu hotel";
-  const [nameOpen, setNameOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const companyName = (config.companyName ?? "").replace(/\s+/g, " ").trim() || "Tu hotel";
   const [sheet, setSheet] = useState(false);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(null), 3800);
-    return () => window.clearTimeout(t);
-  }, [toast]);
-
-  const saveName = (value: string) => {
-    setDraftName(value);
-    onCompanyNameChange?.(value);
-    setNameOpen(false);
-    setSheet(false);
-    setToast(`Listo: ahora el sitio se llama ${value}`);
-  };
-
-  const openName = () => {
-    setSheet(false);
-    setNameOpen(true);
-  };
 
   /* ------------------------------ Contenido --------------------------------- */
   const cards = useMemo(() => (copy?.cards ?? []) as unknown as TurCard[], [copy?.cards]);
@@ -633,7 +477,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
   const nearby = extras.nearby?.length ? extras.nearby : DEFAULT_NEARBY;
   const journal = extras.journal?.length ? extras.journal : DEFAULT_JOURNAL;
   const usingDemoCopy = !extras.nearby?.length || !extras.journal?.length;
-  const suggestions = extras.nameSuggestions ?? DEFAULT_SUGGESTIONS;
   const email = extras.email ?? "reservas@ejemplo.co";
 
   const sectionIds = useMemo(() => ["inicio", "hotel", "habitaciones", "boyaca", "diario", "reservas", "contacto-demo"], []);
@@ -825,7 +668,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
 
   /* --------------------------------- Vista ---------------------------------- */
   const year = new Date().getFullYear();
-  const canEdit = editableName;
   const reveal = (n = 0) => ({
     className: styles.reveal,
     "data-reveal": true as const,
@@ -864,11 +706,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
           </button>
 
           <div className={styles.barActions}>
-            {canEdit ? (
-              <button type="button" className={`${styles.textBtn} ${styles.hideSm}`} onClick={openName}>
-                {I.pencil} Cambiar nombre
-              </button>
-            ) : null}
             <button type="button" className={styles.textBtn} onClick={() => goTo("reservas")}>
               Reservar ↗
             </button>
@@ -898,11 +735,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
           <button type="button" className={`${styles.btn} ${styles.btnSolid}`} onClick={() => goTo("reservas")}>
             {copy.contactCta}
           </button>
-          {canEdit ? (
-            <button type="button" className={styles.btn} onClick={openName}>
-              {I.pencil} Cambiar nombre
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -1246,13 +1078,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
                   {email}
                 </a>
               </li>
-              {canEdit ? (
-                <li>
-                  <button type="button" className={styles.footLink} onClick={openName}>
-                    Cambiar nombre
-                  </button>
-                </li>
-              ) : null}
             </ul>
           </div>
           <div>
@@ -1276,24 +1101,10 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
         </div>
       </footer>
 
-      {/* Botón flotante móvil */}
-      {canEdit ? (
-        <button type="button" className={`${styles.btn} ${styles.btnSolid} ${styles.fab}`} onClick={openName}>
-          {I.pencil} Cambiar nombre
-        </button>
-      ) : null}
-
       {/* Volver arriba */}
       <button type="button" className={`${styles.backTop}${showTop ? ` ${styles.backTopOn}` : ""}`} onClick={toTop} aria-label="Volver arriba" tabIndex={showTop ? 0 : -1}>
         {I.up}
       </button>
-
-      {/* Formulario del nombre */}
-      {nameOpen ? (
-        <Modal label="Cambiar nombre del hotel" onClose={() => setNameOpen(false)}>
-          <NameForm current={companyName === "Tu hotel" ? "" : companyName} original={(config.companyName ?? "").trim()} suggestions={suggestions} onSave={saveName} onCancel={() => setNameOpen(false)} />
-        </Modal>
-      ) : null}
 
       {/* Ficha de habitación */}
       {active ? (
@@ -1342,14 +1153,6 @@ export function TurismoTemplate({ config, onCompanyNameChange, editableName = tr
         </Modal>
       ) : null}
 
-      {/* Confirmación */}
-      <div aria-live="polite">
-        {toast ? (
-          <div className={styles.toast} key={toast}>
-            {toast}
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

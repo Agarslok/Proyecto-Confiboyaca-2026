@@ -3,7 +3,7 @@ import { SiteDiagnosis } from "@/components/site/SiteDiagnosis";
 
 export const metadata: Metadata = {
   title: "Resultado",
-  description: "Lectura preliminar y acceso a la página generada.",
+  description: "Consultoría digital simulada y acceso a la página generada.",
 };
 
 export default function ResultPage() {

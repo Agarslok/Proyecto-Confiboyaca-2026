@@ -17,12 +17,11 @@ import styles from "./metalurgia.module.css";
    Novedades:
    · Portada a pantalla completa: video si hay heroVideoUrl; si no, una escena
      animada de fundición (brasas, resplandor, planta entre montañas).
-   · NOMBRE EDITABLE CON FORMULARIO (barra, menú, pie y botón flotante).
-     Con onCompanyNameChange el valor nuevo sube al padre.
+   · El nombre viene del formulario (config.companyName), sin edición en la página.
    · Capacidades con selector, proceso paso a paso, cifras que suben, noticias
      con ficha y formulario de cotización (demostración, sin envío).
    · Opcionales: heroVideoUrl, announcement, steps[], stats[], quoteMaterials[],
-     nameSuggestions[], email, phone.
+     email, phone.
    ========================================================================== */
 
 type MetCard = { tag?: string; title?: string; location?: string; price?: string; description?: string };
@@ -36,21 +35,13 @@ type MetExtras = {
   steps?: Step[];
   stats?: Stat[];
   quoteMaterials?: string[];
-  nameSuggestions?: string[];
   email?: string;
   phone?: string;
 };
 
 type Props = {
   config: SiteConfig;
-  /** Se llama con el nombre nuevo cada vez que se guarda el formulario. */
-  onCompanyNameChange?: (value: string) => void;
-  /** Oculta los controles de edición del nombre (vista publicada). */
-  editableName?: boolean;
 };
-
-const NAME_MAX = 40;
-const NAME_MIN = 2;
 
 const DEFAULT_STEPS: Step[] = [
   { title: "Diseño y planos", text: "Revisamos el plano, el material y la tolerancia antes de tocar el metal. Aquí se evitan los errores caros." },
@@ -67,8 +58,6 @@ const DEFAULT_STATS: Stat[] = [
 ];
 
 const DEFAULT_MATERIALS = ["Acero al carbono", "Acero inoxidable", "Fundición gris", "Aluminio", "Bronce", "Aún no lo sé"];
-const DEFAULT_SUGGESTIONS = ["Aceros del Altiplano", "Fundiciones Andinas", "Metálica Cuatro Vientos"];
-
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   typeof window.matchMedia === "function" &&
@@ -97,11 +86,6 @@ const I = {
   close: (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <path d="M2.5 2.5l11 11M13.5 2.5l-11 11" stroke="currentColor" strokeWidth="1.8" />
-    </svg>
-  ),
-  pencil: (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M2.5 13.5 3 10l7.5-7.5 3 3L6 13l-3.5.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
   ),
   arrow: (
@@ -410,159 +394,16 @@ function Modal({ label, onClose, wide, children }: { label: string; onClose: () 
   );
 }
 
-/* ----------------------- Formulario para cambiar el nombre -------------------- */
-
-function NameForm({
-  current,
-  original,
-  suggestions,
-  onSave,
-  onCancel,
-}: {
-  current: string;
-  original: string;
-  suggestions: string[];
-  onSave: (value: string) => void;
-  onCancel: () => void;
-}) {
-  const [value, setValue] = useState(current);
-  const [error, setError] = useState("");
-  const clean = value.replace(/\s+/g, " ").trim();
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (clean.length < NAME_MIN) {
-      setError(`Escribe al menos ${NAME_MIN} letras para el nombre.`);
-      return;
-    }
-    if (clean.length > NAME_MAX) {
-      setError(`El nombre puede tener hasta ${NAME_MAX} caracteres.`);
-      return;
-    }
-    setError("");
-    onSave(clean);
-  };
-
-  return (
-    <form className={styles.dialogBody} onSubmit={submit} noValidate>
-      <div>
-        <p className={styles.tag}>Tu sitio</p>
-        <h3 className={styles.dialogTitle}>Cambia el nombre de tu empresa</h3>
-        <p className={styles.dialogText}>Escríbelo una vez y se actualiza en todo el sitio: menú, portada, noticias y pie de página.</p>
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.fieldLabel} htmlFor="met-name">
-          <span>Nombre de la empresa</span>
-          <span className={styles.count}>
-            {value.length}/{NAME_MAX}
-          </span>
-        </label>
-        <input
-          id="met-name"
-          data-autofocus
-          className={`${styles.input} ${styles.inputBig}${error ? ` ${styles.inputBad}` : ""}`}
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value.slice(0, NAME_MAX));
-            if (error) setError("");
-          }}
-          placeholder="Ej.: Fundiciones Andinas"
-          autoComplete="organization"
-          spellCheck={false}
-          maxLength={NAME_MAX}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? "met-name-error" : "met-name-help"}
-        />
-        {error ? (
-          <p className={styles.error} id="met-name-error" role="alert">
-            {error}
-          </p>
-        ) : (
-          <p className={styles.help} id="met-name-help">
-            Puedes usar letras, números y espacios.
-          </p>
-        )}
-      </div>
-
-      {suggestions.length ? (
-        <div className={styles.field}>
-          <span className={styles.fieldLabel}>¿Sin ideas? Prueba con uno de estos</span>
-          <div className={styles.chips}>
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={styles.chip}
-                onClick={() => {
-                  setValue(s);
-                  setError("");
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className={styles.preview} aria-live="polite">
-        <span className={styles.previewTag}>Vista previa</span>
-        <span className={styles.previewName}>{clean || "Tu empresa"}</span>
-      </div>
-
-      <div className={styles.formActions}>
-        <button type="submit" className={`${styles.btn} ${styles.btnYellow}`}>
-          Guardar nombre
-        </button>
-        <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={onCancel}>
-          Cancelar
-        </button>
-        {original && original !== value ? (
-          <button type="button" className={styles.linkBtn} onClick={() => setValue(original)}>
-            Volver a “{original}”
-          </button>
-        ) : null}
-      </div>
-    </form>
-  );
-}
-
 /* ================================ Plantilla =================================== */
 
-export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName = true }: Props) {
+export function MetalurgiaTemplate({ config }: Props) {
   const copy = config.templateCopy as typeof config.templateCopy & { statement?: string; capabilities?: Capability[] };
   const extras = config as SiteConfig & MetExtras;
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  /* ------------------------------ Nombre ------------------------------------ */
-  const [draftName, setDraftName] = useState<string | null>(null);
-  useEffect(() => setDraftName(null), [config.companyName]);
-
-  const companyName = (draftName ?? config.companyName ?? "").trim() || "Tu empresa";
-  const [nameOpen, setNameOpen] = useState(false);
+  const companyName = (config.companyName ?? "").replace(/\s+/g, " ").trim() || "Tu empresa";
   const [menu, setMenu] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(null), 3800);
-    return () => window.clearTimeout(t);
-  }, [toast]);
-
-  const saveName = (value: string) => {
-    setDraftName(value);
-    onCompanyNameChange?.(value);
-    setNameOpen(false);
-    setMenu(false);
-    setToast(`Listo: ahora el sitio se llama ${value}`);
-  };
-
-  const openName = () => {
-    setMenu(false);
-    setNameOpen(true);
-  };
 
   /* ------------------------------ Contenido --------------------------------- */
   const cards = useMemo(() => (copy?.cards ?? []) as unknown as MetCard[], [copy?.cards]);
@@ -572,7 +413,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
   const stats = extras.stats?.length ? extras.stats : DEFAULT_STATS;
   const usingDemoStats = !extras.stats?.length;
   const materials = extras.quoteMaterials?.length ? extras.quoteMaterials : DEFAULT_MATERIALS;
-  const suggestions = extras.nameSuggestions ?? DEFAULT_SUGGESTIONS;
   const email = extras.email ?? "ventas@ejemplo.co";
   const phone = extras.phone ?? "+57 300 000 0000";
   const hasStatement = Boolean(copy?.statement);
@@ -713,7 +553,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
   };
 
   const year = new Date().getFullYear();
-  const canEdit = editableName;
   const reveal = (n = 0) => ({
     className: styles.reveal,
     "data-reveal": true as const,
@@ -734,11 +573,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
             <span className={styles.logoText}>{companyName}</span>
           </button>
           <div className={styles.topActions}>
-            {canEdit ? (
-              <button type="button" className={`${styles.ghost} ${styles.hideSm}`} onClick={openName}>
-                {I.pencil} Cambiar nombre
-              </button>
-            ) : null}
             <button type="button" className={`${styles.btn} ${styles.btnYellow} ${styles.btnSm} ${styles.hideSm}`} onClick={() => goTo("cotizar")}>
               {copy.contactCta}
             </button>
@@ -787,11 +621,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
               <button type="button" className={`${styles.btn} ${styles.btnYellow}`} onClick={() => goTo("cotizar")}>
                 {copy.contactCta}
               </button>
-              {canEdit ? (
-                <button type="button" className={`${styles.btn} ${styles.btnLineLight}`} onClick={openName}>
-                  {I.pencil} Cambiar nombre
-                </button>
-              ) : null}
             </div>
           </div>
         </div>
@@ -1166,13 +995,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
                 <li>
                   <span className={styles.footText}>{phone}</span>
                 </li>
-                {canEdit ? (
-                  <li>
-                    <button type="button" className={styles.footLink} onClick={openName}>
-                      Cambiar nombre
-                    </button>
-                  </li>
-                ) : null}
               </ul>
             </div>
           </div>
@@ -1185,21 +1007,9 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
         </div>
       </footer>
 
-      {canEdit ? (
-        <button type="button" className={`${styles.btn} ${styles.btnYellow} ${styles.fab}`} onClick={openName}>
-          {I.pencil} Cambiar nombre
-        </button>
-      ) : null}
-
       <button type="button" className={`${styles.backTop}${showTop ? ` ${styles.backTopOn}` : ""}`} onClick={toTop} aria-label="Volver arriba" tabIndex={showTop ? 0 : -1}>
         {I.up}
       </button>
-
-      {nameOpen ? (
-        <Modal label="Cambiar nombre de la empresa" onClose={() => setNameOpen(false)}>
-          <NameForm current={companyName === "Tu empresa" ? "" : companyName} original={(config.companyName ?? "").trim()} suggestions={suggestions} onSave={saveName} onCancel={() => setNameOpen(false)} />
-        </Modal>
-      ) : null}
 
       {news ? (
         <Modal label={news.title ?? "Noticia"} onClose={() => setOpenNews(null)} wide>
@@ -1227,13 +1037,6 @@ export function MetalurgiaTemplate({ config, onCompanyNameChange, editableName =
         </Modal>
       ) : null}
 
-      <div aria-live="polite">
-        {toast ? (
-          <div className={styles.toast} key={toast}>
-            {toast}
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

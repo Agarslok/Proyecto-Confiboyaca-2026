@@ -23,8 +23,8 @@ export function StandaloneSitePage() {
       <main style={{ padding: "2rem", fontFamily: "system-ui", maxWidth: 480 }}>
         <h1>Página no disponible</h1>
         <p>
-          No hay una página generada guardada en este navegador. Complete el formulario y genere la lectura
-          preliminar primero.
+          No hay una página generada guardada en este navegador. Complete el formulario y genere la consultoría
+          primero.
         </p>
       </main>
     );

@@ -1,3 +1,4 @@
+import type { ConsultancyReport } from "@/lib/site/consultancy";
 import type { TemplateCopy } from "@/lib/site/template-content";
 
 export const SECTOR_IDS = [
@@ -71,6 +72,7 @@ export interface SiteConfig {
   activityNote: string;
   templateCopy: TemplateCopy;
   gaps: string[];
+  consultancy: ConsultancyReport;
   diagnosis: {
     need: string;
     priority: string;

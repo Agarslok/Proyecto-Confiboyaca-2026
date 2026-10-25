@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { fieldErrorsFromZod } from "@/lib/validation/answers";
 import type { SiteBrief } from "@/lib/site/engine";
+import { formatCompanyName } from "@/lib/site/format-company-name";
 import { AUDIENCE_IDS, FEATURE_IDS, GOAL_IDS, SECTOR_IDS, type SiteDraft } from "@/types/site";
 
 export const siteBriefSchema = z.object({
@@ -18,7 +19,10 @@ export function parseSiteBrief(
 ): { ok: true; brief: SiteBrief } | { ok: false; fieldErrors: Record<string, string> } {
   const parsed = siteBriefSchema.safeParse(draft);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrorsFromZod(parsed.error) };
-  return { ok: true, brief: parsed.data };
+  return {
+    ok: true,
+    brief: { ...parsed.data, companyName: formatCompanyName(parsed.data.companyName) },
+  };
 }
 
 export function validateSiteStep(step: number, draft: SiteDraft): Record<string, string> {

@@ -15,7 +15,9 @@ import {
   goalLabels,
   sectorLabels,
 } from "@/lib/site/catalog";
+import { ConsultoriaLoading } from "@/components/site/ConsultoriaLoading";
 import { buildSite } from "@/lib/site/engine";
+import { formatCompanyName } from "@/lib/site/format-company-name";
 import { patchSiteDraft, saveSiteConfig, setSiteStep } from "@/lib/session/site-session";
 import { parseSiteBrief, validateSiteStep } from "@/lib/validation/site";
 import { SECTOR_IDS, type AudienceId, type FeatureId, type GoalId, type SiteDraft } from "@/types/site";
@@ -149,25 +151,17 @@ export function SiteWizard() {
       setSiteStep(0);
       return;
     }
-    setGenerating(true);
     const config = buildSite(parsed.brief);
-    window.setTimeout(() => {
-      saveSiteConfig(config);
-      router.push("/resultado");
-    }, 800);
+    saveSiteConfig(config);
+    setGenerating(true);
   }
 
   if (generating) {
     return (
-      <section className="wrap analyzing" aria-live="polite">
-        <div className="orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <h1 className="a-title display">Preparando la lectura y la plantilla</h1>
-        <p className="q-help">Se aplica la plantilla del sector con el nombre de su empresa. No se envía nada a internet.</p>
-      </section>
+      <ConsultoriaLoading
+        companyName={draft.companyName}
+        onComplete={() => router.push("/resultado")}
+      />
     );
   }
 
@@ -212,6 +206,12 @@ export function SiteWizard() {
                   value={draft.companyName}
                   error={errors.companyName}
                   onChange={(companyName) => patchSiteDraft({ companyName })}
+                  onBlur={() => {
+                    const formatted = formatCompanyName(draft.companyName);
+                    if (formatted && formatted !== draft.companyName) {
+                      patchSiteDraft({ companyName: formatted });
+                    }
+                  }}
                 />
                 <ChoiceBlock legend="Sector" error={errors.sectorId}>
                   {SECTOR_IDS.map((sector) => (
@@ -312,7 +312,7 @@ export function SiteWizard() {
               {state.step < 2 ? (
                 <Button type="submit">Continuar <Icon.arrow /></Button>
               ) : (
-                <Button type="submit">Generar lectura preliminar <Icon.arrow /></Button>
+                <Button type="submit">Generar consultoría <Icon.arrow /></Button>
               )}
             </div>
           </div>

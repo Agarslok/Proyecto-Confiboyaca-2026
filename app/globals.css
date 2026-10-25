@@ -1,5 +1,6 @@
 @import "./styles/externado.css";
 @import "./styles/confi-overrides.css";
+@import "./styles/consultoria.css";
 
 /* Vista previa de la página generada (perfiles cálido / sobrio) */
 .generated {

@@ -1,4 +1,6 @@
 import { audienceLabels, featureLabels, goalLabels, sectorLabels } from "@/lib/site/catalog";
+import { buildConsultancy } from "@/lib/site/consultancy";
+import { formatCompanyName } from "@/lib/site/format-company-name";
 import { selectTemplate, templateLabel } from "@/lib/site/select-template";
 import { contentForTemplate } from "@/lib/site/template-content";
 import type { FeatureId, SectorId, SiteConfig, SiteDraft } from "@/types/site";
@@ -46,7 +48,7 @@ function gapsFor(brief: SiteBrief): string[] {
 }
 
 export function buildSite(brief: SiteBrief): SiteConfig {
-  const companyName = brief.companyName.trim();
+  const companyName = formatCompanyName(brief.companyName);
   const sectorId = brief.sectorId;
   const templateId = selectTemplate(sectorId);
   const templateCopy = contentForTemplate(templateId, companyName);
@@ -79,13 +81,14 @@ export function buildSite(brief: SiteBrief): SiteConfig {
     activityNote: labelOrPending(brief.activity, "Sin descripción"),
     templateCopy,
     gaps,
+    consultancy: buildConsultancy({ ...brief, companyName }),
     diagnosis: {
       need: `${companyName} recibirá la plantilla de ${sectorLabel.toLowerCase()}. La personalización visible es el nombre de la empresa; el sector fija el diseño.`,
       priority: `Regla del demo: sector → plantilla. Objetivo y características marcadas no cambian el resultado.`,
       included: informational,
       missing: gaps,
       limitation:
-        "Lectura preliminar con reglas locales. No usa IA, no publica en internet y no sustituye una asesoría comercial.",
+        "Consultoría simulada con reglas locales. La animación de IA es demostrativa; no publica en internet ni sustituye asesoría profesional.",
     },
   };
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildSite, type SiteBrief } from "../lib/site/engine";
+import { formatCompanyName } from "../lib/site/format-company-name";
 import { selectTemplate } from "../lib/site/select-template";
 import { parseSiteBrief, validateSiteStep } from "../lib/validation/site";
 import { emptyDraft } from "../lib/session/site-session";
@@ -18,6 +19,13 @@ function brief(overrides: Partial<SiteBrief> = {}): SiteBrief {
   };
 }
 
+describe("formato del nombre", () => {
+  it("capitaliza cada palabra", () => {
+    assert.equal(formatCompanyName("  parra me queda "), "Parra Me Queda");
+    assert.equal(formatCompanyName("harry styles"), "Harry Styles");
+  });
+});
+
 describe("selección de plantilla", () => {
   it("mapea cada sector a su plantilla", () => {
     assert.equal(selectTemplate("turismo"), "turismo");
@@ -34,6 +42,8 @@ describe("generación de la página", () => {
     const page = buildSite(brief());
     assert.equal(page.templateId, "turismo");
     assert.match(page.templateCopy.heroLead, /Andes Viajes/);
+    assert.ok(page.consultancy.signals.length >= 3);
+    assert.match(page.consultancy.headline, /Andes Viajes/);
 
     const industrial = buildSite(brief({ companyName: "Acero Norte", sectorId: "metalurgia" }));
     assert.equal(industrial.templateId, "metalurgia");

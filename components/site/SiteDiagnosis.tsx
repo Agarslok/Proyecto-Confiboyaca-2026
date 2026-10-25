@@ -1,17 +1,35 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/ui/Button";
+import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
+import { ConsultoriaSignals } from "@/components/site/ConsultoriaSignals";
 import { useSite } from "@/components/site/useSite";
+import { buildConsultancy } from "@/lib/site/consultancy";
 
 export function SiteDiagnosis() {
   const state = useSite();
   const config = state.config;
 
-  if (!config) {
+  const consultancy = useMemo(() => {
+    if (!config) return null;
+    if (config.consultancy) return config.consultancy;
+    return buildConsultancy({
+      companyName: config.companyName,
+      sectorId: config.sectorId,
+      activity: "",
+      audience: "",
+      goal: "",
+      otherGoal: "",
+      features: [],
+    });
+  }, [config]);
+
+  if (!config || !consultancy) {
     return (
       <section className="wrap empty-state">
-        <p className="micro accent">Diagnóstico</p>
-        <h1 className="display r-title">Todavía no hay una página preparada</h1>
+        <p className="micro accent">Consultoría</p>
+        <h1 className="display r-title">Todavía no hay una consultoría preparada</h1>
         <p className="lead sm">
           Complete el formulario. Si recargó el navegador antes de terminar, las respuestas guardadas siguen en el
           formulario.
@@ -22,77 +40,49 @@ export function SiteDiagnosis() {
   }
 
   return (
-    <article className="wrap results">
-      <header className="r-head">
-        <p className="micro accent">
-          {config.sectorLabel} · {config.templateLabel}
-        </p>
-        <h1 className="display r-title">Lectura preliminar para {config.companyName}</h1>
-        <p className="lead sm">{config.diagnosis.need}</p>
-        <dl className="r-facts">
-          <div>
-            <dt>Plantilla</dt>
-            <dd>{config.templateLabel}</dd>
-          </div>
-          <div>
-            <dt>Objetivo (info.)</dt>
-            <dd>{config.goalLabel}</dd>
-          </div>
-          <div>
-            <dt>Público (info.)</dt>
-            <dd>{config.audienceLabel}</dd>
-          </div>
-          <div>
-            <dt>Actividad</dt>
-            <dd>{config.activityNote}</dd>
-          </div>
-        </dl>
+    <article className="wrap consultoria-report">
+      <header className="consultoria-report-head">
+        <h1 className="consultoria-report-title">
+          <span className="consultoria-report-kicker">Consultoría para</span>
+          <span className="consultoria-report-name display">{config.companyName}</span>
+        </h1>
+        <p className="lead sm">{consultancy.intro}</p>
       </header>
 
-      <div className="r-grid">
-        <div className="r-main">
-          <section className="r-block">
-            <h2 className="h2">Regla aplicada</h2>
-            <p>{config.diagnosis.priority}</p>
-          </section>
-          <section className="r-block">
-            <h2 className="h2">Qué incluye esta lectura</h2>
-            <ul className="benefits-plain">
-              {config.diagnosis.included.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-          <section className="r-block">
-            <h2 className="h2">Qué todavía falta</h2>
-            <ul className="benefits-plain">
-              {config.diagnosis.missing.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </section>
-          <div className="callout">
-            <p>{config.diagnosis.limitation}</p>
-          </div>
-          <div className="w-actions" style={{ justifyContent: "flex-start" }}>
-            <Button href="/preview">Ver la página generada</Button>
-            <Button href="/sitio" target="_blank" rel="noopener noreferrer">
-              Abrir en una nueva pestaña
-            </Button>
-            <Button href="/diagnostico" variant="secondary">Editar respuestas</Button>
-          </div>
-        </div>
+      <div className="consultoria-grid">
+        <section className="consultoria-narrative card" aria-labelledby="consultoria-narrative-title">
+          <h2 id="consultoria-narrative-title">Lo que encontró nuestra consultora</h2>
+          <p>{consultancy.solutionPitch}</p>
+          <ul className="consultoria-highlights">
+            {consultancy.highlights.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
 
-        <aside className="r-side">
-          <div className="card side-card">
-            <p className="micro accent">Siguiente paso</p>
-            <p className="side-text">Abra la vista previa o el sitio en pantalla completa en otra pestaña.</p>
-            <Button href="/preview" className="btn-block">Abrir vista previa</Button>
-            <Button href="/sitio" target="_blank" rel="noopener noreferrer" variant="secondary" className="btn-block">
-              Nueva pestaña
-            </Button>
-          </div>
-        </aside>
+        <section className="consultoria-priorities card" aria-labelledby="consultoria-priorities-title">
+          <h2 id="consultoria-priorities-title">Señales prioritarias</h2>
+          <p className="fine">Semáforo interpretativo: qué importa ahora y cómo lo abordamos en la web.</p>
+          <ConsultoriaSignals signals={consultancy.signals} />
+        </section>
+      </div>
+
+      <section className="consultoria-cta card" aria-label="Acceso a tu solución web">
+        <div className="consultoria-cta-block">
+          <h3>Conoce tu solución</h3>
+          <ConsultoriaQr siteId={config.id} />
+        </div>
+        <div className="consultoria-cta-block is-visit">
+          <h3>Visita tu solución</h3>
+          <p className="fine">Se abre en una pestaña nueva para que sigas viendo este informe.</p>
+          <Button href="/sitio" target="_blank" rel="noopener noreferrer" className="btn-block">
+            Ver mi página web
+          </Button>
+        </div>
+      </section>
+
+      <div className="consultoria-report-actions">
+        <Button href="/diagnostico" variant="secondary">Editar respuestas</Button>
       </div>
     </article>
   );

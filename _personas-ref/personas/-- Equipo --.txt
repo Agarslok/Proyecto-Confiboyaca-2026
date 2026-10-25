@@ -1,0 +1,36 @@
+-- Equipo --
+
+Nombre: Maria Constanza Garcia Chavez
+Directora del departamento de Matemáticas
+LinkedIn: https://www.linkedin.com/in/constanza-garc%C3%ADa-chaves-6ba068152/
+No GitHub
+
+Nombre: Katherinne Sandoval
+Marketing Estratégico y Comercial
+LinkedIn: https://www.linkedin.com/in/katherinnesandovall/
+No GitHub
+
+Nombre: Carlos Fabian Ruiz Paredes
+Docente
+No linkedin
+No GitHub
+
+
+
+Nombre:  Juan Carlos Urueña Mejia
+Docente
+LinkedIn: https://www.linkedin.com/in/juan-carlos-urue%C3%B1a-mejia-81b11227b/
+No GitHub
+
+
+Nombre: Juan Angel Triana Olarte
+Estudiante de Ciencia de Datos
+https://www.linkedin.com/in/juan-angel-triana-olarte/
+https://github.com/Agarslok
+
+
+
+Nombre: Daniel Estiven Pachecho Villagrande
+Estudiante de Ciencia de Datos
+LinkedIn: https://www.linkedin.com/in/daniel-pacheco-datos/
+https://github.com/PachecoDa

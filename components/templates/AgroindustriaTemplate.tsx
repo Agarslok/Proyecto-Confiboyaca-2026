@@ -16,12 +16,10 @@ import styles from "./agro.module.css";
 
    Novedades:
    · Portada con video de fondo (con póster y respaldo si el video falla).
-   · NOMBRE EDITABLE CON FORMULARIO: botón "Cambiar nombre" (barra, menú móvil,
-     pie y botón flotante) → formulario con validación, sugerencias y vista
-     previa. Si el padre pasa onCompanyNameChange, el valor nuevo sube.
+   · El nombre viene del formulario (config.companyName), sin edición en la página.
    · Opcionales en el config (todos tienen valor por defecto):
        heroVideoUrl, heroPoster, productImages[], impactImage, ctaImage,
-       stats[], testimonials[], nameSuggestions[]
+       stats[], testimonials[]
    ========================================================================== */
 
 type AgroCard = {
@@ -44,15 +42,10 @@ type AgroExtras = {
   ctaImage?: string;
   stats?: Stat[];
   testimonials?: Testimonial[];
-  nameSuggestions?: string[];
 };
 
 type Props = {
   config: SiteConfig;
-  /** Se llama con el nombre nuevo cada vez que se guarda el formulario. */
-  onCompanyNameChange?: (value: string) => void;
-  /** Oculta todos los controles de edición del nombre (vista publicada). */
-  editableName?: boolean;
 };
 
 /* Archivos por defecto: copiar la carpeta /media a public/media del proyecto. */
@@ -63,9 +56,6 @@ const MEDIA = {
   impact: "/media/hojas.jpg",
   cta: "/media/finca.jpg",
 };
-
-const NAME_MAX = 44;
-const NAME_MIN = 2;
 
 const DEFAULT_STATS: Stat[] = [
   { to: 40, suffix: " ha", label: "en producción" },
@@ -91,8 +81,6 @@ const DEFAULT_TESTIMONIALS: Testimonial[] = [
     role: "Exportadora de fruta",
   },
 ];
-
-const DEFAULT_SUGGESTIONS = ["Agroandes", "Campo Vivo", "Frutales del Valle"];
 
 const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
@@ -141,11 +129,6 @@ const I = {
   play: (
     <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
       <path d="M3 1.8v8.4L10 6 3 1.8Z" />
-    </svg>
-  ),
-  pencil: (
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M2.5 13.5 3 10l7.5-7.5 3 3L6 13l-3.5.5Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
     </svg>
   ),
 };
@@ -294,156 +277,15 @@ function Modal({
   );
 }
 
-/* ----------------------- Formulario para cambiar el nombre -------------------- */
-
-function NameForm({
-  current,
-  original,
-  suggestions,
-  onSave,
-  onCancel,
-}: {
-  current: string;
-  original: string;
-  suggestions: string[];
-  onSave: (value: string) => void;
-  onCancel: () => void;
-}) {
-  const [value, setValue] = useState(current);
-  const [error, setError] = useState("");
-
-  const clean = value.replace(/\s+/g, " ").trim();
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    if (clean.length < NAME_MIN) {
-      setError(`Escribe al menos ${NAME_MIN} letras para el nombre.`);
-      return;
-    }
-    if (clean.length > NAME_MAX) {
-      setError(`El nombre puede tener hasta ${NAME_MAX} caracteres.`);
-      return;
-    }
-    setError("");
-    onSave(clean);
-  };
-
-  return (
-    <form className={styles.dialogBody} onSubmit={submit} noValidate>
-      <div>
-        <h3 className={styles.dialogTitle}>Cambia el nombre de tu empresa</h3>
-        <p className={styles.dialogText} style={{ marginTop: 10 }}>
-          Escríbelo una vez y se actualiza en todo el sitio: menú, portada, productos y pie de página.
-        </p>
-      </div>
-
-      <div className={styles.field}>
-        <label className={styles.label} htmlFor="agro-name">
-          <span>Nombre de la empresa</span>
-          <span className={styles.count}>
-            {value.length}/{NAME_MAX}
-          </span>
-        </label>
-        <input
-          id="agro-name"
-          data-autofocus
-          className={`${styles.input}${error ? ` ${styles.inputBad}` : ""}`}
-          value={value}
-          onChange={(e) => {
-            setValue(e.target.value.slice(0, NAME_MAX));
-            if (error) setError("");
-          }}
-          placeholder="Ej.: Agroandes"
-          autoComplete="organization"
-          spellCheck={false}
-          maxLength={NAME_MAX}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? "agro-name-error" : "agro-name-help"}
-        />
-        {error ? (
-          <p className={styles.error} id="agro-name-error" role="alert">
-            {error}
-          </p>
-        ) : (
-          <p className={styles.help} id="agro-name-help">
-            Puedes usar letras, números y espacios.
-          </p>
-        )}
-      </div>
-
-      {suggestions.length ? (
-        <div className={styles.field}>
-          <span className={styles.label}>¿Sin ideas? Prueba con uno de estos</span>
-          <div className={styles.chips}>
-            {suggestions.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={styles.chip}
-                onClick={() => {
-                  setValue(s);
-                  setError("");
-                }}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      <div className={styles.preview} aria-live="polite">
-        <span className={styles.logoMark}>{I.leaf}</span>
-        <span className={styles.previewName}>{clean || "Tu empresa"}</span>
-        <span className={styles.previewTag}>Vista previa</span>
-      </div>
-
-      <div className={styles.formActions}>
-        <button type="submit" className={`${styles.btn} ${styles.btnDark}`}>
-          Guardar nombre
-        </button>
-        <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={onCancel}>
-          Cancelar
-        </button>
-        {original && original !== value ? (
-          <button type="button" className={styles.linkBtn} onClick={() => setValue(original)}>
-            Volver a “{original}”
-          </button>
-        ) : null}
-      </div>
-    </form>
-  );
-}
-
 /* ================================= Plantilla ================================== */
 
-export function AgroindustriaTemplate({ config, onCompanyNameChange, editableName = true }: Props) {
+export function AgroindustriaTemplate({ config }: Props) {
   const copy = config.templateCopy;
   const extras = config as SiteConfig & AgroExtras;
   const rootRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
 
-  /* ------------------------------ Nombre ------------------------------------ */
-  const [draftName, setDraftName] = useState<string | null>(null);
-  useEffect(() => setDraftName(null), [config.companyName]);
-
-  const companyName = (draftName ?? config.companyName ?? "").trim() || "Tu empresa";
-  const [nameOpen, setNameOpen] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = window.setTimeout(() => setToast(null), 3600);
-    return () => window.clearTimeout(t);
-  }, [toast]);
-
-  const saveName = (value: string) => {
-    setDraftName(value);
-    onCompanyNameChange?.(value);
-    setNameOpen(false);
-    setSheet(false);
-    setToast(`Listo: ahora el sitio se llama ${value}`);
-  };
+  const companyName = (config.companyName ?? "").replace(/\s+/g, " ").trim() || "Tu empresa";
 
   /* ------------------------------ Contenido --------------------------------- */
   const cards = useMemo(() => (copy?.cards ?? []) as unknown as AgroCard[], [copy?.cards]);
@@ -453,7 +295,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
   const usingDemoStats = !extras.stats?.length;
   const quotes = extras.testimonials?.length ? extras.testimonials : DEFAULT_TESTIMONIALS;
   const usingDemoQuotes = !extras.testimonials?.length;
-  const suggestions = extras.nameSuggestions ?? DEFAULT_SUGGESTIONS;
   const productImages = extras.productImages?.length ? extras.productImages : MEDIA.products;
   const tags = useMemo(() => Array.from(new Set(cards.map((c) => c.tag).filter(Boolean))) as string[], [cards]);
 
@@ -601,11 +442,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
   } as CSSProperties;
 
   const year = new Date().getFullYear();
-  const canEdit = editableName;
-  const openName = () => {
-    setSheet(false);
-    setNameOpen(true);
-  };
 
   const reveal = (n = 0): { className: string; "data-reveal": boolean; style?: CSSProperties } => ({
     className: styles.reveal,
@@ -648,11 +484,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
           </nav>
 
           <div className={styles.navActions}>
-            {canEdit ? (
-              <button type="button" className={`${styles.btn} ${styles.btnGhost} ${styles.btnSm} ${styles.navGhost} ${styles.navHide}`} onClick={openName}>
-                {I.pencil} Cambiar nombre
-              </button>
-            ) : null}
             <button type="button" className={`${styles.btn} ${styles.btnLeaf} ${styles.btnSm} ${styles.navHide}`} onClick={() => goTo("contacto-demo")}>
               {copy.contactCta}
             </button>
@@ -688,11 +519,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
           <button type="button" className={`${styles.btn} ${styles.btnLeaf}`} onClick={() => goTo("contacto-demo")}>
             {copy.contactCta}
           </button>
-          {canEdit ? (
-            <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={openName}>
-              {I.pencil} Cambiar nombre
-            </button>
-          ) : null}
         </div>
       </div>
 
@@ -936,15 +762,8 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
               </ul>
             </div>
             <div>
-              <p className={styles.footTitle}>Tu sitio</p>
+              <p className={styles.footTitle}>Navegación</p>
               <ul className={styles.footList}>
-                {canEdit ? (
-                  <li>
-                    <button type="button" className={styles.footLink} onClick={openName}>
-                      Cambiar nombre
-                    </button>
-                  </li>
-                ) : null}
                 <li>
                   <button type="button" className={styles.footLink} onClick={toTop}>
                     Volver arriba
@@ -961,20 +780,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
           </div>
         </div>
       </footer>
-
-      {/* Botón flotante (móvil) */}
-      {canEdit ? (
-        <button type="button" className={`${styles.btn} ${styles.btnLeaf} ${styles.btnSm} ${styles.fab}`} onClick={openName}>
-          {I.pencil} Cambiar nombre
-        </button>
-      ) : null}
-
-      {/* Formulario del nombre */}
-      {nameOpen ? (
-        <Modal label="Cambiar nombre de la empresa" onClose={() => setNameOpen(false)}>
-          <NameForm current={companyName === "Tu empresa" ? "" : companyName} original={(config.companyName ?? "").trim()} suggestions={suggestions} onSave={saveName} onCancel={() => setNameOpen(false)} />
-        </Modal>
-      ) : null}
 
       {/* Ficha de producto */}
       {active ? (
@@ -1023,15 +828,6 @@ export function AgroindustriaTemplate({ config, onCompanyNameChange, editableNam
         </Modal>
       ) : null}
 
-      {/* Confirmación */}
-      <div aria-live="polite">
-        {toast ? (
-          <div className={styles.toast} key={toast}>
-            <span className={styles.toastDot} aria-hidden="true" />
-            {toast}
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

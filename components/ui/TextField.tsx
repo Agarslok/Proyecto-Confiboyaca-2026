@@ -10,6 +10,7 @@ interface TextFieldProps {
   placeholder?: string;
   multiline?: boolean;
   large?: boolean;
+  onBlur?: () => void;
 }
 
 export function TextField({
@@ -22,6 +23,7 @@ export function TextField({
   placeholder,
   multiline,
   large = true,
+  onBlur,
 }: TextFieldProps) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -36,6 +38,7 @@ export function TextField({
     "aria-describedby": describedBy,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       onChange(event.target.value),
+    onBlur,
   };
 
   return (
