@@ -25,6 +25,10 @@ export const metadata: Metadata = {
   },
   description:
     "Generador local de páginas web a partir de un formulario. El diagnóstico y la página salen de reglas en este equipo.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    apple: [{ url: "/favicon.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

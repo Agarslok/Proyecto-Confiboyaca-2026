@@ -1,13 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
 import { ConsultoriaSignals } from "@/components/site/ConsultoriaSignals";
 import { useSite } from "@/components/site/useSite";
 import { buildConsultancy } from "@/lib/site/consultancy";
+import { setSiteStep } from "@/lib/session/site-session";
 
 export function SiteDiagnosis() {
+  const router = useRouter();
   const state = useSite();
   const config = state.config;
 
@@ -82,7 +85,16 @@ export function SiteDiagnosis() {
       </section>
 
       <div className="consultoria-report-actions">
-        <Button href="/diagnostico" variant="secondary">Editar respuestas</Button>
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            setSiteStep(0);
+            router.push("/diagnostico");
+          }}
+        >
+          Editar respuestas
+        </Button>
       </div>
     </article>
   );
