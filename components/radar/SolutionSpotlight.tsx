@@ -347,11 +347,22 @@ function Demo({ central }: { central: CentralProblem }) {
 }
 
 export function SolutionSpotlight({ central, companyName }: { central: CentralProblem; companyName: string }) {
+  const [calloutOpen, setCalloutOpen] = useState(true);
   return (
     <>
-      <a className="sol-pill" href="#solucion-consultoria">
-        <span aria-hidden="true">◎</span> Cómo esta página resuelve: {central.name.toLowerCase()}
-      </a>
+      {calloutOpen ? (
+        <aside className="sol-callout" aria-label="Problema central de la empresa">
+          <button type="button" className="sol-callout-close" onClick={() => setCalloutOpen(false)} aria-label="Minimizar">×</button>
+          <p className="sol-kicker">Consultoría Radar IA</p>
+          <p className="sol-callout-problem"><span>Problema central</span>{central.problem}</p>
+          <p className="sol-callout-fix"><span>Esta página lo resuelve con</span>{central.name}</p>
+          <a className="sol-btn" href="#solucion-consultoria" onClick={() => setCalloutOpen(false)}>Ver cómo funciona</a>
+        </aside>
+      ) : (
+        <button type="button" className="sol-pill" onClick={() => setCalloutOpen(true)}>
+          <span aria-hidden="true">◎</span> Problema central: {central.name.toLowerCase()}
+        </button>
+      )}
       <section id="solucion-consultoria" className="sol-section" aria-labelledby="sol-title">
         <div className="sol-inner">
           <p className="sol-kicker">Radar IA · solución de la consultoría para {companyName}</p>

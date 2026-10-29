@@ -82,6 +82,11 @@ export interface RadarQuestion {
 export interface RadarAnswers {
   companyName: string;
   city: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  /** Autorización de tratamiento de datos (Ley 1581 de 2012). Obligatoria para guardar. */
+  consent: boolean;
   size: SizeId | "";
   industry: IndustryId | "";
   activity: string;
@@ -90,6 +95,10 @@ export interface RadarAnswers {
   goals: RadarGoalId[];
   /** Pantalla actual del formulario. */
   cursor: number;
+  /** Registro en el servidor, si ya se guardó. El token permite al mismo navegador actualizarlo. */
+  recordId?: string;
+  recordCode?: string;
+  editToken?: string;
 }
 
 export interface Finding {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { saveRadarDiagnosis } from "@/app/actions/radar";
 import { Icon } from "@/components/externado/icons";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { ConsultoriaLoading } from "@/components/site/ConsultoriaLoading";
@@ -16,7 +17,7 @@ import { patchRadar, radarOf, startNiche } from "@/lib/radar/store";
 import type { OptionKey, RadarAnswers, RadarGoalId, SizeId } from "@/lib/radar/types";
 import { buildSite } from "@/lib/site/engine";
 import { formatCompanyName } from "@/lib/site/format-company-name";
-import { saveSiteConfig } from "@/lib/session/site-session";
+import { getSiteSnapshot, saveSiteConfig } from "@/lib/session/site-session";
 import { parseSiteBrief } from "@/lib/validation/site";
 
 const KEYS: OptionKey[] = ["A", "B", "C", "D"];
@@ -66,14 +67,12 @@ function CompanyScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<
           if (formatted && formatted !== radar.companyName) patchRadar({ companyName: formatted });
         }}
       />
-      <TextField
-        id="city"
-        label="Ciudad o municipio"
-        hint="Opcional."
-        value={radar.city}
-        large={false}
-        onChange={(city) => patchRadar({ city })}
-      />
+      <div className="radar-contact">
+        <TextField id="city" label="Ciudad o municipio" hint="Opcional." value={radar.city} large={false} onChange={(city) => patchRadar({ city })} />
+        <TextField id="contactName" label="Nombre de contacto" hint="Opcional." value={radar.contactName} large={false} onChange={(contactName) => patchRadar({ contactName })} />
+        <TextField id="email" label="Correo" hint="Opcional. Para enviarle el diagnóstico." value={radar.email} error={errors.email} large={false} onChange={(email) => patchRadar({ email: email.trim() })} />
+        <TextField id="phone" label="Teléfono o WhatsApp" hint="Opcional." value={radar.phone} large={false} onChange={(phone) => patchRadar({ phone: phone.replace(/[^\d+ ]/g, "") })} />
+      </div>
       <div>
         <p className="q-help"><strong>¿Cuántas personas trabajan en la empresa?</strong></p>
         <div className="opts compact" aria-invalid={errors.size ? true : undefined}>
@@ -91,6 +90,16 @@ function CompanyScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<
           ))}
         </div>
         <p className="err" role="alert">{errors.size ?? ""}</p>
+      </div>
+      <div>
+        <label className={radar.consent ? "radar-consent on" : "radar-consent"}>
+          <input type="checkbox" checked={radar.consent} onChange={(event) => patchRadar({ consent: event.target.checked })} />
+          <span>
+            Autorizo a la Universidad Externado de Colombia a tratar los datos de esta encuesta para elaborar el
+            diagnóstico y contactarme, según la Ley 1581 de 2012. Puedo pedir que se corrijan o eliminen.
+          </span>
+        </label>
+        <p className="err" role="alert">{errors.consent ?? ""}</p>
       </div>
     </>
   );
@@ -231,6 +240,8 @@ export function RadarWizard() {
       const next: Record<string, string> = {};
       if (radar.companyName.trim().length < 2) next.companyName = "Escriba el nombre de la empresa.";
       if (!radar.size) next.size = "Elija el tamaño de la empresa.";
+      if (radar.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(radar.email)) next.email = "Revise el correo.";
+      if (!radar.consent) next.consent = "Para guardar el diagnóstico necesitamos su autorización.";
       return next;
     }
     if (target.kind === "sector") {
@@ -264,6 +275,7 @@ export function RadarWizard() {
   }
 
   function generate() {
+    if (radar.recordCode === "") patchRadar({ recordCode: undefined });
     const parsed = parseSiteBrief(state.draft);
     if (!parsed.ok) {
       patchRadar({ cursor: 0 });
@@ -272,6 +284,18 @@ export function RadarWizard() {
     }
     saveSiteConfig(buildSite(parsed.brief));
     setGenerating(true);
+    /* Se guarda en el servidor mientras corre la animación. Si falla, el diagnóstico sigue en este navegador. */
+    void saveRadarDiagnosis(radarOf(getSiteSnapshot())).then((saved) => {
+      if (saved.ok) {
+        patchRadar({ recordId: saved.id, recordCode: saved.code, editToken: saved.editToken || radar.editToken });
+        const again = parseSiteBrief(getSiteSnapshot().draft);
+        if (again.ok) saveSiteConfig(buildSite(again.brief));
+      } else {
+        /* Código vacío = no se guardó; el informe lo avisa. */
+        patchRadar({ recordCode: "" });
+        console.warn(saved.error);
+      }
+    });
   }
 
   useEffect(() => {

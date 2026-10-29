@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { CaseSpark } from "@/components/radar/CaseSpark";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
+import { useSite } from "@/components/site/useSite";
 import { Button } from "@/components/ui/Button";
 import { COURSES, DIMENSIONS, LEVELS, ROUTES } from "@/lib/radar/bank";
-import { patchRadar } from "@/lib/radar/store";
+import { patchRadar, radarOf } from "@/lib/radar/store";
 import type { Finding, RadarResult } from "@/lib/radar/types";
 import type { SiteConfig } from "@/types/site";
 
@@ -54,6 +55,7 @@ function Gauge({ index, level }: { index: number; level: RadarResult["level"] })
 
 export function RadarReport({ config }: { config: SiteConfig & { radar: RadarResult } }) {
   const router = useRouter();
+  const recordCode = radarOf(useSite()).recordCode;
   const result = config.radar;
   const level = LEVELS[result.level];
   const [allFindings, setAllFindings] = useState(false);
@@ -73,6 +75,15 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
           <span className="tag">{result.activityLabel}</span>
           <span className="tag">Eslabón: {result.linkLabel.toLowerCase()}</span>
           {result.sizeLabel ? <span className="tag">{result.sizeLabel}</span> : null}
+        </p>
+        <p className="fine radar-saved" role="status">
+          {recordCode ? (
+            <>Guardado · código <strong>{recordCode}</strong>. El equipo puede abrirlo de nuevo desde el panel de consultores.</>
+          ) : recordCode === "" ? (
+            "No se pudo guardar en el servidor. El diagnóstico sigue disponible en este navegador."
+          ) : (
+            "Guardando el diagnóstico…"
+          )}
         </p>
       </header>
 
@@ -213,6 +224,7 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
       </section>
 
       <div className="consultoria-report-actions">
+        <Button href="/flyer">Descargar flyer (PDF)</Button>
         <Button
           type="button"
           variant="secondary"

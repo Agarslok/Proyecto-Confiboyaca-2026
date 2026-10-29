@@ -1,7 +1,9 @@
 import { INDUSTRIES, industryById } from "@/lib/radar/bank";
 import { emptyRadarAnswers } from "@/lib/radar/engine";
 import type { RadarAnswers } from "@/lib/radar/types";
-import { getSiteSnapshot, patchSiteDraft } from "@/lib/session/site-session";
+import { buildSite } from "@/lib/site/engine";
+import { getSiteSnapshot, patchSiteDraft, saveSiteConfig } from "@/lib/session/site-session";
+import { parseSiteBrief } from "@/lib/validation/site";
 import type { SiteState } from "@/types/site";
 
 /**
@@ -30,5 +32,17 @@ export function startNiche(activityId: string): boolean {
   const industry = INDUSTRIES.find((item) => item.activities.some((activity) => activity.id === activityId));
   if (!industry) return false;
   patchRadar({ ...emptyRadarAnswers(), industry: industry.id, activity: activityId, cursor: 0 });
+  return true;
+}
+
+/**
+ * Carga en este navegador un diagnóstico guardado (desde el panel de consultores)
+ * y regenera el resultado y la página web, para revisarlo con el cliente.
+ */
+export function loadSavedRadar(answers: RadarAnswers): boolean {
+  patchRadar({ ...emptyRadarAnswers(), ...answers, cursor: 0 });
+  const parsed = parseSiteBrief(getSiteSnapshot().draft);
+  if (!parsed.ok) return false;
+  saveSiteConfig(buildSite(parsed.brief));
   return true;
 }

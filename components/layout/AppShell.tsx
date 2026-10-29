@@ -43,7 +43,7 @@ function screenClass(pathname: string): string {
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const isStandaloneSite = pathname.startsWith("/sitio");
+  const isStandaloneSite = pathname.startsWith("/sitio") || pathname.startsWith("/flyer");
   const state = useSite();
   const shellRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLButtonElement>(null);

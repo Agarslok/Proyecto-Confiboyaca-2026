@@ -10,6 +10,8 @@ Rama de pruebas creada a partir de `fase_inicial`. No se ha subido a GitHub.
 | `/resultado` | Consultoría con semáforo | Índice 0–100, nivel de riesgo, radar de 6 dimensiones, hallazgos, 6 casos, ruta y cursos |
 | `/sitio` | Plantilla por sector con el nombre | La misma plantilla, con textos de la actividad y una sección que resuelve el problema central |
 | `/encuestas` | — | Catálogo de los 48 nichos: preguntas de cada uno y botón «Aplicar encuesta» |
+| `/consultor` | — | Panel con contraseña: buscar, filtrar y reabrir los diagnósticos guardados |
+| `/flyer` | — | Resumen de una hoja A4 para guardar como PDF |
 | `/caso/[id]` | — | Detalle de cada caso: cómo lo tiene hoy, cómo debería tenerlo, tabla propuesta y pasos |
 
 Las plantillas de `components/templates/` no se tocaron. El formulario anterior (`SiteWizard`) sigue en el código; solo dejó de usarse en `/diagnostico`.
@@ -76,3 +78,28 @@ Para aplicar la encuesta a un nicho concreto: `/encuestas` → «Aplicar encuest
 El problema central sale de la dimensión donde la empresa pierde más puntos del índice, (100 − puntaje) × peso, y es su hallazgo más grave. Cada pregunta apunta a una solución (`lib/radar/solution.ts`): registro digital, producción según lo que se vende, base de clientes, solicitudes con estado, inventario, tablero de indicadores o respaldo de datos.
 
 En `/sitio` la portada usa un mensaje de esa solución y, después de la plantilla, aparece la sección «Solución de la consultoría» con una demostración interactiva (datos de ejemplo, no se guardan) y un botón flotante para llegar. Las plantillas siguen sin modificarse; por eso la sección va al final de la página.
+
+## Dónde se guardan los diagnósticos
+
+Al terminar la encuesta, el diagnóstico se guarda en el servidor, en SQLite (`data/radar.db`, o la ruta de `RADAR_DB_PATH`), con un código como `RAD-8FEMNH`. Antes solo existía en el navegador del cliente.
+
+- La autorización de datos (Ley 1581 de 2012) es obligatoria para guardar y queda con su fecha.
+- El índice y el nivel se recalculan en el servidor a partir de las respuestas; no se confía en lo que manda el navegador.
+- El navegador que creó el registro recibe un token para actualizarlo; nadie más puede modificarlo, salvo un consultor con sesión.
+- `data/` y `.env.local` están en `.gitignore`: los datos personales nunca van a GitHub.
+
+### Panel de consultores
+
+`/consultor` pide la contraseña del equipo (`CONSULTOR_PASSWORD` en `.env.local`). La sesión es una cookie firmada (`SESSION_SECRET`), `httpOnly`, de 8 horas. Tras 5 intentos fallidos, el ingreso se bloquea 5 minutos.
+
+Desde el panel se busca por empresa, código, contacto, ciudad o industria; se filtra por nivel; y cada diagnóstico se puede abrir de nuevo (resultado, página web, flyer) o editar. Al editar, se actualiza el mismo registro.
+
+### Para pasar a producción (200 a 1.000 empresas en internet)
+
+SQLite en un solo servidor alcanza para el piloto. Para publicarlo en internet hace falta:
+
+1. Una base de datos administrada (Postgres, por ejemplo Supabase): reemplazar `lib/store/diagnoses.ts` por un adaptador con la misma interfaz `DiagnosisStore`.
+2. Cuentas por consultor en lugar de una contraseña compartida (por ejemplo Supabase Auth).
+3. HTTPS (la cookie ya se marca `secure` en producción), copias de seguridad y una política de retención y borrado de datos.
+
+No guarde `data/radar.db` en una carpeta sincronizada (OneDrive, Drive) cuando haya datos reales: use `RADAR_DB_PATH` hacia una carpeta local.

@@ -33,7 +33,10 @@ const POINTS: Record<OptionKey, number> = { A: 0, B: 1, C: 2, D: 3, E: 0 };
 const SEVERITY_ORDER: Record<Finding["severity"], number> = { critico: 0, mejorable: 1, confirmar: 2 };
 
 export function emptyRadarAnswers(): RadarAnswers {
-  return { companyName: "", city: "", size: "", industry: "", activity: "", choices: {}, goals: [], cursor: 0 };
+  return {
+    companyName: "", city: "", contactName: "", email: "", phone: "", consent: false,
+    size: "", industry: "", activity: "", choices: {}, goals: [], cursor: 0,
+  };
 }
 
 export function activityOf(answers: Pick<RadarAnswers, "industry" | "activity">): { industry?: Industry; activity?: Activity } {
@@ -94,7 +97,7 @@ export function screensFor(answers: RadarAnswers): Screen[] {
 export function screenIsDone(screen: Screen, answers: RadarAnswers): boolean {
   switch (screen.kind) {
     case "empresa":
-      return answers.companyName.trim().length >= 2 && Boolean(answers.size);
+      return answers.companyName.trim().length >= 2 && Boolean(answers.size) && answers.consent;
     case "sector":
       return Boolean(activityOf(answers).activity);
     case "question":
