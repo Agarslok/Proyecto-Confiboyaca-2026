@@ -20,7 +20,8 @@ import {
    Almacén en Supabase (Postgres), para publicar en Netlify.
 
    Usa la API REST de Supabase con la llave secreta del proyecto
-   (SUPABASE_SECRET_KEY), que solo existe en el servidor. La tabla tiene RLS
+   (SUPABASE_SECRET_KEY: la nueva sb_secret_… o la antigua service_role),
+   que solo existe en el servidor. La tabla tiene RLS
    activado y sin políticas: con la llave pública nadie puede leerla.
    El esquema está en supabase/schema.sql.
    ========================================================================== */
@@ -42,7 +43,9 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
   async function request(path: string, init: RequestInit & { prefer?: string } = {}) {
     const headers: Record<string, string> = {
       apikey: key,
-      Authorization: `Bearer ${key}`,
+      /* Llaves antiguas (JWT «service_role», empiezan con eyJ) también van como Bearer.
+         Las nuevas (sb_secret_…) solo en apikey: Supabase las cambia por un JWT. */
+      ...(key.startsWith("eyJ") ? { Authorization: `Bearer ${key}` } : {}),
       "Content-Type": "application/json",
       ...(init.prefer ? { Prefer: init.prefer } : {}),
     };

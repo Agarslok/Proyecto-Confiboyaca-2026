@@ -14,7 +14,7 @@ import { createSupabaseStore } from "../lib/store/supabase";
 
 type Row = Record<string, unknown>;
 
-function fakeSupabase(maxRows = 1000) {
+function fakeSupabase(maxRows = 1000, key = "sb_secret_prueba") {
   const tables: Record<string, Row[]> = { diagnoses: [], diagnoses_backup: [] };
   const calls: string[] = [];
 
@@ -47,8 +47,9 @@ function fakeSupabase(maxRows = 1000) {
     const method = init.method ?? "GET";
     const headers = new Headers(init.headers);
     calls.push(`${method} ${table}`);
-    assert.equal(headers.get("apikey"), "llave-secreta");
-    assert.equal(headers.get("authorization"), "Bearer llave-secreta");
+    assert.equal(headers.get("apikey"), key);
+    /* Solo las llaves JWT antiguas van también como Bearer. */
+    assert.equal(headers.get("authorization"), key.startsWith("eyJ") ? `Bearer ${key}` : null);
     const rows = tables[table];
     const params = url.searchParams;
 
@@ -82,7 +83,7 @@ function fakeSupabase(maxRows = 1000) {
     return new Response(JSON.stringify(page), { status: 200, headers: responseHeaders });
   }) as typeof fetch;
 
-  return { tables, calls, store: createSupabaseStore("https://ejemplo.supabase.co/", "llave-secreta", fetchImpl) };
+  return { tables, calls, store: createSupabaseStore("https://ejemplo.supabase.co/", key, fetchImpl) };
 }
 
 function complete(overrides: Partial<RadarAnswers> = {}): RadarAnswers {
@@ -147,6 +148,11 @@ describe("almacén en Supabase", () => {
     for (const name of ["Uno", "Dos", "Tres", "Cuatro", "Cinco"]) await store.save(complete({ companyName: `Empresa ${name}` }));
     assert.equal((await store.all()).length, 5);
     assert.equal((await store.stats()).total, 5);
+  });
+
+  it("con una llave JWT antigua también manda Authorization: Bearer", async () => {
+    const { store } = fakeSupabase(1000, "eyJantigua.service.role");
+    assert.ok((await store.save(complete())).ok);
   });
 
   it("reiniciar copia a la tabla de respaldo y luego borra", async () => {
