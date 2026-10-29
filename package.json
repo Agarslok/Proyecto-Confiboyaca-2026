@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts"
+    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts tests/radar.test.ts"
   },
   "dependencies": {
     "next": "16.4.3",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
 import { ConsultoriaSignals } from "@/components/site/ConsultoriaSignals";
+import { RadarReport } from "@/components/radar/RadarReport";
 import { useSite } from "@/components/site/useSite";
 import { buildConsultancy } from "@/lib/site/consultancy";
 import { setSiteStep } from "@/lib/session/site-session";
@@ -27,6 +28,8 @@ export function SiteDiagnosis() {
       features: [],
     });
   }, [config]);
+
+  if (config?.radar) return <RadarReport config={{ ...config, radar: config.radar }} />;
 
   if (!config || !consultancy) {
     return (

@@ -1,3 +1,6 @@
+import { buildRadarResult, activityOf } from "@/lib/radar/engine";
+import { voiceCopy } from "@/lib/radar/site-voice";
+import type { RadarAnswers } from "@/lib/radar/types";
 import { audienceLabels, featureLabels, goalLabels, sectorLabels } from "@/lib/site/catalog";
 import { buildConsultancy } from "@/lib/site/consultancy";
 import { formatCompanyName } from "@/lib/site/format-company-name";
@@ -13,6 +16,7 @@ export interface SiteBrief {
   goal: SiteDraft["goal"];
   otherGoal: string;
   features: FeatureId[];
+  radar?: RadarAnswers;
 }
 
 function configId(companyName: string, sectorId: SectorId): string {
@@ -51,7 +55,10 @@ export function buildSite(brief: SiteBrief): SiteConfig {
   const companyName = formatCompanyName(brief.companyName);
   const sectorId = brief.sectorId;
   const templateId = selectTemplate(sectorId);
-  const templateCopy = contentForTemplate(templateId, companyName);
+  let templateCopy = contentForTemplate(templateId, companyName);
+  let extras: Record<string, unknown> = {};
+  const { industry, activity } = brief.radar ? activityOf(brief.radar) : {};
+  if (industry && activity) ({ copy: templateCopy, extras } = voiceCopy(templateCopy, companyName, industry, activity));
   const sectorLabel = sectorLabels[sectorId];
   const tplLabel = templateLabel(templateId);
   const gaps = gapsFor(brief);
@@ -70,6 +77,7 @@ export function buildSite(brief: SiteBrief): SiteConfig {
   }
 
   return {
+    ...extras,
     id: configId(companyName, sectorId),
     companyName,
     sectorId,
@@ -82,6 +90,7 @@ export function buildSite(brief: SiteBrief): SiteConfig {
     templateCopy,
     gaps,
     consultancy: buildConsultancy({ ...brief, companyName }),
+    radar: brief.radar ? buildRadarResult({ ...brief.radar, companyName }) : undefined,
     diagnosis: {
       need: `${companyName} recibirá la plantilla de ${sectorLabel.toLowerCase()}. La personalización visible es el nombre de la empresa; el sector fija el diseño.`,
       priority: `Regla del demo: sector → plantilla. Objetivo y características marcadas no cambian el resultado.`,

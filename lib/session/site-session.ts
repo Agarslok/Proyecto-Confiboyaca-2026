@@ -2,6 +2,7 @@ import { buildSite } from "@/lib/site/engine";
 import { parseSiteBrief } from "@/lib/validation/site";
 import type { FeatureId, SectorId, SiteConfig, SiteDraft, SiteState } from "@/types/site";
 import { FEATURE_IDS, SECTOR_IDS } from "@/types/site";
+import { normalizeRadarAnswers } from "@/lib/radar/session";
 
 export const SITE_STORAGE_KEY = "confi.site.v1";
 export const INTRO_SEEN_KEY = "confi.intro.seen";
@@ -72,6 +73,8 @@ function normalizeDraft(partial: SiteDraft): SiteDraft {
   draft.features = draft.features.filter((feature): feature is FeatureId =>
     (FEATURE_IDS as readonly string[]).includes(feature),
   );
+  if (draft.radar) draft.radar = normalizeRadarAnswers(draft.radar);
+  else delete draft.radar;
   return draft;
 }
 

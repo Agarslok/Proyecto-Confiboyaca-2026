@@ -1,3 +1,4 @@
+import type { RadarAnswers, RadarResult } from "@/lib/radar/types";
 import type { ConsultancyReport } from "@/lib/site/consultancy";
 import type { TemplateCopy } from "@/lib/site/template-content";
 
@@ -58,6 +59,8 @@ export interface SiteDraft {
   goal: GoalId | "";
   otherGoal: string;
   features: FeatureId[];
+  /** Respuestas del Radar IA (rama prueba/radar-ia). Opcional: sin ellas, el flujo clásico sigue igual. */
+  radar?: RadarAnswers;
 }
 
 export interface SiteConfig {
@@ -73,6 +76,7 @@ export interface SiteConfig {
   templateCopy: TemplateCopy;
   gaps: string[];
   consultancy: ConsultancyReport;
+  radar?: RadarResult;
   diagnosis: {
     need: string;
     priority: string;

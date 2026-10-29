@@ -2,6 +2,8 @@ import { z } from "zod";
 import { fieldErrorsFromZod } from "@/lib/validation/answers";
 import type { SiteBrief } from "@/lib/site/engine";
 import { formatCompanyName } from "@/lib/site/format-company-name";
+import { isRadarAnswers } from "@/lib/radar/session";
+import type { RadarAnswers } from "@/lib/radar/types";
 import { AUDIENCE_IDS, FEATURE_IDS, GOAL_IDS, SECTOR_IDS, type SiteDraft } from "@/types/site";
 
 export const siteBriefSchema = z.object({
@@ -12,6 +14,7 @@ export const siteBriefSchema = z.object({
   goal: z.union([z.enum(GOAL_IDS), z.literal("")]),
   otherGoal: z.string().trim().max(120, "Describa el objetivo en menos de 120 caracteres."),
   features: z.array(z.enum(FEATURE_IDS)),
+  radar: z.custom<RadarAnswers>((value) => isRadarAnswers(value)).optional(),
 });
 
 export function parseSiteBrief(
