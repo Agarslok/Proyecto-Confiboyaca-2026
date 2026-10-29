@@ -1,13 +1,32 @@
 # Confi
 
-Prototipo local de diagnóstico y consultoría empresarial. Una empresa indica su sector y sus problemas, el motor de reglas prepara una lectura y la interfaz abre una demostración ficticia relacionada.
+Aplicación de la feria con dos experiencias separadas y una consultoría de página web que ya existía.
 
-Esta versión no llama a Gemini ni a una base de datos. Sirve para revisar el recorrido completo antes de conectar servicios externos.
+Esta versión no llama a Gemini ni a una base de datos. El diagnóstico del stand sale del motor de reglas local. Las demostraciones usan datos ficticios.
 
-## Requisitos
+## Rutas
 
-- Node.js 22.22.3
-- npm 10
+| Ruta | Responsabilidad |
+| --- | --- |
+| `/` | Entrada. Elige pitch, stand o la consultoría existente. |
+| `/pitch` | Presentación de siete diapositivas. El avatar ocupa la sexta y todavía no está conectado. |
+| `/stand` | Abre la misma consultoría y el generador de página que `/consultoria`. |
+| `/stand/diagnostico` | Formulario del motor de diagnóstico ya existente. |
+| `/stand/resultado` | Lectura generada con reglas locales. |
+| `/stand/demo` | Demostración interactiva con datos ficticios. |
+| `/consultoria` | Página principal anterior: presentación, formulario de página web y consultoría. |
+| `/diagnostico`, `/resultado`, `/sitio`, `/preview` | Recorrido de la consultoría y de la página generada. Siguen operativos. |
+| `/demo` | Demostración del diagnóstico clásico, fuera del recorrido del stand. |
+
+## Dónde vive cada cosa
+
+- `app/pitch/` y `app/stand/` componen las rutas. No contienen la lógica del diagnóstico.
+- `features/pitch/` guarda el guion, el escenario y las siete diapositivas. Las notas del presentador se abren con N.
+- `features/pitch/components/avatar-stage.tsx` reserva el avatar. No simula una conexión.
+- `features/stand/` guarda el sector del stand y el marco de navegación. El estado del sector vive en `sessionStorage` (`confi.stand.sector.v1`) y no se mezcla con el pitch.
+- `components/diagnostic/`, `components/demos/`, `lib/diagnostic/` y `lib/data/demos.ts` siguen siendo el motor y las demostraciones reutilizadas.
+- `components/externado/` y `components/site/` siguen siendo la consultoría.
+- Turismo y agro todavía no tienen textos propios en el motor. Esas entradas usan la plantilla de servicios profesionales hasta que existan lentes sectoriales. Metalurgia usa la plantilla industrial.
 
 ## Puesta en marcha
 
@@ -16,11 +35,16 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000.
+Abra http://localhost:3000. Pitch está en `/pitch`. Stand abre http://localhost:3000/consultoria.
 
-## Recorrido
+## Requisitos
 
-1. Abra la aplicación. La apertura muestra el colibrí y se puede saltar con el botón o con Escape.
+- Node.js 22.22.3
+- npm 10
+
+## Recorrido de la consultoría
+
+1. Abra `/consultoria`. La apertura muestra el colibrí y se puede saltar con el botón o con Escape.
 2. Entre al formulario. Puede empezar por gastronomía o por servicios profesionales.
 3. Responda la empresa, el objetivo, las características y la identidad.
 4. Genere el diagnóstico. El texto sale de esas respuestas.
@@ -48,7 +72,7 @@ npm run build
 
 ## Qué queda en este navegador
 
-El formulario y la página se guardan en `localStorage`, bajo la clave `confi.site.v1`. Sobreviven a una recarga en el mismo navegador. No es una base de datos: no se comparte con otros equipos y desaparece al reiniciar o al borrar los datos del sitio. Al recargar, la página se reconstruye con las respuestas guardadas. La apertura del colibrí se recuerda solo durante la pestaña, en `sessionStorage`.
+El formulario de la página se guarda en `localStorage`, bajo la clave `confi.site.v1`. El diagnóstico del stand usa `confi.walkthrough.v1`. Esas dos copias sobreviven a una recarga en el mismo navegador y no salen de este equipo. El sector elegido en el stand usa `sessionStorage` y dura solo mientras la pestaña sigue abierta.
 
 El servidor, además, escribe la empresa y el diagnóstico en memoria del proceso para ejercitar los repositorios. Esa copia se pierde al detener `npm run dev` y la interfaz no la usa como fuente de verdad.
 

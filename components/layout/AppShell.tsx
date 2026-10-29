@@ -13,6 +13,18 @@ import { useSite } from "@/components/site/useSite";
 import { resetWalkthrough } from "@/lib/session/browser-session";
 import { INTRO_SEEN_KEY, resetSite } from "@/lib/session/site-session";
 
+const CONSULTORIA_HOME = "/consultoria";
+
+function skipsConsultoriaChrome(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/pitch") ||
+    pathname.startsWith("/stand") ||
+    pathname.startsWith("/sitio") ||
+    pathname.startsWith("/solucion")
+  );
+}
+
 const introListeners = new Set<() => void>();
 
 function emitIntro(): void {
@@ -33,7 +45,7 @@ function introIsPending(): boolean {
 }
 
 function screenClass(pathname: string): string {
-  if (pathname === "/") return "welcome";
+  if (pathname === CONSULTORIA_HOME) return "welcome";
   if (pathname.startsWith("/diagnostico")) return "form";
   if (pathname.startsWith("/resultado")) return "results";
   if (pathname.startsWith("/preview")) return "demo";
@@ -43,13 +55,14 @@ function screenClass(pathname: string): string {
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const isStandaloneSite = pathname.startsWith("/sitio");
+  const skipsChrome = skipsConsultoriaChrome(pathname);
+  const isConsultoriaHome = pathname === CONSULTORIA_HOME;
   const state = useSite();
   const shellRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLButtonElement>(null);
   const showIntro = useSyncExternalStore(subscribeIntro, introIsPending, () => false);
   const [activeSection, setActiveSection] = useState("");
-  const inFlow = pathname !== "/";
+  const inFlow = !isConsultoriaHome;
 
   const finishIntro = useCallback(() => {
     try {
@@ -67,7 +80,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [showIntro]);
 
   useEffect(() => {
-    if (pathname !== "/" || typeof IntersectionObserver === "undefined") return;
+    if (!isConsultoriaHome || typeof IntersectionObserver === "undefined") return;
     const els = HOME_SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
     const io = new IntersectionObserver(
       (entries) => {
@@ -86,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       io.disconnect();
       window.removeEventListener("scroll", onTop);
     };
-  }, [pathname]);
+  }, [pathname, isConsultoriaHome]);
 
   function replayIntro() {
     try {
@@ -102,25 +115,25 @@ export function AppShell({ children }: { children: ReactNode }) {
   function restart() {
     resetSite();
     resetWalkthrough();
-    router.push("/");
+    router.push(CONSULTORIA_HOME);
   }
 
   function onHome() {
-    router.push("/");
+    router.push(CONSULTORIA_HOME);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function onSection(id: string) {
-    if (pathname === "/") scrollToSection(id);
+    if (isConsultoriaHome) scrollToSection(id);
     else {
-      router.push("/");
+      router.push(CONSULTORIA_HOME);
       window.setTimeout(() => scrollToSection(id), 120);
     }
   }
 
   const hiddenStyle = showIntro ? { clipPath: "circle(0px at 50% 46%)" } : undefined;
 
-  if (isStandaloneSite) {
+  if (skipsChrome) {
     return <>{children}</>;
   }
 
@@ -133,7 +146,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <FluidBackground />
         <SiteHeader
           inFlow={inFlow}
-          activeSection={pathname === "/" ? activeSection : ""}
+          activeSection={isConsultoriaHome ? activeSection : ""}
           onHome={onHome}
           onSection={onSection}
           onStart={() => router.push("/diagnostico")}

@@ -21,7 +21,13 @@ function isProblemId(value: string | null): value is ProblemId {
   return PROBLEM_IDS.includes(value as ProblemId);
 }
 
-export function Wizard() {
+export function Wizard({
+  homeHref = "/",
+  resultHref = "/resultado",
+}: {
+  homeHref?: string;
+  resultHref?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const state = useWalkthrough();
@@ -75,7 +81,7 @@ export function Wizard() {
         return;
       }
       saveDiagnosis(result.diagnosis);
-      router.push("/resultado");
+      router.push(resultHref);
     });
   }
 
@@ -125,14 +131,14 @@ export function Wizard() {
             Atrás
           </Button>
         ) : (
-          <Button href="/" variant="ghost">
+          <Button href={homeHref} variant="ghost">
             Volver al inicio
           </Button>
         )}
         {step < STEP_COUNT - 1 ? (
           <Button type="submit">Continuar</Button>
         ) : state.diagnosis ? (
-          <Button href="/resultado">Ver el diagnóstico</Button>
+          <Button href={resultHref}>Ver el diagnóstico</Button>
         ) : (
           <Button type="submit" disabled={pending}>
             {pending ? "Generando diagnóstico…" : "Ver diagnóstico"}

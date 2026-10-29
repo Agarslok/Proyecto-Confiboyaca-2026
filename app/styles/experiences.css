@@ -1,0 +1,172 @@
+.experience-shell {
+  position: relative;
+  min-height: 100vh;
+  padding: 28px 0 72px;
+}
+
+.experience-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.experience-intro {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.experience-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.experience-choice {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 24px;
+  min-height: 220px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.experience-choice h2 {
+  font-family: var(--f-display);
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.experience-aside {
+  margin-top: 28px;
+}
+
+.experience-nav {
+  margin-bottom: 28px;
+}
+
+.experience-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.experience-links a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.experience-links a[aria-current="page"] {
+  color: var(--mint-glow);
+}
+
+.experience-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.pitch-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 16px;
+}
+
+.pitch-steps button {
+  min-width: 52px;
+  min-height: 40px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.pitch-steps button.is-selected {
+  border-color: var(--mint-glow);
+  color: var(--fg);
+  background: var(--mint-soft);
+}
+
+.pitch-stage {
+  display: grid;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.avatar-slot,
+.pitch-panel {
+  padding: 24px;
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.avatar-slot {
+  min-height: 280px;
+  border-style: dashed;
+}
+
+.stand-sectors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 28px 0 16px;
+}
+
+.stand-sector {
+  text-align: left;
+  padding: 20px;
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+  color: inherit;
+  width: 100%;
+}
+
+.stand-sector.is-selected {
+  border-color: var(--mint-glow);
+}
+
+.experience-shell .wizard,
+.experience-shell .result,
+.experience-shell .demo {
+  display: grid;
+  gap: 16px;
+  max-width: 860px;
+}
+
+.experience-shell .wizard-nav,
+.experience-shell .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.experience-shell .choices {
+  display: grid;
+  gap: 10px;
+}
+
+.experience-shell .step-body,
+.experience-shell .choice-set {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 860px) {
+  .experience-choices,
+  .pitch-stage,
+  .stand-sectors {
+    grid-template-columns: 1fr;
+  }
+}

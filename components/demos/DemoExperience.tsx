@@ -8,7 +8,15 @@ import { useWalkthrough } from "@/components/layout/useWalkthrough";
 import { Button } from "@/components/ui/Button";
 import { demos } from "@/config/catalog";
 
-export function DemoExperience() {
+export function DemoExperience({
+  emptyFormHref = "/diagnostico",
+  diagnosisHref = "/resultado",
+  correctHref = "/diagnostico",
+}: {
+  emptyFormHref?: string;
+  diagnosisHref?: string;
+  correctHref?: string;
+}) {
   const state = useWalkthrough();
   const diagnosis = state.diagnosis;
 
@@ -18,7 +26,7 @@ export function DemoExperience() {
         <p className="kicker">Demostración</p>
         <h1>Todavía no hay una solución que mostrar</h1>
         <p>La demostración se elige cuando el motor de reglas termina el diagnóstico.</p>
-        <Button href="/diagnostico">Ir al formulario</Button>
+        <Button href={emptyFormHref}>Ir al formulario</Button>
       </section>
     );
   }
@@ -44,10 +52,10 @@ export function DemoExperience() {
         <AnalyticsDemo key={diagnosis.templateKey} templateKey={diagnosis.templateKey} />
       ) : null}
       <div className="actions">
-        <Button href="/resultado" variant="secondary">
+        <Button href={diagnosisHref} variant="secondary">
           Volver al diagnóstico
         </Button>
-        <Button href="/diagnostico" variant="ghost">
+        <Button href={correctHref} variant="ghost">
           Corregir respuestas
         </Button>
       </div>

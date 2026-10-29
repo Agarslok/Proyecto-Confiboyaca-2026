@@ -3,7 +3,13 @@
 import { useWalkthrough } from "@/components/layout/useWalkthrough";
 import { Button } from "@/components/ui/Button";
 
-export function DiagnosisScreen() {
+export function DiagnosisScreen({
+  formHref = "/diagnostico",
+  demoHref = "/demo",
+}: {
+  formHref?: string;
+  demoHref?: string;
+}) {
   const state = useWalkthrough();
   const diagnosis = state.diagnosis;
 
@@ -16,7 +22,7 @@ export function DiagnosisScreen() {
           Complete el formulario para generar una lectura a partir de las respuestas. Si ya lo
           hizo y luego cambió algún dato, hay que generarlo de nuevo.
         </p>
-        <Button href="/diagnostico">Ir al formulario</Button>
+        <Button href={formHref}>Ir al formulario</Button>
       </section>
     );
   }
@@ -78,8 +84,8 @@ export function DiagnosisScreen() {
       </section>
 
       <div className="actions">
-        <Button href="/demo">Abrir la demostración de {diagnosis.demoTitle.toLowerCase()}</Button>
-        <Button href="/diagnostico" variant="secondary">
+        <Button href={demoHref}>Abrir la demostración de {diagnosis.demoTitle.toLowerCase()}</Button>
+        <Button href={formHref} variant="secondary">
           Corregir respuestas
         </Button>
       </div>

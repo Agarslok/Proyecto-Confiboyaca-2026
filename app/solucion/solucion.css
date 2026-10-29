@@ -1,0 +1,15 @@
+.solucion-back {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #06211d;
+  color: #97fcd7;
+  text-decoration: none;
+  font: 600 14px/1 Inter, system-ui, sans-serif;
+}

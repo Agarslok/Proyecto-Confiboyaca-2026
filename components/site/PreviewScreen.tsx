@@ -43,7 +43,7 @@ export function PreviewScreen() {
     const accepted = window.confirm("Se borrará el formulario y la página guardados en este navegador.");
     if (!accepted) return;
     resetSite();
-    router.push("/");
+    router.push("/consultoria");
   }
 
   return (

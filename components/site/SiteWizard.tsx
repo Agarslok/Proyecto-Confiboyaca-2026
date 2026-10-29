@@ -305,7 +305,7 @@ export function SiteWizard() {
                   <Icon.back /> Atrás
                 </Button>
               ) : (
-                <Button href="/" variant="ghost">
+                <Button href="/consultoria" variant="ghost">
                   Volver al inicio
                 </Button>
               )}

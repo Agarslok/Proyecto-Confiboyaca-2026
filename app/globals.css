@@ -1,6 +1,9 @@
 @import "./styles/externado.css";
 @import "./styles/confi-overrides.css";
 @import "./styles/consultoria.css";
+@import "./styles/experiences.css";
+@import "./styles/pitch-deck.css";
+@import "./styles/avatar-dock.css";
 
 /* Vista previa de la página generada (perfiles cálido / sobrio) */
 .generated {

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { ExternadoHomePage } from "@/components/externado/home-page";
+import { ExperienceGate } from "@/features/entry/experience-gate";
 
 export const metadata: Metadata = {
-  title: "Inicio",
-  description: "Presentación del diagnóstico empresarial y acceso al formulario.",
+  title: "Experiencias",
+  description: "Entrada para elegir entre la presentación y el stand interactivo.",
 };
 
 export default function HomePage() {
-  return <ExternadoHomePage />;
+  return <ExperienceGate />;
 }
