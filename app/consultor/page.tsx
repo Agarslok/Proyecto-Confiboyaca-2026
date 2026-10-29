@@ -5,7 +5,7 @@ import { DataTools } from "@/components/consultor/DataTools";
 import { requireConsultor } from "@/lib/auth/dal";
 import { LEVELS } from "@/lib/radar/bank";
 import type { LevelId } from "@/lib/radar/types";
-import { LEAD_LABELS, LEAD_STATUSES, getDiagnosisStore, type LeadStatus } from "@/lib/store/diagnoses";
+import { LEAD_LABELS, LEAD_STATUSES, getDiagnosisStore, storeLabel, type LeadStatus } from "@/lib/store/diagnoses";
 
 export const metadata: Metadata = {
   title: "Diagnósticos guardados",
@@ -29,9 +29,9 @@ export default async function ConsultorPage({
   const level = (["alto", "moderado", "bajo"].includes(params.nivel ?? "") ? params.nivel : "") as LevelId | "";
   const status = ((LEAD_STATUSES as readonly string[]).includes(params.estado ?? "") ? params.estado : "") as LeadStatus | "";
   const page = Math.max(1, Number(params.pagina) || 1);
-  const store = getDiagnosisStore();
-  const stats = store.stats();
-  const { items, total } = store.list({ search, level, status, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
+  const store = await getDiagnosisStore();
+  const stats = await store.stats();
+  const { items, total } = await store.list({ search, level, status, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE });
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const link = (next: Record<string, string | number>) => {
     const merged: Record<string, string> = { ...(search && { q: search }), ...(level && { nivel: level }), ...(status && { estado: status }) };
@@ -47,7 +47,7 @@ export default async function ConsultorPage({
     <section className="wrap consultor-panel">
       <header className="consultor-head">
         <div>
-          <p className="micro accent">Radar IA · panel de consultores</p>
+          <p className="micro accent">Radar IA · panel de consultores · base: {storeLabel()}</p>
           <h1 className="display niche-title">Diagnósticos guardados</h1>
         </div>
         <form action={logoutConsultor}>

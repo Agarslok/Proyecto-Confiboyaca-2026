@@ -22,7 +22,7 @@ function dateTime(iso: string): string {
 export default async function SavedDiagnosisPage({ params }: { params: Promise<{ id: string }> }) {
   await requireConsultor();
   const { id } = await params;
-  const record = getDiagnosisStore().get(id);
+  const record = await (await getDiagnosisStore()).get(id);
   if (!record) notFound();
   const result = buildRadarResult(record.answers);
   const level = LEVELS[result.level];

@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const format = url.searchParams.get("formato") ?? "xlsx";
-  const records = getDiagnosisStore().all();
+  const records = await (await getDiagnosisStore()).all();
   const stamp = new Date().toISOString().slice(0, 10);
   const headers = { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff" };
 

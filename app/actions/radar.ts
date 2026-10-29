@@ -1,6 +1,5 @@
 "use server";
 
-import { dirname, join, resolve } from "node:path";
 import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -27,7 +26,7 @@ export async function saveRadarDiagnosis(raw: unknown): Promise<SaveResult> {
     const id = typeof record.recordId === "string" ? record.recordId : undefined;
     const editToken = typeof record.editToken === "string" ? record.editToken : undefined;
     const asConsultant = id ? await isConsultor() : false;
-    return getDiagnosisStore().save(raw as never, { id, editToken, asConsultant });
+    return await (await getDiagnosisStore()).save(raw as never, { id, editToken, asConsultant });
   } catch {
     return { ok: false, error: "No se pudo guardar el diagnóstico en el servidor." };
   }
@@ -70,7 +69,7 @@ export async function logoutConsultor(): Promise<void> {
 /** El cliente pide desde su diagnóstico que lo llamen. */
 export async function requestFollowUp(recordId: string, editToken: string): Promise<boolean> {
   try {
-    return getDiagnosisStore().requestFollowUp(String(recordId), String(editToken));
+    return await (await getDiagnosisStore()).requestFollowUp(String(recordId), String(editToken));
   } catch {
     return false;
   }
@@ -79,7 +78,7 @@ export async function requestFollowUp(recordId: string, editToken: string): Prom
 /** Solo consultores: estado del seguimiento y notas. */
 export async function updateLeadStatus(_previous: { saved?: boolean; error?: string }, formData: FormData): Promise<{ saved?: boolean; error?: string }> {
   if (!(await isConsultor())) return { error: "La sesión terminó. Vuelva a entrar." };
-  const ok = getDiagnosisStore().setStatus(
+  const ok = await (await getDiagnosisStore()).setStatus(
     String(formData.get("id") ?? ""),
     String(formData.get("status") ?? "") as LeadStatus,
     String(formData.get("notes") ?? ""),
@@ -95,12 +94,9 @@ export async function resetAllDiagnoses(_previous: { done?: string; error?: stri
   if (!(await isConsultor())) return { error: "La sesión terminó. Vuelva a entrar." };
   if (String(formData.get("confirm") ?? "").trim() !== "BORRAR") return { error: "Escriba BORRAR, en mayúsculas, para confirmar." };
   try {
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const dbPath = resolve(process.env.RADAR_DB_PATH || "data/radar.db");
-    const backup = join(dirname(dbPath), "respaldos", `radar-${stamp}.db`);
-    const removed = getDiagnosisStore().clear(backup);
+    const { removed, backup } = await (await getDiagnosisStore()).clear();
     revalidatePath("/consultor");
-    return { done: removed ? `Se borraron ${removed} diagnósticos. Copia de respaldo: ${backup}` : "La base ya estaba vacía." };
+    return { done: removed ? `Se borraron ${removed} diagnósticos. Copia de respaldo: ${backup}.` : "La base ya estaba vacía." };
   } catch {
     return { error: "No se pudo reiniciar la base." };
   }
