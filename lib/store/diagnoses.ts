@@ -25,8 +25,9 @@ let store: Promise<DiagnosisStore> | null = null;
 async function open(): Promise<DiagnosisStore> {
   const kind = (process.env.RADAR_STORE || "sqlite").toLowerCase();
   if (kind === "supabase") {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SECRET_KEY;
+    /* Sin espacios ni comillas de más: es fácil pegarlos al copiar la llave. */
+    const url = process.env.SUPABASE_URL?.trim().replace(/^["']|["']$/g, "");
+    const key = process.env.SUPABASE_SECRET_KEY?.trim().replace(/^["']|["']$/g, "");
     if (!url || !key) throw new StoreNotConfiguredError("Faltan SUPABASE_URL y SUPABASE_SECRET_KEY para RADAR_STORE=supabase.");
     return createSupabaseStore(url, key);
   }
