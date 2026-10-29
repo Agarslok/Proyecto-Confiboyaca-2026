@@ -345,13 +345,14 @@ export function RadarWizard() {
     void saveRadarDiagnosis(radarOf(getSiteSnapshot())).then((saved) => {
       if (saved.ok) {
         patchRadar({ recordId: saved.id, recordCode: saved.code, editToken: saved.editToken || radar.editToken });
-        const again = parseSiteBrief(getSiteSnapshot().draft);
-        if (again.ok) saveSiteConfig(buildSite(again.brief));
       } else {
         /* Código vacío = no se guardó; el informe lo avisa. */
         patchRadar({ recordCode: "" });
         console.warn(saved.error);
       }
+      /* patchRadar borra el resultado guardado: se vuelve a armar, haya o no guardado. */
+      const again = parseSiteBrief(getSiteSnapshot().draft);
+      if (again.ok) saveSiteConfig(buildSite(again.brief));
     });
   }
 

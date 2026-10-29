@@ -51,8 +51,9 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
     };
     const response = await fetchImpl(`${base}${path}`, { ...init, headers, cache: "no-store" });
     if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      throw new SupabaseError(`Supabase ${response.status}: ${detail.slice(0, 300)}`);
+      /* Solo código y mensaje: el «details» de Postgres puede traer la fila con datos personales. */
+      const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string; hint?: string };
+      throw new SupabaseError(`Supabase ${response.status}: ${[body.code, body.message, body.hint].filter(Boolean).join(" · ").slice(0, 300)}`);
     }
     return response;
   }

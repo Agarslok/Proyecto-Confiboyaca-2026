@@ -16,6 +16,14 @@ import {
 import { getDiagnosisStore, type LeadStatus, type SaveResult } from "@/lib/store/diagnoses";
 
 /**
+ * Deja el motivo real en el log del servidor (en Netlify: Functions → log).
+ * Los mensajes de error del almacén no incluyen llaves ni datos personales.
+ */
+function logStoreError(action: string, error: unknown): void {
+  console.error(`[radar] No se pudo ${action}:`, error instanceof Error ? `${error.name}: ${error.message}` : error);
+}
+
+/**
  * Guarda el diagnóstico al terminar la encuesta. Es pública (la llena el
  * cliente), pero solo crea registros: para modificar uno existente hace falta
  * el token que recibió el mismo navegador, o una sesión de consultor.
@@ -27,7 +35,8 @@ export async function saveRadarDiagnosis(raw: unknown): Promise<SaveResult> {
     const editToken = typeof record.editToken === "string" ? record.editToken : undefined;
     const asConsultant = id ? await isConsultor() : false;
     return await (await getDiagnosisStore()).save(raw as never, { id, editToken, asConsultant });
-  } catch {
+  } catch (error) {
+    logStoreError("guardar el diagnóstico", error);
     return { ok: false, error: "No se pudo guardar el diagnóstico en el servidor." };
   }
 }
@@ -70,7 +79,8 @@ export async function logoutConsultor(): Promise<void> {
 export async function requestFollowUp(recordId: string, editToken: string): Promise<boolean> {
   try {
     return await (await getDiagnosisStore()).requestFollowUp(String(recordId), String(editToken));
-  } catch {
+  } catch (error) {
+    logStoreError("registrar la solicitud de llamada", error);
     return false;
   }
 }
@@ -97,7 +107,8 @@ export async function resetAllDiagnoses(_previous: { done?: string; error?: stri
     const { removed, backup } = await (await getDiagnosisStore()).clear();
     revalidatePath("/consultor");
     return { done: removed ? `Se borraron ${removed} diagnósticos. Copia de respaldo: ${backup}.` : "La base ya estaba vacía." };
-  } catch {
+  } catch (error) {
+    logStoreError("reiniciar la base", error);
     return { error: "No se pudo reiniciar la base." };
   }
 }
