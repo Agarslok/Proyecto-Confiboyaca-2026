@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { INDUSTRIES } from "../lib/radar/bank";
 import { CASES } from "../lib/radar/cases";
-import { buildRadarResult, emptyRadarAnswers, nicheQuestions, pickCases, screensFor } from "../lib/radar/engine";
+import { caseDetail } from "../lib/radar/case-details";
+import { buildRadarResult, emptyRadarAnswers, nicheQuestions, nicheSummary, pickCases, screensFor } from "../lib/radar/engine";
 import { normalizeRadarAnswers } from "../lib/radar/session";
 import type { OptionKey, RadarAnswers } from "../lib/radar/types";
 import { buildSite } from "../lib/site/engine";
@@ -21,10 +22,10 @@ function answerAll(base: Partial<RadarAnswers>, pick: OptionKey | ((id: string) 
 }
 
 describe("banco del radar", () => {
-  it("tiene 10 industrias × 4 actividades y 60 casos", () => {
-    assert.equal(INDUSTRIES.length, 10);
+  it("tiene 12 industrias × 4 actividades y 64 casos", () => {
+    assert.equal(INDUSTRIES.length, 12);
     assert.ok(INDUSTRIES.every((industry) => industry.activities.length === 4));
-    assert.equal(CASES.length, 60);
+    assert.equal(CASES.length, 64);
   });
 
   it("no pasa de 18 pantallas en ningún nicho y nunca baja de 15", () => {
@@ -128,5 +129,34 @@ describe("página generada desde el radar", () => {
     assert.equal(clean?.size, "");
     assert.deepEqual(clean?.choices, { y: "B" });
     assert.deepEqual(clean?.goals, ["vender", "costos"]);
+  });
+});
+
+describe("nichos, casos en detalle y problema central", () => {
+  it("minería tiene sus propias preguntas y cabe en 15 a 18 pantallas", () => {
+    const summary = nicheSummary("mineria", "mineria-extraccion");
+    assert.deepEqual(summary.questions.map((question) => question.id), ["mineria-1", "mineria-2", "produccion-2"]);
+    assert.ok(summary.shortest >= 15 && summary.longest <= 18);
+  });
+
+  it("el problema central de la panadería es el registro y la página lo resuelve", () => {
+    const radar = answerAll({ industry: "alimentos", activity: "alimentos-produccion" }, "A");
+    const result = buildRadarResult(radar);
+    assert.equal(result.central?.questionId, "datos-registro");
+    assert.equal(result.central?.kind, "registro");
+    assert.ok(result.central?.also.some((item) => item.kind === "merma"));
+    const site = buildSite({ companyName: radar.companyName, sectorId: "gastronomia", activity: "", audience: "", goal: "", otherGoal: "", features: [], radar });
+    assert.match(site.templateCopy.heroLead, /queda registrado/);
+  });
+
+  it("el detalle de un caso compara la respuesta de hoy con el nivel integrado", () => {
+    const radar = answerAll({ industry: "alimentos", activity: "alimentos-produccion" }, "A");
+    const item = CASES.find((entry) => entry.id === "t-alto-0")!;
+    const detail = caseDetail(item, radar);
+    assert.equal(detail.todayAnswer?.key, "A");
+    assert.match(detail.target ?? "", /integrados/);
+    assert.ok(detail.rows.some((row) => row.includes("Almojábana")));
+    const generic = caseDetail(CASES.find((entry) => entry.kind === "eslabon")!, radar);
+    assert.ok(generic.steps.length > 0 && generic.rows.length === 6);
   });
 });

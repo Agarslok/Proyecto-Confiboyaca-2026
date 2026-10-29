@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CaseSpark } from "@/components/radar/CaseSpark";
 import { RadarChart } from "@/components/radar/RadarChart";
@@ -100,6 +101,23 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
         </div>
       </section>
 
+      {result.central ? (
+        <section className="card radar-central" aria-labelledby="radar-central-title">
+          <div>
+            <p className="micro accent">Problema central · {result.central.dimensionLabel}</p>
+            <h2 id="radar-central-title">{result.central.problem}</h2>
+            <p className="fine">Está en la dimensión donde la empresa pierde más puntos del índice. La página web generada se enfoca en resolverlo.</p>
+          </div>
+          <div className="radar-central-fix">
+            <p className="micro">Solución en su página</p>
+            <p className="radar-central-name">{result.central.name}</p>
+            <Button href="/sitio#solucion-consultoria" target="_blank" rel="noopener noreferrer" variant="ghost" className="btn-sm">
+              Ver cómo lo resuelve
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="card radar-dims" aria-labelledby="radar-dims-title">
         <h2 id="radar-dims-title">Puntaje por dimensión</h2>
         <ul>
@@ -141,15 +159,16 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
 
       <section aria-labelledby="radar-cases-title">
         <h2 id="radar-cases-title" className="radar-section-title">Casos para empezar</h2>
-        <p className="fine">Seis casos de su nivel, primero los de su industria y su eslabón, priorizados por sus objetivos.</p>
+        <p className="fine">Seis casos de su nivel, primero los de su industria y su eslabón, priorizados por sus objetivos. Abra cada uno para ver cómo tiene hoy el dato y cómo debería tenerlo.</p>
         <div className="radar-cases">
           {result.cases.map((item) => (
-            <article key={item.id} className="card radar-case">
+            <Link key={item.id} href={`/caso/${item.id}`} className="card radar-case">
               <p className="radar-case-kind">{KIND[item.kind]}</p>
               <h3>{item.title}</h3>
               <p className="radar-case-tech">{item.technique}</p>
               <CaseSpark item={item} />
-            </article>
+              <span className="radar-case-more">Ver hoy vs. cómo debería ser →</span>
+            </Link>
           ))}
         </div>
       </section>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { SolutionSpotlight } from "@/components/radar/SolutionSpotlight";
 import { SiteTemplateView } from "@/components/templates/SiteTemplateView";
 import {
   ensureSiteLoaded,
@@ -30,5 +31,10 @@ export function StandaloneSitePage() {
     );
   }
 
-  return <SiteTemplateView config={config} />;
+  return (
+    <>
+      <SiteTemplateView config={config} />
+      {config.radar?.central ? <SolutionSpotlight central={config.radar.central} companyName={config.companyName} /> : null}
+    </>
+  );
 }

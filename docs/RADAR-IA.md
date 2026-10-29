@@ -8,7 +8,9 @@ Rama de pruebas creada a partir de `fase_inicial`. No se ha subido a GitHub.
 |---|---|---|
 | `/diagnostico` | Formulario de 3 pasos (nombre, objetivo, elementos) | Radar IA: una pregunta por pantalla, adaptada a la industria |
 | `/resultado` | Consultoría con semáforo | Índice 0–100, nivel de riesgo, radar de 6 dimensiones, hallazgos, 6 casos, ruta y cursos |
-| `/sitio` | Plantilla por sector con el nombre | La misma plantilla, con textos de la actividad (p. ej. panadería) |
+| `/sitio` | Plantilla por sector con el nombre | La misma plantilla, con textos de la actividad y una sección que resuelve el problema central |
+| `/encuestas` | — | Catálogo de los 48 nichos: preguntas de cada uno y botón «Aplicar encuesta» |
+| `/caso/[id]` | — | Detalle de cada caso: cómo lo tiene hoy, cómo debería tenerlo, tabla propuesta y pasos |
 
 Las plantillas de `components/templates/` no se tocaron. El formulario anterior (`SiteWizard`) sigue en el código; solo dejó de usarse en `/diagnostico`.
 
@@ -48,7 +50,7 @@ Las gráficas de cada caso usan **datos simulados** y lo dicen en pantalla.
 | Moda y textil, Comercio y retail | Retail |
 | Alimentos y bebidas | Gastronomía |
 | Salud, Servicios profesionales, Otra | Servicios |
-| Manufactura, Transporte y logística | Metalurgia (industrial) |
+| Manufactura, Transporte y logística, Minería y energía, Construcción | Metalurgia (industrial) |
 | Agro y agroindustria | Agroindustria |
 | Turismo y hotelería | Turismo |
 
@@ -62,3 +64,15 @@ Si el nombre de una empresa de alimentos dice «panadería», «pastelería» o 
 - `lib/radar/site-voice.ts`: tono de la página por actividad.
 - `components/radar/`: formulario, radar SVG, diagnóstico y minigráficas.
 - `tests/radar.test.ts`: pruebas (`npm test`).
+
+## Nichos nuevos
+
+Se agregaron **Minería y energía** (extracción, beneficio, comercialización, transporte) y **Construcción e inmobiliario** (obras, materiales, inmobiliaria, mantenimiento), con 2 preguntas propias cada una y 2 casos por industria. Quedan 12 industrias × 4 actividades = 48 nichos y 64 casos.
+
+Para aplicar la encuesta a un nicho concreto: `/encuestas` → «Aplicar encuesta», o directo `/diagnostico?nicho=turismo-hotel`.
+
+## Problema central → página web
+
+El problema central sale de la dimensión donde la empresa pierde más puntos del índice, (100 − puntaje) × peso, y es su hallazgo más grave. Cada pregunta apunta a una solución (`lib/radar/solution.ts`): registro digital, producción según lo que se vende, base de clientes, solicitudes con estado, inventario, tablero de indicadores o respaldo de datos.
+
+En `/sitio` la portada usa un mensaje de esa solución y, después de la plantilla, aparece la sección «Solución de la consultoría» con una demostración interactiva (datos de ejemplo, no se guardan) y un botón flotante para llegar. Las plantillas siguen sin modificarse; por eso la sección va al final de la página.

@@ -8,6 +8,7 @@ import {
   industryById,
 } from "@/lib/radar/bank";
 import { CASES } from "@/lib/radar/cases";
+import { centralProblem } from "@/lib/radar/solution";
 import type {
   Activity,
   CaseItem,
@@ -217,5 +218,21 @@ export function buildRadarResult(answers: RadarAnswers): RadarResult {
     sizeLabel: answers.size ? `${SIZES[answers.size].detail} (${SIZES[answers.size].label} personas)` : "",
     questionsAnswered: score.scoredCount,
     unsure: score.unsure,
+    central: centralProblem(score.findings, score.dimensions, answers.companyName, answers.industry),
   };
+}
+
+/** Para el catálogo: preguntas propias del nicho y cuántas pantallas puede tener. */
+export function nicheSummary(industryId: Industry["id"], activityId: string) {
+  const base: RadarAnswers = { ...emptyRadarAnswers(), industry: industryId, activity: activityId };
+  const shortest = screensFor({ ...base, choices: { "datos-registro": "A", "ia-uso": "A" } }).length;
+  const longest = screensFor({ ...base, choices: { "datos-registro": "B", "ia-uso": "B" } }).length;
+  return { questions: nicheQuestions(base), shortest, longest };
+}
+
+/** Las preguntas comunes, con el vocabulario del nicho si se indica. */
+export function coreQuestions(industryId?: Industry["id"], activityId?: string): RadarQuestion[] {
+  const { industry, activity } = activityOf({ industry: industryId ?? "", activity: activityId ?? "" });
+  const vocab = industry ? vocabFor(industry, activity) : { productos: "productos", clientes: "clientes", punto: "sede" };
+  return CORE_QUESTIONS.map((question) => withVocab(question, vocab));
 }

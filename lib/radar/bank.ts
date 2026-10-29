@@ -177,6 +177,32 @@ export const INDUSTRIES: Industry[] = [
     ],
   },
   {
+    id: "mineria",
+    label: "Minería y energía",
+    icon: "⛏️",
+    template: "metalurgia",
+    vocab: { productos: "minerales", clientes: "compradores", punto: "mina" },
+    activities: [
+      { id: "mineria-extraccion", label: "Extracción minera", description: "Carbón, esmeraldas, materiales de construcción u otros minerales", link: "produccion" },
+      { id: "mineria-beneficio", label: "Beneficio y transformación", description: "Lavado, trituración, coquización o tallado", link: "produccion", vocab: { productos: "productos beneficiados" } },
+      { id: "mineria-comercio", label: "Comercialización de minerales", description: "Compramos y vendemos mineral o producto beneficiado", link: "comercial" },
+      { id: "mineria-transporte", label: "Transporte y despacho", description: "Llevamos el mineral a acopios, plantas o puertos", link: "logistica" },
+    ],
+  },
+  {
+    id: "construccion",
+    label: "Construcción e inmobiliario",
+    icon: "🏗️",
+    template: "metalurgia",
+    vocab: { productos: "obras", clientes: "clientes", punto: "obra" },
+    activities: [
+      { id: "construccion-obra", label: "Construcción de obras", description: "Vivienda, edificaciones u obra civil", link: "produccion" },
+      { id: "construccion-materiales", label: "Venta de materiales", description: "Ferretería o depósito de materiales", link: "comercial", vocab: { productos: "materiales" } },
+      { id: "construccion-inmobiliaria", label: "Inmobiliaria", description: "Venta y arriendo de inmuebles", link: "comercial", vocab: { productos: "inmuebles", clientes: "compradores e inquilinos" } },
+      { id: "construccion-mantenimiento", label: "Acabados y mantenimiento", description: "Remodelaciones, instalaciones y reparaciones", link: "servicio" },
+    ],
+  },
+  {
     id: "otra",
     label: "Otra industria",
     icon: "🧭",
@@ -327,6 +353,35 @@ export const INDUSTRY_QUESTIONS: Record<IndustryId, RadarQuestion[]> = {
       text: "¿Analizan las reseñas y opiniones en línea de sus huéspedes?",
       options: ["No", "Las leemos de vez en cuando", "Las respondemos y llevamos un registro", "Medimos temas y tendencias de forma sistemática"],
       finding: "Las opiniones de los huéspedes no se analizan: se pierden alertas tempranas de problemas de servicio.",
+    },
+  ],
+  mineria: [
+    {
+      id: "mineria-1", dimension: "negocio", section: NEGOCIO, topics: ["seguridad"],
+      text: "¿Registran los incidentes, casi-accidentes y condiciones de riesgo (gases, sostenimiento, ventilación)?",
+      options: ["No se registran", "Solo los accidentes graves, en papel", "Todos, en una planilla con su causa", "En un sistema, con causas, tendencias y alertas"],
+      consultantNote: "En minería subterránea la seguridad es el dato más crítico. Pregunte si guardan las mediciones de gases por turno.",
+      finding: "Los incidentes y condiciones de riesgo no se registran: no se pueden anticipar accidentes ni demostrar cumplimiento ante la autoridad minera.",
+    },
+    {
+      id: "mineria-2", dimension: "negocio", section: NEGOCIO, topics: ["planeacion"],
+      text: "¿Miden la producción y la calidad del mineral por frente o turno (toneladas, humedad, poder calorífico)?",
+      options: ["No, solo lo que se vende", "Totales aproximados por semana", "Por frente o turno, en una planilla", "En un sistema, enlazado con los análisis de laboratorio"],
+      finding: "No se mide la producción por frente ni la calidad: no se sabe qué frente es rentable ni se puede negociar el precio por calidad.",
+    },
+  ],
+  construccion: [
+    {
+      id: "construccion-1", dimension: "negocio", section: NEGOCIO, topics: ["planeacion"],
+      text: "¿Comparan el avance real de cada obra con lo presupuestado (costo y tiempo)?",
+      options: ["No", "Solo al terminar la obra", "Cada mes, en Excel", "Cada semana, con un software de control de obra"],
+      finding: "No se compara el avance con el presupuesto: los sobrecostos se descubren cuando ya no hay cómo corregirlos.",
+    },
+    {
+      id: "construccion-2", dimension: "negocio", section: NEGOCIO, topics: ["inventario"],
+      text: "¿Llevan control de los materiales que entran y salen de cada obra o bodega?",
+      options: ["No", "Remisiones en papel", "Una planilla por obra", "Un sistema con existencias por obra"],
+      finding: "Sin control de materiales por obra hay pérdidas, robos y compras dobles que nadie detecta.",
     },
   ],
   otra: [
@@ -538,4 +593,20 @@ export const LEVELS: Record<"alto" | "moderado" | "bajo", { label: string; icon:
   alto: { label: "Riesgo alto", icon: "●", reading: "Sin bases de datos para decidir", focus: "Fundamentos y construcción de la base de datos" },
   moderado: { label: "Riesgo moderado", icon: "◆", reading: "En transición analítica", focus: "Integración, tableros e indicadores" },
   bajo: { label: "Riesgo bajo", icon: "▲", reading: "Lista para escalar con IA", focus: "Modelos predictivos e IA aplicada" },
+};
+
+/** Ejemplos para tablas y demostraciones: 3 productos o servicios y 2 clientes por industria. */
+export const SAMPLES: Record<IndustryId, { items: [string, string, string]; customers: [string, string] }> = {
+  moda: { items: ["Camisa M azul", "Jean 32", "Chaqueta S negra"], customers: ["Almacén La 10", "Laura Gómez"] },
+  alimentos: { items: ["Almojábana", "Pan de yuca", "Torta de cuajada"], customers: ["Cafetería El Puente", "Marta Rojas"] },
+  comercio: { items: ["Arroz 500 g", "Aceite 1 L", "Café 250 g"], customers: ["Tienda Don Luis", "Carlos Pérez"] },
+  salud: { items: ["Consulta general", "Control odontológico", "Examen de sangre"], customers: ["Ana Torres", "Jorge Niño"] },
+  manufactura: { items: ["Soporte B-40", "Pieza A-120", "Lámina C-8"], customers: ["Metálicas del Norte", "Ferretería Central"] },
+  transporte: { items: ["Envío Tunja–Bogotá", "Envío Duitama", "Envío Sogamoso"], customers: ["Distribuidora Andina", "Lácteos El Valle"] },
+  agro: { items: ["Papa pastusa", "Café pergamino", "Leche cruda"], customers: ["Acopio La Vega", "Cooperativa del Valle"] },
+  servicios: { items: ["Asesoría contable", "Declaración de renta", "Auditoría"], customers: ["Comercial Boyacá SAS", "Pedro Castro"] },
+  turismo: { items: ["Habitación doble", "Suite", "Plan fin de semana"], customers: ["Familia Moreno", "Agencia Viajes Sol"] },
+  mineria: { items: ["Carbón térmico", "Carbón coquizable", "Coque"], customers: ["Acerías Paz del Río", "Coquizadora del Norte"] },
+  construccion: { items: ["Cemento 50 kg", "Varilla 1/2\"", "Bloque #5"], customers: ["Obra Torres del Lago", "Juan Becerra"] },
+  otra: { items: ["Producto A", "Producto B", "Servicio C"], customers: ["Cliente Uno", "Cliente Dos"] },
 };

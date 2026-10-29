@@ -1,4 +1,4 @@
-import { industryById } from "@/lib/radar/bank";
+import { INDUSTRIES, industryById } from "@/lib/radar/bank";
 import { emptyRadarAnswers } from "@/lib/radar/engine";
 import type { RadarAnswers } from "@/lib/radar/types";
 import { getSiteSnapshot, patchSiteDraft } from "@/lib/session/site-session";
@@ -23,4 +23,12 @@ export function patchRadar(partial: Partial<RadarAnswers>): void {
     sectorId: industry ? industry.template : "",
     activity: industry?.activities.find((item) => item.id === radar.activity)?.description ?? "",
   });
+}
+
+/** Empieza una encuesta nueva ya ubicada en un nicho (desde el catálogo). */
+export function startNiche(activityId: string): boolean {
+  const industry = INDUSTRIES.find((item) => item.activities.some((activity) => activity.id === activityId));
+  if (!industry) return false;
+  patchRadar({ ...emptyRadarAnswers(), industry: industry.id, activity: activityId, cursor: 0 });
+  return true;
 }

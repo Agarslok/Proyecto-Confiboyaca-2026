@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/externado/icons";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { ConsultoriaLoading } from "@/components/site/ConsultoriaLoading";
@@ -11,7 +12,7 @@ import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { TextField } from "@/components/ui/TextField";
 import { GOALS, INDUSTRIES, LINKS, SIZES } from "@/lib/radar/bank";
 import { activityOf, scoreRadar, screenIsDone, screensFor, type Screen } from "@/lib/radar/engine";
-import { patchRadar, radarOf } from "@/lib/radar/store";
+import { patchRadar, radarOf, startNiche } from "@/lib/radar/store";
 import type { OptionKey, RadarAnswers, RadarGoalId, SizeId } from "@/lib/radar/types";
 import { buildSite } from "@/lib/site/engine";
 import { formatCompanyName } from "@/lib/site/format-company-name";
@@ -115,6 +116,9 @@ function SectorScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<s
         ))}
       </div>
       <p className="err" role="alert">{errors.industry ?? ""}</p>
+      <p className="fine">
+        ¿Quiere ver las preguntas de cada nicho antes de empezar? <Link href="/encuestas">Catálogo de encuestas por nicho</Link>
+      </p>
       {industry ? (
         <div className="radar-reveal" key={industry.id}>
           <p className="q-help"><strong>¿Cuál es su actividad principal en {industry.label.toLowerCase()}?</strong></p>
@@ -197,6 +201,7 @@ function LiveAside({ radar }: { radar: RadarAnswers }) {
 
 export function RadarWizard() {
   const router = useRouter();
+  const nicho = useSearchParams().get("nicho");
   const state = useSite();
   const radar = radarOf(state);
   const screens = useMemo(() => screensFor(radar), [radar]);
@@ -213,6 +218,13 @@ export function RadarWizard() {
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
+
+  /* Desde el catálogo: /diagnostico?nicho=turismo-hotel abre una encuesta nueva para ese nicho. */
+  useEffect(() => {
+    if (!nicho) return;
+    startNiche(nicho);
+    router.replace("/diagnostico");
+  }, [nicho, router]);
 
   function errorsFor(target: Screen): Record<string, string> {
     if (target.kind === "empresa") {

@@ -51,6 +51,14 @@ const VOICES: Record<string, Voice> = {
   "turismo-agencia": { kicker: "Planes y paquetes", aboutTitle: "Viajes diseñados para ti", cta: "Armar mi plan" },
   "turismo-eventos": { kicker: "Eventos y convenciones", aboutTitle: "Espacios para cada ocasión", cta: "Cotizar evento" },
   "turismo-transporte": { kicker: "Traslados y tours", aboutTitle: "Rutas y excursiones", cta: "Reservar traslado" },
+  "mineria-extraccion": { kicker: "Minería responsable en Boyacá", aboutTitle: "Frentes de explotación", cta: "Solicitar ficha técnica" },
+  "mineria-beneficio": { kicker: "Beneficio y transformación de mineral", aboutTitle: "Planta y procesos", cta: "Cotizar producto" },
+  "mineria-comercio": { kicker: "Comercialización de minerales", aboutTitle: "Calidad certificada por lote", cta: "Solicitar oferta" },
+  "mineria-transporte": { kicker: "Transporte y despacho de mineral", aboutTitle: "Rutas y despachos", cta: "Programar despacho" },
+  "construccion-obra": { kicker: "Construimos en Boyacá", aboutTitle: "Proyectos y obras", cta: "Cotizar mi obra" },
+  "construccion-materiales": { kicker: "Depósito de materiales", aboutTitle: "Todo para tu obra", cta: "Pedir cotización" },
+  "construccion-inmobiliaria": { kicker: "Inmuebles en venta y arriendo", aboutTitle: "Proyectos disponibles", cta: "Agendar visita" },
+  "construccion-mantenimiento": { kicker: "Acabados y mantenimiento", aboutTitle: "Servicios para tu espacio", cta: "Solicitar visita técnica" },
   "otra-operacion": { kicker: "Operación y ejecución", aboutTitle: "Lo que hacemos", cta: "Solicitar cotización" },
   "otra-comercial": { kicker: "Productos y servicios", aboutTitle: "Nuestro portafolio", cta: "Hablar con ventas" },
   "otra-logistica": { kicker: "Logística confiable", aboutTitle: "Cómo movemos lo tuyo", cta: "Cotizar servicio" },
@@ -102,14 +110,20 @@ const SPECIALS: Special[] = [
   },
 ];
 
-export function voiceCopy(base: TemplateCopy, companyName: string, industry: Industry, activity: Activity): { copy: TemplateCopy; extras: Extras } {
+export function voiceCopy(
+  base: TemplateCopy,
+  companyName: string,
+  industry: Industry,
+  activity: Activity,
+  customerLead?: string,
+): { copy: TemplateCopy; extras: Extras } {
   const special = SPECIALS.find((item) => item.industries.includes(industry.id) && item.match.test(companyName));
   const voice = special?.voice ?? VOICES[activity.id];
   if (!voice) return { copy: base, extras: {} };
   const copy: TemplateCopy = {
     ...base,
     heroKicker: voice.kicker,
-    heroLead: `${companyName} · ${activity.description}. Textos e imágenes de ejemplo para mostrar cómo se vería la página.`,
+    heroLead: customerLead ?? `${companyName} · ${activity.description}. Textos e imágenes de ejemplo para mostrar cómo se vería la página.`,
     aboutTitle: voice.aboutTitle,
     contactCta: voice.cta,
     footerNote: `${companyName} · ${industry.label} · Demostración local. Contenido de ejemplo.`,

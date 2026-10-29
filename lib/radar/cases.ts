@@ -1,7 +1,8 @@
 import type { CaseItem, IndustryId, LevelId, LinkId, RadarGoalId } from "@/lib/radar/types";
 
 /* ============================================================================
-   Biblioteca de 60 casos hipotéticos (sección 6 del esquema).
+   Biblioteca de casos hipotéticos: los 60 de la sección 6 del esquema, más
+   4 de minería y construcción, que se agregaron en esta rama.
    Los objetivos de cada caso (goals) no estaban en el esquema: se asignaron
    aquí para poder aplicar el +10 por objetivo coincidente.
    ========================================================================== */
@@ -127,6 +128,12 @@ export const CASES: CaseItem[] = [
   ...byIndustry("servicios",
     ["Proyectos que pierden dinero", "Registro de tiempos · rentabilidad por proyecto", "Rentabilidad por proyecto", "mayor", ["costos", "vender"]],
     ["Propuestas e informes con IA generativa", "Modelos de lenguaje · plantillas · base de conocimiento", "Horas por propuesta", "menor", ["automatizar"]]),
+  ...byIndustry("mineria",
+    ["Accidentes que se repiten sin registro", "Registro digital de incidentes · análisis de causas · Pareto", "Incidentes por cada 1.000 turnos", "menor", ["costos"]],
+    ["Predicción de la calidad del mineral", "Modelos de regresión con análisis de laboratorio · muestreo por frente", "Castigos de precio por calidad", "menor", ["vender", "costos"]]),
+  ...byIndustry("construccion",
+    ["Obras que se pasan del presupuesto", "Control de avance · curva S · presupuesto vs. real", "Sobrecosto sobre el presupuesto", "menor", ["costos"]],
+    ["Pronóstico de sobrecostos y retrasos", "Modelos de regresión con el histórico de obras · alertas", "Obras entregadas a tiempo", "mayor", ["costos", "demanda"]]),
   ...byIndustry("turismo",
     ["Comisiones sin control por canal", "Tablero de ocupación · ADR · RevPAR", "Comisiones a intermediarios", "menor", ["costos", "vender"]],
     ["Tarifas dinámicas (revenue management)", "Pronóstico de ocupación · optimización tarifaria", "RevPAR", "mayor", ["vender", "demanda"]]),

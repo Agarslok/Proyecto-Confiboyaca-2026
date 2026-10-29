@@ -1,3 +1,4 @@
+import type { CentralProblem } from "@/lib/radar/solution";
 import type { SectorId } from "@/types/site";
 
 /** Las 6 dimensiones del índice (los ejes del radar). */
@@ -14,6 +15,8 @@ export const INDUSTRY_IDS = [
   "agro",
   "servicios",
   "turismo",
+  "mineria",
+  "construccion",
   "otra",
 ] as const;
 export type IndustryId = (typeof INDUSTRY_IDS)[number];
@@ -130,4 +133,6 @@ export interface RadarResult {
   sizeLabel: string;
   questionsAnswered: number;
   unsure: number;
+  /** El hallazgo más grave y la solución que incorpora la página web. */
+  central: CentralProblem | null;
 }

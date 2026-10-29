@@ -58,7 +58,10 @@ export function buildSite(brief: SiteBrief): SiteConfig {
   let templateCopy = contentForTemplate(templateId, companyName);
   let extras: Record<string, unknown> = {};
   const { industry, activity } = brief.radar ? activityOf(brief.radar) : {};
-  if (industry && activity) ({ copy: templateCopy, extras } = voiceCopy(templateCopy, companyName, industry, activity));
+  const radar = brief.radar ? buildRadarResult({ ...brief.radar, companyName }) : undefined;
+  if (industry && activity) {
+    ({ copy: templateCopy, extras } = voiceCopy(templateCopy, companyName, industry, activity, radar?.central?.customerLead));
+  }
   const sectorLabel = sectorLabels[sectorId];
   const tplLabel = templateLabel(templateId);
   const gaps = gapsFor(brief);
@@ -90,7 +93,7 @@ export function buildSite(brief: SiteBrief): SiteConfig {
     templateCopy,
     gaps,
     consultancy: buildConsultancy({ ...brief, companyName }),
-    radar: brief.radar ? buildRadarResult({ ...brief.radar, companyName }) : undefined,
+    radar,
     diagnosis: {
       need: `${companyName} recibirá la plantilla de ${sectorLabel.toLowerCase()}. La personalización visible es el nombre de la empresa; el sector fija el diseño.`,
       priority: `Regla del demo: sector → plantilla. Objetivo y características marcadas no cambian el resultado.`,
