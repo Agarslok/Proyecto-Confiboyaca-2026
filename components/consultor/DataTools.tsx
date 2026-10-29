@@ -3,6 +3,13 @@
 import { useActionState, useState } from "react";
 import { resetAllDiagnoses } from "@/app/actions/radar";
 
+const EXPORTS = [
+  { href: "/consultor/exportar?formato=xlsx", label: "Excel (.xlsx)", primary: true },
+  { href: "/consultor/exportar?formato=csv", label: "CSV para Excel en español (;)" },
+  { href: "/consultor/exportar?formato=csv-coma", label: "CSV estándar (,)" },
+  { href: "/consultor/exportar?formato=csv&hoja=respuestas", label: "CSV de respuestas" },
+];
+
 /** Exportar a Excel / CSV y reiniciar la base (con respaldo). */
 export function DataTools({ total }: { total: number }) {
   const [state, action, pending] = useActionState(resetAllDiagnoses, {});
@@ -14,11 +21,13 @@ export function DataTools({ total }: { total: number }) {
       <div>
         <h2 id="tools-title">Exportar</h2>
         <p className="fine">Todos los diagnósticos guardados ({total}). Excel trae dos hojas: «Diagnósticos» (una fila por empresa) y «Respuestas» (cada pregunta, para análisis).</p>
+        {/* Descargas de archivos: <a download>, no <Link>, que navegaría dentro de la app. */}
         <div className="consultor-tools-row">
-          <a className="btn btn-primary btn-sm" href="/consultor/exportar?formato=xlsx">Excel (.xlsx)</a>
-          <a className="btn btn-ghost btn-sm" href="/consultor/exportar?formato=csv">CSV para Excel en español (;)</a>
-          <a className="btn btn-ghost btn-sm" href="/consultor/exportar?formato=csv-coma">CSV estándar (,)</a>
-          <a className="btn btn-ghost btn-sm" href="/consultor/exportar?formato=csv&hoja=respuestas">CSV de respuestas</a>
+          {EXPORTS.map((item) => (
+            <a key={item.href} className={item.primary ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"} href={item.href} download>
+              {item.label}
+            </a>
+          ))}
         </div>
         <p className="fine">Para un PDF por empresa, abra el diagnóstico y use «Flyer en PDF».</p>
       </div>
