@@ -125,3 +125,20 @@ Los casos del esquema venían descritos con su técnica (XGBoost, k-means, Aprio
 - 14 casos que solo tienen sentido con escala (sensores, visión artificial, modelos de abandono…) tienen un tamaño mínimo y no se muestran a micro ni pequeñas empresas.
 - 3 casos nuevos de operación diaria: entradas y salidas del inventario, fiados y cuentas por cobrar, compras a proveedores. Para micro y pequeñas pesan más (+60) que los del eslabón (+50).
 - Los niveles y la ruta de 12 meses también se reescribieron: por ejemplo, «Dejar de anotar en papel → Medir ventas, inventario y caja → Decidir con esos números».
+
+## Horas, costos y seguimiento comercial
+
+- **Horas por fase** (`lib/radar/effort.ts`): reemplazan la «ruta de 12 meses». Un producto pequeño (Plan Arranque) da 60–85 h para una microempresa. Suben con el tamaño (×1,3 pequeña, ×1,8 mediana, ×2,5 grande) y con cómo están los datos (papel suma horas de digitalización). También calcula visitas y meses.
+- **Costo interno** (`lib/radar/pricing.ts`, solo en el panel): horas × costo hora del equipo (salario + prestaciones), transporte y viáticos por visita, herramientas por mes, administración y margen. Los valores por defecto son de referencia y se cambian en el panel para cada empresa.
+- **Seguimiento** del cliente: el diagnóstico cierra con «¿Quiere que se lo dejemos funcionando?» y el botón «Sí, quiero que me llamen». En el panel cada empresa tiene estado (Nuevo, Pidió que lo llamen, Contactado, Visita agendada, En acompañamiento, Terminado, Descartado) y notas, y se puede filtrar por estado.
+
+## Datos de contacto obligatorios
+
+Nombre, apellido, correo (validado), celular (mínimo 10 números) y ciudad (se escribe o se elige de una lista) son obligatorios, en el formulario y en el servidor (`lib/radar/contact.ts`).
+
+## Otros
+
+- Tienda de ropa: prendas ilustradas en lugar de botellas y cajas (`lib/radar/niche-art.ts`); tienda de barrio: productos de mercado. En `RetailTemplate.tsx` se cambiaron 2 líneas para que el banner y las categorías usen la imagen del producto.
+- Inicio: «¿Qué tipo de negocio tiene?» abre la encuesta ya en su nicho. El pie tiene enlaces a «Encuestas por nicho» y «Acceso para consultores».
+- «Reiniciar» pasó a llamarse «Nueva encuesta»: borra las respuestas de este navegador para empezar con otra empresa; lo guardado en el panel no se toca.
+- Equipo: botones ‹ › y pausar/reanudar en el carrusel.

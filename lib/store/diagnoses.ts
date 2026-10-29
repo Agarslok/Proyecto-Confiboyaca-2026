@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { buildRadarResult, isRadarComplete } from "@/lib/radar/engine";
+import { contactErrors } from "@/lib/radar/contact";
 import { normalizeRadarAnswers } from "@/lib/radar/session";
 import type { LevelId, RadarAnswers } from "@/lib/radar/types";
 
@@ -18,8 +19,14 @@ import type { LevelId, RadarAnswers } from "@/lib/radar/types";
    Solo se importa desde Server Actions y Server Components.
    ========================================================================== */
 
+import { LEAD_STATUSES, type LeadStatus } from "@/lib/store/lead-status";
+
+export { LEAD_LABELS, LEAD_STATUSES, type LeadStatus } from "@/lib/store/lead-status";
+
 export interface DiagnosisSummary {
   id: string;
+  status: LeadStatus;
+  interestAt: string;
   code: string;
   companyName: string;
   city: string;
@@ -34,6 +41,7 @@ export interface DiagnosisSummary {
 }
 
 export interface DiagnosisRecord extends DiagnosisSummary {
+  notes: string;
   email: string;
   phone: string;
   consentAt: string;
@@ -43,6 +51,7 @@ export interface DiagnosisRecord extends DiagnosisSummary {
 export interface ListQuery {
   search?: string;
   level?: LevelId | "";
+  status?: LeadStatus | "";
   limit?: number;
   offset?: number;
 }
@@ -51,7 +60,11 @@ export interface DiagnosisStore {
   save(answers: RadarAnswers, options?: { id?: string; editToken?: string; asConsultant?: boolean }): SaveResult;
   get(id: string): DiagnosisRecord | null;
   list(query?: ListQuery): { items: DiagnosisSummary[]; total: number };
-  stats(): { total: number; byLevel: Record<LevelId, number> };
+  stats(): { total: number; byLevel: Record<LevelId, number>; interested: number };
+  /** El cliente pide que lo llamen; solo con el token de su navegador. */
+  requestFollowUp(id: string, editToken: string): boolean;
+  /** Solo consultores: cambia el estado y las notas. */
+  setStatus(id: string, status: LeadStatus, notes: string): boolean;
 }
 
 export type SaveResult =
@@ -113,6 +126,8 @@ function toSummary(row: Row): DiagnosisSummary {
     activity: String(row.activity),
     index: Number(row.index_score),
     level: String(row.level) as LevelId,
+    status: ((LEAD_STATUSES as readonly string[]).includes(String(row.status)) ? String(row.status) : "nuevo") as LeadStatus,
+    interestAt: String(row.interest_at ?? ""),
     centralProblem: String(row.central_problem),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -124,14 +139,16 @@ export function validateForStorage(raw: unknown): { ok: true; answers: RadarAnsw
   const answers = normalizeRadarAnswers(raw);
   if (!answers) return { ok: false, error: "Las respuestas no tienen el formato esperado." };
   if (!answers.consent) return { ok: false, error: "Falta la autorización de tratamiento de datos (Ley 1581 de 2012)." };
-  if (answers.companyName.trim().length < 2 || answers.companyName.length > 80) return { ok: false, error: "Falta el nombre de la empresa." };
-  if (answers.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(answers.email)) return { ok: false, error: "El correo no es válido." };
+  if (answers.companyName.length > 80) return { ok: false, error: "El nombre de la empresa es muy largo." };
+  const contact = Object.values(contactErrors(answers));
+  if (contact.length) return { ok: false, error: contact[0] };
   if (!isRadarComplete(answers)) return { ok: false, error: "El diagnóstico está incompleto." };
   /* El registro, su código y el token se guardan en columnas propias, no dentro de las respuestas. */
   const clean: RadarAnswers = { ...answers, cursor: 0 };
   delete clean.recordId;
   delete clean.recordCode;
   delete clean.editToken;
+  delete clean.followUpRequested;
   return { ok: true, answers: clean };
 }
 
@@ -141,6 +158,11 @@ export function createSqliteStore(path: string): DiagnosisStore {
   /* Sin WAL: un solo archivo, más seguro si la carpeta se sincroniza (OneDrive, Drive). */
   db.exec("PRAGMA busy_timeout = 3000;");
   db.exec(SCHEMA);
+  /* Columnas que llegaron después: se agregan si la base ya existía. */
+  const columns = new Set((db.prepare("PRAGMA table_info(diagnoses)").all() as Row[]).map((column) => String(column.name)));
+  if (!columns.has("status")) db.exec("ALTER TABLE diagnoses ADD COLUMN status TEXT NOT NULL DEFAULT 'nuevo'");
+  if (!columns.has("notes")) db.exec("ALTER TABLE diagnoses ADD COLUMN notes TEXT NOT NULL DEFAULT ''");
+  if (!columns.has("interest_at")) db.exec("ALTER TABLE diagnoses ADD COLUMN interest_at TEXT NOT NULL DEFAULT ''");
 
   return {
     save(raw, options = {}) {
@@ -152,7 +174,7 @@ export function createSqliteStore(path: string): DiagnosisStore {
       const fields = {
         company_name: answers.companyName.trim(),
         city: answers.city.trim(),
-        contact_name: answers.contactName.trim(),
+        contact_name: `${answers.contactName.trim()} ${answers.contactLastName.trim()}`.trim(),
         email: answers.email.trim().toLowerCase(),
         phone: answers.phone.trim(),
         industry: result.industryLabel,
@@ -196,6 +218,7 @@ export function createSqliteStore(path: string): DiagnosisStore {
       if (!answers) return null;
       return {
         ...toSummary(row),
+        notes: String(row.notes ?? ""),
         email: String(row.email),
         phone: String(row.phone),
         consentAt: String(row.consent_at),
@@ -203,7 +226,7 @@ export function createSqliteStore(path: string): DiagnosisStore {
       };
     },
 
-    list({ search = "", level = "", limit = 50, offset = 0 } = {}) {
+    list({ search = "", level = "", status = "", limit = 50, offset = 0 } = {}) {
       const where: string[] = [];
       const params: Record<string, string | number> = {};
       if (search.trim()) {
@@ -213,6 +236,10 @@ export function createSqliteStore(path: string): DiagnosisStore {
       if (level) {
         where.push("level = $level");
         params.level = level;
+      }
+      if (status) {
+        where.push("status = $status");
+        params.status = status;
       }
       const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
       const total = Number((db.prepare(`SELECT COUNT(*) AS n FROM diagnoses ${clause}`).get(params) as Row).n);
@@ -226,7 +253,24 @@ export function createSqliteStore(path: string): DiagnosisStore {
       const rows = db.prepare("SELECT level, COUNT(*) AS n FROM diagnoses GROUP BY level").all() as Row[];
       const byLevel: Record<LevelId, number> = { alto: 0, moderado: 0, bajo: 0 };
       for (const row of rows) byLevel[String(row.level) as LevelId] = Number(row.n);
-      return { total: byLevel.alto + byLevel.moderado + byLevel.bajo, byLevel };
+      const interested = Number((db.prepare("SELECT COUNT(*) AS n FROM diagnoses WHERE status = 'interesado'").get() as Row).n);
+      return { total: byLevel.alto + byLevel.moderado + byLevel.bajo, byLevel, interested };
+    },
+
+    requestFollowUp(id, editToken) {
+      const row = db.prepare("SELECT edit_token_hash, status FROM diagnoses WHERE id = ?").get(id) as Row | undefined;
+      if (!row || !editToken || !sameHash(hashToken(editToken), String(row.edit_token_hash))) return false;
+      const now = new Date().toISOString();
+      /* No retrocede un caso que el equipo ya está atendiendo. */
+      const next = String(row.status) === "nuevo" ? "interesado" : String(row.status);
+      db.prepare("UPDATE diagnoses SET status = ?, interest_at = ?, updated_at = ? WHERE id = ?").run(next, now, now, id);
+      return true;
+    },
+
+    setStatus(id, status, notes) {
+      if (!(LEAD_STATUSES as readonly string[]).includes(status)) return false;
+      const result = db.prepare("UPDATE diagnoses SET status = ?, notes = ?, updated_at = ? WHERE id = ?").run(status, notes.slice(0, 2000), new Date().toISOString(), id);
+      return Number(result.changes) > 0;
     },
   };
 }

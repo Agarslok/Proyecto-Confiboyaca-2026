@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { ChoiceCard } from "@/components/ui/ChoiceCard";
 import { TextField } from "@/components/ui/TextField";
 import { GOALS, INDUSTRIES, LINKS, SIZES } from "@/lib/radar/bank";
+import { CITY_SUGGESTIONS, contactErrors } from "@/lib/radar/contact";
 import { activityOf, scoreRadar, screenIsDone, screensFor, type Screen } from "@/lib/radar/engine";
 import { patchRadar, radarOf, startNiche } from "@/lib/radar/store";
 import type { OptionKey, RadarAnswers, RadarGoalId, SizeId } from "@/lib/radar/types";
@@ -52,6 +53,51 @@ function QuestionOption({
   );
 }
 
+/** Campo de contacto: obligatorio, con su tipo de teclado y, si aplica, sugerencias. */
+function ContactField({
+  id,
+  label,
+  value,
+  error,
+  type = "text",
+  autoComplete,
+  list,
+  placeholder,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  error?: string;
+  type?: "text" | "email" | "tel";
+  autoComplete: string;
+  list?: string;
+  placeholder?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="field">
+      <label className="q-help" htmlFor={id}>{label}</label>
+      <input
+        id={id}
+        name={id}
+        type={type}
+        inputMode={type === "tel" ? "tel" : type === "email" ? "email" : undefined}
+        className="text-in sm"
+        value={value}
+        list={list}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-error` : undefined}
+        required
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <p id={`${id}-error`} className="err" role="alert">{error ?? ""}</p>
+    </div>
+  );
+}
+
 function CompanyScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<string, string> }) {
   return (
     <>
@@ -67,11 +113,16 @@ function CompanyScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<
           if (formatted && formatted !== radar.companyName) patchRadar({ companyName: formatted });
         }}
       />
+      <p className="fine radar-contact-note">Todos los datos son obligatorios: con ellos le enviamos el diagnóstico y le hacemos seguimiento.</p>
       <div className="radar-contact">
-        <TextField id="city" label="Ciudad o municipio" hint="Opcional." value={radar.city} large={false} onChange={(city) => patchRadar({ city })} />
-        <TextField id="contactName" label="Nombre de contacto" hint="Opcional." value={radar.contactName} large={false} onChange={(contactName) => patchRadar({ contactName })} />
-        <TextField id="email" label="Correo" hint="Opcional. Para enviarle el diagnóstico." value={radar.email} error={errors.email} large={false} onChange={(email) => patchRadar({ email: email.trim() })} />
-        <TextField id="phone" label="Teléfono o WhatsApp" hint="Opcional." value={radar.phone} large={false} onChange={(phone) => patchRadar({ phone: phone.replace(/[^\d+ ]/g, "") })} />
+        <ContactField id="contactName" label="Nombre de contacto" value={radar.contactName} error={errors.contactName} autoComplete="given-name" onChange={(contactName) => patchRadar({ contactName })} />
+        <ContactField id="contactLastName" label="Apellido" value={radar.contactLastName} error={errors.contactLastName} autoComplete="family-name" onChange={(contactLastName) => patchRadar({ contactLastName })} />
+        <ContactField id="email" type="email" label="Correo" value={radar.email} error={errors.email} autoComplete="email" placeholder="nombre@empresa.com" onChange={(email) => patchRadar({ email: email.trim() })} />
+        <ContactField id="phone" type="tel" label="Celular o WhatsApp" value={radar.phone} error={errors.phone} autoComplete="tel" placeholder="300 123 4567" onChange={(phone) => patchRadar({ phone: phone.replace(/[^\d+ ]/g, "") })} />
+        <ContactField id="city" label="Ciudad o municipio" value={radar.city} error={errors.city} autoComplete="address-level2" list="radar-cities" placeholder="Escriba o elija" onChange={(city) => patchRadar({ city })} />
+        <datalist id="radar-cities">
+          {CITY_SUGGESTIONS.map((city) => <option key={city} value={city} />)}
+        </datalist>
       </div>
       <div>
         <p className="q-help"><strong>¿Cuántas personas trabajan en la empresa?</strong></p>
@@ -177,6 +228,19 @@ function GoalsScreen({ radar }: { radar: RadarAnswers }) {
   );
 }
 
+/** En celular el radar lateral no cabe: una franja con el índice que se mueve con cada respuesta. */
+function MobileLive({ radar }: { radar: RadarAnswers }) {
+  const live = useMemo(() => scoreRadar(radar), [radar]);
+  if (!live.dimensions.some((dimension) => dimension.answered)) return null;
+  return (
+    <div className="radar-mobile-live" aria-hidden="true">
+      <span>Índice preliminar</span>
+      <span className="radar-mobile-bar"><span style={{ width: `${Math.max(4, live.index)}%` }} /></span>
+      <strong>{live.index}</strong>
+    </div>
+  );
+}
+
 function LiveAside({ radar }: { radar: RadarAnswers }) {
   const live = useMemo(() => scoreRadar(radar), [radar]);
   const { industry, activity } = activityOf(radar);
@@ -236,14 +300,7 @@ export function RadarWizard() {
   }, [nicho, router]);
 
   function errorsFor(target: Screen): Record<string, string> {
-    if (target.kind === "empresa") {
-      const next: Record<string, string> = {};
-      if (radar.companyName.trim().length < 2) next.companyName = "Escriba el nombre de la empresa.";
-      if (!radar.size) next.size = "Elija el tamaño de la empresa.";
-      if (radar.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(radar.email)) next.email = "Revise el correo.";
-      if (!radar.consent) next.consent = "Para guardar el diagnóstico necesitamos su autorización.";
-      return next;
-    }
+    if (target.kind === "empresa") return contactErrors(radar);
     if (target.kind === "sector") {
       if (!radar.industry) return { industry: "Elija una industria." };
       if (!activityOf(radar).activity) return { activity: "Elija la actividad principal." };
@@ -344,6 +401,7 @@ export function RadarWizard() {
 
   return (
     <form
+      noValidate
       className="wrap flow radar-flow"
       onSubmit={(event) => {
         event.preventDefault();
@@ -373,6 +431,8 @@ export function RadarWizard() {
           })}
         </ol>
       </div>
+
+      <MobileLive radar={radar} />
 
       <div className="flow-grid">
         <div className="q-card">

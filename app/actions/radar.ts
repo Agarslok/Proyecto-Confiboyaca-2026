@@ -12,7 +12,7 @@ import {
   passwordMatches,
   registerFailure,
 } from "@/lib/auth/session";
-import { getDiagnosisStore, type SaveResult } from "@/lib/store/diagnoses";
+import { getDiagnosisStore, type LeadStatus, type SaveResult } from "@/lib/store/diagnoses";
 
 /**
  * Guarda el diagnóstico al terminar la encuesta. Es pública (la llena el
@@ -63,4 +63,24 @@ export async function loginConsultor(_previous: LoginState, formData: FormData):
 export async function logoutConsultor(): Promise<void> {
   (await cookies()).delete(SESSION_COOKIE);
   redirect("/consultor/ingresar");
+}
+
+/** El cliente pide desde su diagnóstico que lo llamen. */
+export async function requestFollowUp(recordId: string, editToken: string): Promise<boolean> {
+  try {
+    return getDiagnosisStore().requestFollowUp(String(recordId), String(editToken));
+  } catch {
+    return false;
+  }
+}
+
+/** Solo consultores: estado del seguimiento y notas. */
+export async function updateLeadStatus(_previous: { saved?: boolean; error?: string }, formData: FormData): Promise<{ saved?: boolean; error?: string }> {
+  if (!(await isConsultor())) return { error: "La sesión terminó. Vuelva a entrar." };
+  const ok = getDiagnosisStore().setStatus(
+    String(formData.get("id") ?? ""),
+    String(formData.get("status") ?? "") as LeadStatus,
+    String(formData.get("notes") ?? ""),
+  );
+  return ok ? { saved: true } : { error: "No se pudo guardar el estado." };
 }

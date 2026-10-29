@@ -142,7 +142,7 @@ export function SiteHeader({
           </nav>
           <div className="top-actions">
             {inFlow ? (
-              <RestartButton onConfirm={onRestart} variant="dark" label="Reiniciar" />
+              <RestartButton onConfirm={onRestart} variant="dark" label="Nueva encuesta" />
             ) : (
               <button type="button" className="btn btn-dark btn-cta" onClick={onStart}>
                 <span>Comenzar<span className="cta-long"> formulario</span></span> <Icon.arrow />
@@ -177,7 +177,7 @@ export function SiteHeader({
                 onRestart();
               }}
               variant="dark"
-              label="Reiniciar"
+              label="Nueva encuesta"
             />
           ) : (
             <button

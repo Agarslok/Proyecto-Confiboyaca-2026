@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CostCalculator } from "@/components/consultor/CostCalculator";
+import { LeadStatusForm } from "@/components/consultor/LeadStatusForm";
 import { ReopenButtons } from "@/components/consultor/ReopenButtons";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { requireConsultor } from "@/lib/auth/dal";
-import { LEVELS, SIZES } from "@/lib/radar/bank";
+import { LEVELS, PLANS, SIZES } from "@/lib/radar/bank";
 import { buildRadarResult } from "@/lib/radar/engine";
 import { getDiagnosisStore } from "@/lib/store/diagnoses";
 
@@ -46,6 +48,8 @@ export default async function SavedDiagnosisPage({ params }: { params: Promise<{
           {result.central ? (
             <p><span className="fine">Problema central:</span><br />{result.central.problem}</p>
           ) : null}
+          <p><span className="fine">Plan recomendado:</span><br />{PLANS[result.plan].name} · {result.effort.range[0]}–{result.effort.range[1]} h · {result.effort.visits} visitas</p>
+          {record.interestAt ? <p className="consultor-interest">☎ Pidió que lo llamen el {dateTime(record.interestAt)}</p> : null}
           <dl className="consultor-contact">
             <div><dt>Contacto</dt><dd>{record.contactName || "—"}</dd></div>
             <div><dt>Correo</dt><dd>{record.email ? <a href={`mailto:${record.email}`}>{record.email}</a> : "—"}</dd></div>
@@ -58,6 +62,10 @@ export default async function SavedDiagnosisPage({ params }: { params: Promise<{
           <RadarChart dimensions={result.dimensions} size={230} showValues />
         </div>
       </div>
+
+      <LeadStatusForm id={record.id} status={record.status} notes={record.notes} />
+
+      <CostCalculator effort={result.effort} plan={PLANS[result.plan].name} />
 
       <ReopenButtons answers={record.answers} />
       <p className="fine">«Abrir» carga este diagnóstico en este navegador para revisarlo con el cliente. Si edita las respuestas, al terminar se actualiza este mismo registro.</p>

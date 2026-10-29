@@ -1,3 +1,4 @@
+import type { Effort } from "@/lib/radar/effort";
 import type { CentralProblem } from "@/lib/radar/solution";
 import type { SectorId } from "@/types/site";
 
@@ -82,7 +83,9 @@ export interface RadarQuestion {
 export interface RadarAnswers {
   companyName: string;
   city: string;
+  /** Nombre y apellido de la persona de contacto. */
   contactName: string;
+  contactLastName: string;
   email: string;
   phone: string;
   /** Autorización de tratamiento de datos (Ley 1581 de 2012). Obligatoria para guardar. */
@@ -99,6 +102,8 @@ export interface RadarAnswers {
   recordId?: string;
   recordCode?: string;
   editToken?: string;
+  /** El cliente ya pidió que lo llamen desde este navegador. */
+  followUpRequested?: boolean;
 }
 
 export interface Finding {
@@ -161,4 +166,6 @@ export interface RadarResult {
   nextPlan: "arranque" | "orden" | "crecer" | null;
   /** Microempresa en papel: se le muestran primeros pasos sencillos. */
   firstSteps: boolean;
+  /** Horas estimadas del plan, por fase, con visitas y duración. */
+  effort: Effort;
 }

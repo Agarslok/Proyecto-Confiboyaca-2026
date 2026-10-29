@@ -617,14 +617,12 @@ export type PlanId = "arranque" | "orden" | "crecer";
 
 /**
  * Monitorías en la empresa: el equipo monta la solución en el sistema de la
- * empresa y la deja funcionando. Las horas son una propuesta inicial para
- * ajustar; los precios están por definir.
+ * empresa y la deja funcionando. Las horas se estiman por fases en effort.ts
+ * según el tamaño y cómo están hoy los datos; los costos, en pricing.ts.
  */
-export const PLANS: Record<PlanId, { name: string; hours: number; format: string; promise: string; includes: string[] }> = {
+export const PLANS: Record<PlanId, { name: string; promise: string; includes: string[] }> = {
   arranque: {
     name: "Plan Arranque",
-    hours: 8,
-    format: "4 visitas de 2 horas en su negocio",
     promise: "Se lo dejamos funcionando en su propio celular. Usted no tiene que aprender a programar nada.",
     includes: [
       "Una visita para ver cómo trabaja hoy, sin cambiarle nada",
@@ -635,8 +633,6 @@ export const PLANS: Record<PlanId, { name: string; hours: number; format: string
   },
   orden: {
     name: "Plan Orden",
-    hours: 16,
-    format: "8 sesiones de 2 horas con usted o su encargado",
     promise: "Ventas, clientes e inventario en un solo lugar, con un tablero que se actualiza solo.",
     includes: [
       "Unificamos la información que hoy está en cuadernos, chats y archivos",
@@ -647,8 +643,6 @@ export const PLANS: Record<PlanId, { name: string; hours: number; format: string
   },
   crecer: {
     name: "Plan Crecer con IA",
-    hours: 24,
-    format: "12 sesiones de 2 horas con su equipo",
     promise: "Su primer uso de inteligencia artificial funcionando en la operación, con resultados medidos.",
     includes: [
       "Elegimos con usted el caso de IA de mayor retorno",

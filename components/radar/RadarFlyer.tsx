@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { useSite } from "@/components/site/useSite";
-import { LEVELS, PLANS, ROUTES } from "@/lib/radar/bank";
+import { LEVELS, PLANS } from "@/lib/radar/bank";
 import { radarOf } from "@/lib/radar/store";
 
 /* ============================================================================
@@ -85,17 +85,17 @@ export function RadarFlyer() {
         <section className="flyer-plan">
           <div>
             <span>Acompañamiento recomendado</span>
-            <strong>{PLANS[result.plan].name} · {PLANS[result.plan].hours} horas</strong>
+            <strong>{PLANS[result.plan].name} · {result.effort.range[0]}–{result.effort.range[1]} horas</strong>
             <p>{PLANS[result.plan].promise}</p>
           </div>
-          <p>{PLANS[result.plan].format}</p>
+          <p>≈ {result.effort.months} {result.effort.months === 1 ? "mes" : "meses"} · {result.effort.visits} visitas a su negocio</p>
         </section>
 
         <section className="flyer-route">
-          <h3>Ruta de 12 meses</h3>
+          <h3>Horas por fase</h3>
           <ol>
-            {ROUTES[result.level].map((stage) => (
-              <li key={stage.title}><span>{stage.when}</span>{stage.title}</li>
+            {result.effort.phases.slice(0, 6).map((phase) => (
+              <li key={phase.name}><span>{phase.hours} h</span>{phase.name}</li>
             ))}
           </ol>
         </section>

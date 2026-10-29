@@ -5,10 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CaseSpark } from "@/components/radar/CaseSpark";
 import { RadarChart } from "@/components/radar/RadarChart";
-import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
+import { InterestButton } from "@/components/radar/InterestButton";
 import { useSite } from "@/components/site/useSite";
 import { Button } from "@/components/ui/Button";
-import { COURSES, DIMENSIONS, LEVELS, PLANS, ROUTES } from "@/lib/radar/bank";
+import { COURSES, DIMENSIONS, LEVELS, PLANS } from "@/lib/radar/bank";
 import { patchRadar, radarOf } from "@/lib/radar/store";
 import type { Finding, RadarResult } from "@/lib/radar/types";
 import type { SiteConfig } from "@/types/site";
@@ -62,6 +62,7 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
   const findings = allFindings ? result.findings : result.findings.slice(0, 5);
   const critical = result.findings.filter((finding) => finding.severity === "critico").length;
   const plan = PLANS[result.plan];
+  const effort = result.effort;
   const nextPlan = result.nextPlan ? PLANS[result.nextPlan] : null;
   /* El curso de 12 h de IA generativa queda como opción, no como la solución. */
   const course = COURSES.find((item) => item.title.startsWith("IA generativa")) ?? null;
@@ -202,10 +203,14 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
 
       <section className="card radar-mentoring" aria-labelledby="radar-mentoring-title">
         <div>
-          <p className="micro accent">Acompañamiento por horas</p>
-          <h2 id="radar-mentoring-title">{plan.name}: {plan.hours} horas</h2>
+          <p className="micro accent">Acompañamiento por horas · se lo dejamos funcionando</p>
+          <h2 id="radar-mentoring-title">{plan.name}: entre {effort.range[0]} y {effort.range[1]} horas</h2>
           <p className="radar-mentoring-promise">{plan.promise}</p>
-          <p className="fine">{plan.format}. Trabajamos dentro del sistema de su empresa y lo dejamos funcionando.</p>
+          <p className="radar-mentoring-facts">
+            <span><strong>≈ {effort.months} {effort.months === 1 ? "mes" : "meses"}</strong> de trabajo</span>
+            <span><strong>{effort.visits} visitas</strong> a su negocio</span>
+            <span>Dentro del sistema de su empresa</span>
+          </p>
           <ul className="radar-mentoring-list">
             {plan.includes.map((line, index) => (
               <li key={line}>{index === 1 && result.central ? `Montamos ${result.central.name.toLowerCase()} y los primeros pasos` : line}</li>
@@ -213,16 +218,18 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
           </ul>
         </div>
         <div className="radar-mentoring-side">
-          <h3>Ruta de 12 meses</h3>
-          <ol className="radar-route">
-            {ROUTES[result.level].map((stage) => (
-              <li key={stage.title}>
-                <span className="fine">{stage.when}</span>
-                <strong>{stage.title}</strong>
+          <h3>Horas por fase</h3>
+          <ol className="radar-phases">
+            {effort.phases.map((phase) => (
+              <li key={phase.name}>
+                <span>{phase.name}</span>
+                <strong>{phase.hours} h</strong>
               </li>
             ))}
+            <li className="is-total"><span>Total estimado</span><strong>{effort.total} h</strong></li>
           </ol>
-          {nextPlan ? <p className="fine">Después: {nextPlan.name} ({nextPlan.hours} h).</p> : null}
+          <p className="fine">Estimación según el tamaño de su empresa y cómo tiene hoy la información. Se confirma en la primera visita.</p>
+          {nextPlan ? <p className="fine">Después, si quiere seguir: {nextPlan.name}.</p> : null}
           {course ? (
             <p className="radar-mentoring-course">
               <span className="fine">Opcional, si quiere que su equipo aprenda:</span>
@@ -232,33 +239,33 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
         </div>
       </section>
 
-      <section className="consultoria-cta card" aria-label="Acceso a su página web">
-        <div className="consultoria-cta-block">
-          <h3>Conozca su página</h3>
-          <ConsultoriaQr siteId={config.id} />
+      <section className="card radar-closing" aria-labelledby="radar-closing-title">
+        <div>
+          <p className="micro accent">Siguiente paso</p>
+          <h2 id="radar-closing-title">¿Quiere que se lo dejemos funcionando?</h2>
+          <p className="lead sm">
+            Le llamamos para agendar la primera visita a {config.companyName}. Sin costo y sin compromiso: la usamos para
+            confirmar las horas y mostrarle cómo quedaría.
+          </p>
+          <InterestButton plan={plan.name} />
         </div>
-        <div className="consultoria-cta-block is-visit">
-          <h3>Su página, con el estilo de su sector</h3>
-          <p className="fine">Plantilla {config.templateLabel}, con textos para {result.activityLabel.toLowerCase()}. Se abre en una pestaña nueva.</p>
-          <Button href="/sitio" target="_blank" rel="noopener noreferrer" className="btn-block">
-            Ver mi página web
+        <div className="radar-closing-side">
+          <Button href="/sitio" target="_blank" rel="noopener noreferrer" variant="ghost" className="btn-block">
+            Ver la página web de muestra
           </Button>
+          <Button href="/flyer" variant="ghost" className="btn-block">Descargar el resumen en PDF</Button>
+          <button
+            type="button"
+            className="link-btn"
+            onClick={() => {
+              patchRadar({ cursor: 0 });
+              router.push("/diagnostico");
+            }}
+          >
+            Editar respuestas
+          </button>
         </div>
       </section>
-
-      <div className="consultoria-report-actions">
-        <Button href="/flyer">Descargar flyer (PDF)</Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => {
-            patchRadar({ cursor: 0 });
-            router.push("/diagnostico");
-          }}
-        >
-          Editar respuestas
-        </Button>
-      </div>
     </article>
   );
 }

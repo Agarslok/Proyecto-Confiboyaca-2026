@@ -81,3 +81,26 @@
 .showcase-before .micro, .showcase-after .micro { margin: 0; }
 .showcase-after h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: clamp(20px, 2.2vw, 26px); line-height: 1.2; }
 .showcase-before .case-notebook { max-width: 360px; }
+
+/* ---- Portada: elegir el tipo de negocio ---- */
+.w-niches { display: grid; gap: 10px; margin-top: 26px; max-width: 760px; }
+.w-niches-title { margin: 0; font-family: var(--f-display); font-size: 18px; color: var(--fg); }
+.w-niches-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.w-niche {
+  display: inline-flex; gap: 8px; align-items: center; padding: 9px 14px; border-radius: var(--r-pill); cursor: pointer;
+  border: 1px solid var(--line-strong); background: rgba(7, 39, 36, .55); color: var(--fg); font: 400 15px var(--f-body);
+  transition: border-color .25s, box-shadow .25s, transform .25s;
+}
+.w-niche:hover { border-color: var(--mint-glow); box-shadow: var(--glow); transform: translateY(-2px); }
+.w-niche.is-more { color: var(--mint-glow); border-style: dashed; }
+
+/* ---- Equipo: controles del carrusel ---- */
+.team-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 18px; }
+.team-control {
+  min-width: 46px; height: 46px; padding: 0 16px; border-radius: var(--r-pill); cursor: pointer;
+  border: 1px solid var(--line-strong); background: rgba(7, 39, 36, .6); color: var(--fg); font: 400 22px/1 var(--f-body);
+  transition: border-color .25s, background-color .25s;
+}
+.team-control.is-toggle { font-size: 14px; }
+.team-control:hover { border-color: var(--mint-glow); background: var(--pulse-soft); }
+.team-control[aria-pressed="true"] { border-color: var(--mint-glow); color: var(--mint-glow); }

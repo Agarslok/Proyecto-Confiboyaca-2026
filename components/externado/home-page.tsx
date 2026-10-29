@@ -8,6 +8,19 @@ import { TEAM } from "@/components/externado/team-config";
 import { TeamCarousel } from "@/components/externado/team-carousel";
 import { scrollToSection, useReveal } from "@/components/externado/use-reveal";
 
+/** Atajos de la portada: el negocio elegido abre la encuesta ya ubicada en su nicho. */
+const QUICK_NICHES = [
+  { icon: "🥐", label: "Panadería o alimentos", nicho: "alimentos-produccion" },
+  { icon: "🍽️", label: "Restaurante o cafetería", nicho: "alimentos-restaurante" },
+  { icon: "🛒", label: "Tienda o supermercado", nicho: "comercio-fisica" },
+  { icon: "👗", label: "Ropa", nicho: "moda-compraventa" },
+  { icon: "🏨", label: "Hotel u hospedaje", nicho: "turismo-hotel" },
+  { icon: "🩺", label: "Salud o estética", nicho: "salud-ips" },
+  { icon: "🌱", label: "Finca o agro", nicho: "agro-primaria" },
+  { icon: "🏭", label: "Taller o fábrica", nicho: "manufactura-planta" },
+  { icon: "⛏️", label: "Minería", nicho: "mineria-extraccion" },
+];
+
 export function ExternadoHomePage() {
   const router = useRouter();
   useReveal([]);
@@ -35,6 +48,19 @@ export function ExternadoHomePage() {
           <button type="button" className="btn btn-ghost btn-lg" onClick={() => onSection("como-funciona")}>
             Cómo funciona
           </button>
+        </div>
+        <div className="w-niches" aria-labelledby="w-niches-title">
+          <p id="w-niches-title" className="w-niches-title">¿Qué tipo de negocio tiene?</p>
+          <div className="w-niches-list">
+            {QUICK_NICHES.map((item) => (
+              <button key={item.nicho} type="button" className="w-niche" onClick={() => router.push(`/diagnostico?nicho=${item.nicho}`)}>
+                <span aria-hidden="true">{item.icon}</span> {item.label}
+              </button>
+            ))}
+            <button type="button" className="w-niche is-more" onClick={() => router.push("/encuestas")}>
+              Otro negocio →
+            </button>
+          </div>
         </div>
         <p className="w-meta">
           <Icon.clock /> Unos 4 minutos · Preguntas según tu industria · Sin lenguaje técnico

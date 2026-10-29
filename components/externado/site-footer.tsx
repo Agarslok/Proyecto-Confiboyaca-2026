@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ExtIcon } from "@/components/externado/icons";
 import { DEPT_URL, HOME_SECTIONS, UNI_URL } from "@/components/externado/team-config";
 
@@ -27,6 +28,8 @@ export function SiteFooter({ onReplay, onSection }: SiteFooterProps) {
             </button>
           ))}
           <button type="button" className="foot-link" onClick={onReplay}>Repetir apertura</button>
+          <Link className="foot-link" href="/encuestas">Encuestas por nicho</Link>
+          <Link className="foot-link" href="/consultor">Acceso para consultores</Link>
         </nav>
         <div className="foot-col">
           <p className="micro">Universidad</p>

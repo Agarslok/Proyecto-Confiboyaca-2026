@@ -1,4 +1,5 @@
 import type { TemplateCopy } from "@/lib/site/template-content";
+import { garmentImage, type Garment } from "@/lib/radar/niche-art";
 import type { Activity, Industry, IndustryId } from "@/lib/radar/types";
 
 /* ============================================================================
@@ -67,6 +68,34 @@ const VOICES: Record<string, Voice> = {
 
 type Extras = Record<string, unknown>;
 
+const GARMENTS: [Garment, string, string, string, string, string?][] = [
+  ["shirt", "CAMISAS", "Camisa oxford", "TALLAS S–XL · 3 COLORES", "$89.900", "$109.900"],
+  ["jeans", "JEANS", "Jean clásico tiro alto", "TALLAS 6–16", "$119.900"],
+  ["jacket", "CHAQUETAS", "Chaqueta de jean", "TALLAS S–L", "$159.900"],
+  ["dress", "VESTIDOS", "Vestido camisero", "TALLAS XS–L", "$129.900", "$149.900"],
+  ["hoodie", "BUSOS", "Buso con capota", "UNISEX · S–XL", "$99.900"],
+  ["sneaker", "CALZADO", "Tenis blancos", "TALLAS 35–43", "$149.900"],
+];
+
+/**
+ * Productos de la página según la industria, para que se vea el negocio real:
+ * prendas para moda; mercado de barrio para comercio (la plantilla ya dibuja
+ * bien costales, botellas, latas y cajas cuando el nombre lo dice).
+ */
+const INDUSTRY_CARDS: Partial<Record<IndustryId, TemplateCopy["cards"]>> = {
+  moda: GARMENTS.map(([garment, tag, title, location, price, oldPrice], index) => ({
+    tag, title, location, price, oldPrice, image: garmentImage(garment, index), featured: index === 0,
+  })),
+  comercio: [
+    { tag: "GRANOS", title: "Arroz 500 g", location: "BULTO O UNIDAD", price: "$2.900", featured: true },
+    { tag: "ACEITES", title: "Aceite de girasol 1 L", location: "BOTELLA", price: "$9.800", oldPrice: "$11.200" },
+    { tag: "LÁCTEOS", title: "Leche entera 1 L", location: "BOLSA", price: "$4.200" },
+    { tag: "DESPENSA", title: "Huevos x 30", location: "CUBETA", price: "$16.500" },
+    { tag: "ENLATADOS", title: "Atún en lata", location: "175 G", price: "$6.900" },
+    { tag: "ASEO", title: "Detergente líquido 2 L", location: "BOTELLA", price: "$18.900", oldPrice: "$21.500" },
+  ],
+};
+
 interface Special {
   match: RegExp;
   industries: IndustryId[];
@@ -128,7 +157,8 @@ export function voiceCopy(
     contactCta: voice.cta,
     footerNote: `${companyName} · ${industry.label} · Demostración local. Contenido de ejemplo.`,
   };
-  if (special?.cards) copy.cards = special.cards;
+  const cards = special?.cards ?? INDUSTRY_CARDS[industry.id];
+  if (cards) copy.cards = cards;
   if (special?.statement) copy.statement = special.statement;
   return { copy, extras: special?.extras ?? {} };
 }

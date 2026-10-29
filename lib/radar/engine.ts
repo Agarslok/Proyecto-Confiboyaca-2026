@@ -9,6 +9,8 @@ import {
 } from "@/lib/radar/bank";
 import type { PlanId } from "@/lib/radar/bank";
 import { CASES } from "@/lib/radar/cases";
+import { contactErrors } from "@/lib/radar/contact";
+import { estimateEffort } from "@/lib/radar/effort";
 import { fitsSize } from "@/lib/radar/case-language";
 import { centralProblem } from "@/lib/radar/solution";
 import type {
@@ -36,7 +38,7 @@ const SEVERITY_ORDER: Record<Finding["severity"], number> = { critico: 0, mejora
 
 export function emptyRadarAnswers(): RadarAnswers {
   return {
-    companyName: "", city: "", contactName: "", email: "", phone: "", consent: false,
+    companyName: "", city: "", contactName: "", contactLastName: "", email: "", phone: "", consent: false,
     size: "", industry: "", activity: "", choices: {}, goals: [], cursor: 0,
   };
 }
@@ -99,7 +101,7 @@ export function screensFor(answers: RadarAnswers): Screen[] {
 export function screenIsDone(screen: Screen, answers: RadarAnswers): boolean {
   switch (screen.kind) {
     case "empresa":
-      return answers.companyName.trim().length >= 2 && Boolean(answers.size) && answers.consent;
+      return Object.keys(contactErrors(answers)).length === 0;
     case "sector":
       return Boolean(activityOf(answers).activity);
     case "question":
@@ -247,7 +249,7 @@ export function buildRadarResult(answers: RadarAnswers): RadarResult {
     central: centralProblem(score.findings, score.dimensions, answers.companyName, answers.industry),
     ...(() => {
       const { plan, next } = planFor(score.level, answers);
-      return { plan, nextPlan: next, firstSteps: needsFirstSteps(answers) };
+      return { plan, nextPlan: next, firstSteps: needsFirstSteps(answers), effort: estimateEffort(plan, answers) };
     })(),
   };
 }

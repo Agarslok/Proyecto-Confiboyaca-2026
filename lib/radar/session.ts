@@ -21,12 +21,13 @@ export function normalizeRadarAnswers(raw: unknown): RadarAnswers | undefined {
   ) as Record<string, OptionKey>;
   answers.goals = answers.goals.filter((goal): goal is RadarGoalId => (GOAL_IDS as readonly string[]).includes(goal)).slice(0, 2);
   answers.cursor = typeof answers.cursor === "number" && answers.cursor >= 0 ? Math.floor(answers.cursor) : 0;
-  for (const key of ["city", "contactName", "email", "phone"] as const) {
+  for (const key of ["city", "contactName", "contactLastName", "email", "phone"] as const) {
     answers[key] = typeof answers[key] === "string" ? answers[key].slice(0, 120) : "";
   }
   answers.consent = answers.consent === true;
   for (const key of ["recordId", "recordCode", "editToken"] as const) {
     if (typeof answers[key] !== "string") delete answers[key];
   }
+  if (answers.followUpRequested !== true) delete answers.followUpRequested;
   return answers;
 }
