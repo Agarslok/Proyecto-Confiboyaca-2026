@@ -1,5 +1,7 @@
 "use server";
 
+import { dirname, join, resolve } from "node:path";
+import { revalidatePath } from "next/cache";
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { authConfigured, isConsultor } from "@/lib/auth/dal";
@@ -83,4 +85,23 @@ export async function updateLeadStatus(_previous: { saved?: boolean; error?: str
     String(formData.get("notes") ?? ""),
   );
   return ok ? { saved: true } : { error: "No se pudo guardar el estado." };
+}
+
+/**
+ * Solo consultores: deja la base en cero (por ejemplo, antes del despliegue
+ * final). Hay que escribir BORRAR; antes se guarda una copia de respaldo.
+ */
+export async function resetAllDiagnoses(_previous: { done?: string; error?: string }, formData: FormData): Promise<{ done?: string; error?: string }> {
+  if (!(await isConsultor())) return { error: "La sesión terminó. Vuelva a entrar." };
+  if (String(formData.get("confirm") ?? "").trim() !== "BORRAR") return { error: "Escriba BORRAR, en mayúsculas, para confirmar." };
+  try {
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const dbPath = resolve(process.env.RADAR_DB_PATH || "data/radar.db");
+    const backup = join(dirname(dbPath), "respaldos", `radar-${stamp}.db`);
+    const removed = getDiagnosisStore().clear(backup);
+    revalidatePath("/consultor");
+    return { done: removed ? `Se borraron ${removed} diagnósticos. Copia de respaldo: ${backup}` : "La base ya estaba vacía." };
+  } catch {
+    return { error: "No se pudo reiniciar la base." };
+  }
 }

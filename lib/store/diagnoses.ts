@@ -65,6 +65,13 @@ export interface DiagnosisStore {
   requestFollowUp(id: string, editToken: string): boolean;
   /** Solo consultores: cambia el estado y las notas. */
   setStatus(id: string, status: LeadStatus, notes: string): boolean;
+  /** Todos los registros completos, para exportar. */
+  all(): DiagnosisRecord[];
+  /**
+   * Solo consultores: borra todos los diagnósticos para empezar de cero.
+   * Antes guarda una copia de la base en backupPath. Devuelve cuántos borró.
+   */
+  clear(backupPath: string): number;
 }
 
 export type SaveResult =
@@ -271,6 +278,23 @@ export function createSqliteStore(path: string): DiagnosisStore {
       if (!(LEAD_STATUSES as readonly string[]).includes(status)) return false;
       const result = db.prepare("UPDATE diagnoses SET status = ?, notes = ?, updated_at = ? WHERE id = ?").run(status, notes.slice(0, 2000), new Date().toISOString(), id);
       return Number(result.changes) > 0;
+    },
+
+    all() {
+      const ids = db.prepare("SELECT id FROM diagnoses ORDER BY created_at").all() as Row[];
+      return ids.map((row) => this.get(String(row.id))).filter((record): record is DiagnosisRecord => record !== null);
+    },
+
+    clear(backupPath) {
+      const total = Number((db.prepare("SELECT COUNT(*) AS n FROM diagnoses").get() as Row).n);
+      if (total === 0) return 0;
+      if (path !== ":memory:") {
+        mkdirSync(dirname(backupPath), { recursive: true });
+        /* Copia completa y consistente de la base antes de borrar. */
+        db.prepare("VACUUM INTO ?").run(backupPath);
+      }
+      db.exec("DELETE FROM diagnoses");
+      return total;
     },
   };
 }

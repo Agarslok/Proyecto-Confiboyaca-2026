@@ -495,3 +495,14 @@ button.sol-pill { cursor: pointer; }
 .consultor-cost-total dd { margin: 0; color: var(--fg); }
 .consultor-cost-total .is-sub { padding-top: 8px; border-top: 1px solid var(--line); }
 .consultor-cost-total .is-total dd { font-family: var(--f-display); font-size: 1.4rem; color: var(--mint-glow); }
+
+/* ---- Panel: exportar y reiniciar ---- */
+.consultor-tools { padding: 22px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; }
+@media (max-width: 860px) { .consultor-tools { grid-template-columns: 1fr; } }
+.consultor-tools h2 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 400; font-size: 1.2rem; }
+.consultor-tools-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+.consultor-tools-row a { text-decoration: none; }
+.consultor-danger { padding: 16px; border-radius: var(--r-card); border: 1px dashed var(--risk-alto); background: var(--risk-alto-soft); }
+.consultor-danger-form { display: grid; gap: 8px; margin-top: 8px; }
+.consultor-danger-form label { display: grid; gap: 4px; }
+.btn-danger { background: var(--risk-alto); color: #2a0b06; border-color: var(--risk-alto); }

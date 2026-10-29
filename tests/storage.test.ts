@@ -183,3 +183,46 @@ describe("encuesta nueva en el mismo navegador", () => {
     delete (globalThis as { window?: unknown }).window;
   });
 });
+
+describe("exportar y reiniciar", () => {
+  it("exporta CSV con tildes y una fila por empresa", async () => {
+    const { diagnosesSheet, answersSheet } = await import("../lib/export/diagnoses");
+    const { toCsv } = await import("../lib/export/spreadsheet");
+    const store = createSqliteStore(":memory:");
+    store.save(complete());
+    store.save(complete({ companyName: "Hotel; con punto y coma" }));
+    const records = store.all();
+    const csv = toCsv(diagnosesSheet(records).rows, ";");
+    assert.ok(csv.startsWith("﻿Código;Empresa"));
+    assert.equal(csv.trim().split("\r\n").length, 3);
+    assert.ok(csv.includes('"Hotel; con punto y coma"'));
+    assert.ok(answersSheet(records).rows.length > 20);
+  });
+
+  it("arma un .xlsx que es un ZIP válido con sus dos hojas", async () => {
+    const { toXlsx } = await import("../lib/export/spreadsheet");
+    const file = toXlsx([{ name: "Diagnósticos", rows: [["Empresa", "Índice"], ["Panadería Carlitos", 16]] }, { name: "Respuestas", rows: [["a"]] }]);
+    const text = new TextDecoder().decode(file);
+    assert.equal(file[0], 0x50);
+    assert.equal(file[1], 0x4b);
+    assert.ok(text.includes("xl/worksheets/sheet2.xml"));
+    assert.ok(text.includes("Panadería Carlitos"));
+    assert.ok(text.includes("<v>16</v>"));
+  });
+
+  it("reiniciar borra todo y deja una copia de respaldo", async () => {
+    const { mkdtempSync, existsSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const folder = mkdtempSync(join(tmpdir(), "radar-"));
+    const store = createSqliteStore(join(folder, "radar.db"));
+    store.save(complete());
+    store.save(complete({ companyName: "Otra empresa" }));
+    const backup = join(folder, "respaldos", "copia.db");
+    assert.equal(store.clear(backup), 2);
+    assert.equal(store.stats().total, 0);
+    assert.ok(existsSync(backup));
+    assert.equal(createSqliteStore(backup).stats().total, 2);
+    assert.equal(store.clear(join(folder, "otra.db")), 0);
+  });
+});

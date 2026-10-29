@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { logoutConsultor } from "@/app/actions/radar";
+import { DataTools } from "@/components/consultor/DataTools";
 import { requireConsultor } from "@/lib/auth/dal";
 import { LEVELS } from "@/lib/radar/bank";
 import type { LevelId } from "@/lib/radar/types";
@@ -109,6 +110,7 @@ export default async function ConsultorPage({
           {page < pages ? <Link href={link({ pagina: page + 1 })}>Siguiente →</Link> : <span />}
         </nav>
       ) : null}
+      <DataTools total={stats.total} />
     </section>
   );
 }
