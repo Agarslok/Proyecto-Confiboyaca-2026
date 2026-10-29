@@ -610,3 +610,51 @@ export const SAMPLES: Record<IndustryId, { items: [string, string, string]; cust
   construccion: { items: ["Cemento 50 kg", "Varilla 1/2\"", "Bloque #5"], customers: ["Obra Torres del Lago", "Juan Becerra"] },
   otra: { items: ["Producto A", "Producto B", "Servicio C"], customers: ["Cliente Uno", "Cliente Dos"] },
 };
+
+/* ----------------------- Acompañamiento por horas ----------------------- */
+
+export type PlanId = "arranque" | "orden" | "crecer";
+
+/**
+ * Monitorías en la empresa: el equipo monta la solución en el sistema de la
+ * empresa y la deja funcionando. Las horas son una propuesta inicial para
+ * ajustar; los precios están por definir.
+ */
+export const PLANS: Record<PlanId, { name: string; hours: number; format: string; promise: string; includes: string[] }> = {
+  arranque: {
+    name: "Plan Arranque",
+    hours: 8,
+    format: "4 visitas de 2 horas en su negocio",
+    promise: "Se lo dejamos funcionando en su propio celular. Usted no tiene que aprender a programar nada.",
+    includes: [
+      "Una visita para ver cómo trabaja hoy, sin cambiarle nada",
+      "Montamos la solución a su problema central y los primeros pasos",
+      "Le mostramos cómo usarla con su propio celular, las veces que haga falta",
+      "Volvemos a la semana para resolver dudas y ajustar",
+    ],
+  },
+  orden: {
+    name: "Plan Orden",
+    hours: 16,
+    format: "8 sesiones de 2 horas con usted o su encargado",
+    promise: "Ventas, clientes e inventario en un solo lugar, con un tablero que se actualiza solo.",
+    includes: [
+      "Unificamos la información que hoy está en cuadernos, chats y archivos",
+      "Dejamos un tablero con 3 a 5 indicadores y su meta",
+      "Copias de seguridad automáticas y accesos por persona",
+      "Acompañamos al encargado hasta que lo use sin ayuda",
+    ],
+  },
+  crecer: {
+    name: "Plan Crecer con IA",
+    hours: 24,
+    format: "12 sesiones de 2 horas con su equipo",
+    promise: "Su primer uso de inteligencia artificial funcionando en la operación, con resultados medidos.",
+    includes: [
+      "Elegimos con usted el caso de IA de mayor retorno",
+      "Lo implementamos en sus sistemas y automatizamos los reportes",
+      "Reglas de uso de IA y de datos personales (Ley 1581)",
+      "Medimos el antes y el después",
+    ],
+  },
+};

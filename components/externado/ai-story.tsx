@@ -40,6 +40,16 @@ const WEIGHTS = { viernes: 2, promo: 1.5, lluvia: -1.2, historial: 0.6 };
 
 type Signals = { viernes: boolean; promo: boolean; lluvia: boolean; historial: boolean };
 
+/** Suma de señales con su peso: lo mismo que hace la red, en una línea. */
+function predict(signals: Signals): { score: number; level: "Altas" | "Normales" | "Bajas" } {
+  const score =
+    WEIGHTS.historial * (signals.historial ? 1 : 0) +
+    (signals.viernes ? WEIGHTS.viernes : 0) +
+    (signals.promo ? WEIGHTS.promo : 0) +
+    (signals.lluvia ? WEIGHTS.lluvia : 0);
+  return { score, level: score >= 2.2 ? "Altas" : score >= 0.8 ? "Normales" : "Bajas" };
+}
+
 function netLayout() {
   const { layers, w, h } = NET;
   const xs = layers.map((_, i) => 160 + i * ((w - 160) / (layers.length - 1)));
@@ -71,12 +81,7 @@ function NeuralNet({ step, signals }: { step: number; signals: Signals }) {
   const activeInputs = play
     ? [signals.viernes, signals.promo, signals.lluvia, signals.historial]
     : [true, true, true, true];
-  const score =
-    WEIGHTS.historial * (signals.historial ? 1 : 0) +
-    (signals.viernes ? WEIGHTS.viernes : 0) +
-    (signals.promo ? WEIGHTS.promo : 0) +
-    (signals.lluvia ? WEIGHTS.lluvia : 0);
-  const level = score >= 2.2 ? "Altas" : score >= 0.8 ? "Normales" : "Bajas";
+  const { level } = predict(signals);
   const lit = (layer: number) => {
     if (k === "datos") return layer === 0;
     if (k === "aprende") return layer <= 1;
@@ -171,6 +176,7 @@ export function AIStory() {
     historial: true,
   });
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
+  const prediction = predict(signals);
 
   useEffect(() => {
     if (typeof IntersectionObserver === "undefined") return;
@@ -218,8 +224,34 @@ export function AIStory() {
               ))}
             </ol>
           </div>
+          <div className="stage-progress" aria-hidden="true">
+            <span style={{ width: `${((step + 1) / STORY.length) * 100}%` }} />
+          </div>
           <NeuralNet step={step} signals={signals} />
-          <p className="stage-tip" aria-live="polite">{STORY[step].tip || "La IA sugiere; las personas deciden."}</p>
+          {STORY[step].k === "prueba" ? (
+            <div className="stage-play">
+              <div className="toggles" role="group" aria-label="Señales de entrada">
+                {toggles.map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`toggle${signals[key] ? " on" : ""}`}
+                    aria-pressed={signals[key]}
+                    onClick={() => setSignals((prev) => ({ ...prev, [key]: !prev[key] }))}
+                  >
+                    <span className="sw" aria-hidden="true" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="stage-meter" aria-live="polite">
+                <span>Ventas previstas: <strong>{prediction.level.toLowerCase()}</strong></span>
+                <span className="stage-meter-bar"><span style={{ width: `${Math.max(6, Math.min(100, ((prediction.score + 1.2) / 5.3) * 100))}%` }} /></span>
+              </div>
+            </div>
+          ) : (
+            <p className="stage-tip" aria-live="polite">{STORY[step].tip || "La IA sugiere; las personas deciden."}</p>
+          )}
         </div>
       </div>
       <div className="story-steps">
@@ -235,25 +267,7 @@ export function AIStory() {
             <p className="story-n">{String(i + 1).padStart(2, "0")}</p>
             <h3>{s.title}</h3>
             <p>{s.text}</p>
-            {s.k === "prueba" ? (
-              <div className="toggles" role="group" aria-label="Señales de entrada">
-                {toggles.map(([key, label]) => (
-                  <button
-                    key={key}
-                    type="button"
-                    className={`toggle${signals[key] ? " on" : ""}`}
-                    aria-pressed={signals[key]}
-                    onClick={() => {
-                      setSignals((prev) => ({ ...prev, [key]: !prev[key] }));
-                      setStep(4);
-                    }}
-                  >
-                    <span className="sw" aria-hidden="true" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            {s.k === "prueba" ? <p className="story-hint">Use los interruptores de la tarjeta.</p> : null}
           </article>
         ))}
       </div>

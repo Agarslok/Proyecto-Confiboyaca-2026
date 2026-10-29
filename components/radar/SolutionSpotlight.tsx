@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { SAMPLES } from "@/lib/radar/bank";
-import type { CentralProblem } from "@/lib/radar/solution";
+import type { CentralProblem, SolutionKind } from "@/lib/radar/solution";
 import type { IndustryId } from "@/lib/radar/types";
 
 /* ============================================================================
@@ -333,10 +333,11 @@ function RespaldoDemo() {
   );
 }
 
-function Demo({ central }: { central: CentralProblem }) {
-  const sample = SAMPLES[(central.industryId || "otra") as IndustryId];
-  switch (central.kind) {
-    case "registro": return <RegistroDemo questionId={central.questionId} industryId={central.industryId} items={sample.items} customers={sample.customers} />;
+/** Demostración interactiva de una solución; también se usa en la página de inicio. */
+export function SolutionDemo({ kind, industryId, questionId = "" }: { kind: SolutionKind; industryId: IndustryId | ""; questionId?: string }) {
+  const sample = SAMPLES[industryId || "otra"];
+  switch (kind) {
+    case "registro": return <RegistroDemo questionId={questionId} industryId={industryId} items={sample.items} customers={sample.customers} />;
     case "merma": return <MermaDemo items={sample.items} />;
     case "clientes": return <ClientesDemo customers={sample.customers} />;
     case "solicitudes": return <SolicitudesDemo items={sample.items} />;
@@ -386,7 +387,7 @@ export function SolutionSpotlight({ central, companyName }: { central: CentralPr
                 </>
               ) : null}
             </div>
-            <Demo central={central} />
+            <SolutionDemo kind={central.kind} industryId={central.industryId} questionId={central.questionId} />
           </div>
           <p className="sol-small">Demostración con datos de ejemplo. Nada de lo que escriba aquí se envía ni se guarda.</p>
         </div>

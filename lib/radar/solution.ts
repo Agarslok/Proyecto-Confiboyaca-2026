@@ -117,6 +117,12 @@ const RECORD_BY_INDUSTRY: Partial<Record<IndustryId, { headline: string; lead: (
   },
 };
 
+/** Titular de la solución, con el registro contado en palabras de la industria. */
+export function solutionHeadline(kind: SolutionKind, industryId: IndustryId | ""): string {
+  const record = kind === "registro" && industryId ? RECORD_BY_INDUSTRY[industryId] : undefined;
+  return record?.headline ?? SOLUTIONS[kind].headline;
+}
+
 export interface CentralProblem {
   questionId: string;
   kind: SolutionKind;

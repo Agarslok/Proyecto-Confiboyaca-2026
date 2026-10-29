@@ -119,6 +119,12 @@ export interface CaseItem {
   indicator: string;
   better: "menor" | "mayor";
   goals: RadarGoalId[];
+  /** Primeros pasos para microempresas que trabajan en papel: se priorizan para ellas. */
+  forSmall?: boolean;
+  /** Lo que el equipo deja montado. */
+  doneForYou?: string;
+  /** Lo único que tiene que hacer el dueño. */
+  ownerEffort?: string;
 }
 
 export interface DimensionScore {
@@ -144,4 +150,9 @@ export interface RadarResult {
   unsure: number;
   /** El hallazgo más grave y la solución que incorpora la página web. */
   central: CentralProblem | null;
+  /** Acompañamiento por horas recomendado y el siguiente. */
+  plan: "arranque" | "orden" | "crecer";
+  nextPlan: "arranque" | "orden" | "crecer" | null;
+  /** Microempresa en papel: se le muestran primeros pasos sencillos. */
+  firstSteps: boolean;
 }

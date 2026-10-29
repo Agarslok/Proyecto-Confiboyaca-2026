@@ -103,3 +103,16 @@ SQLite en un solo servidor alcanza para el piloto. Para publicarlo en internet h
 3. HTTPS (la cookie ya se marca `secure` en producción), copias de seguridad y una política de retención y borrado de datos.
 
 No guarde `data/radar.db` en una carpeta sincronizada (OneDrive, Drive) cuando haya datos reales: use `RADAR_DB_PATH` hacia una carpeta local.
+
+## Microempresas en papel y acompañamiento por horas
+
+Muchos dueños de microempresas no quieren aprender una herramienta: quieren que se la dejen funcionando.
+
+- **Primeros pasos** (`lib/radar/cases.ts`, `SMALL_FIRST_STEPS`): 5 casos muy sencillos (del cuaderno al celular, anotar hablando con notas de voz, WhatsApp Business ordenado, la caja del día, facturas en foto). Cada uno dice qué deja montado el equipo y qué le toca al dueño. Se muestran hasta 3, primero, cuando la empresa es micro o pequeña y registra en papel o en Excel suelto.
+- **Planes por horas** (`lib/radar/bank.ts`, `PLANS`): Arranque 8 h, Orden 16 h y Crecer con IA 24 h. Se recomienda uno según el nivel y el tamaño. Las horas son una propuesta inicial; los precios están por definir.
+- El curso de 12 h de IA generativa queda como opción, no como la solución.
+
+## Inicio
+
+- «Cómo funciona»: la tarjeta de la red se centra en la pantalla, los pasos son más cortos y los interruptores de «Pruébalo tú» están dentro de la tarjeta, que se queda fija mientras se usa.
+- «Lo que se puede construir»: en lugar de tarjetas con texto, una vitrina donde se elige un negocio (panadería, hotel, mina) y un problema, y se ve el «antes» (cuaderno) y el «después» funcionando.

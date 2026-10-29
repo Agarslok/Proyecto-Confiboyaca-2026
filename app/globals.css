@@ -2,6 +2,7 @@
 @import "./styles/confi-overrides.css";
 @import "./styles/consultoria.css";
 @import "./styles/radar.css";
+@import "./styles/home.css";
 
 /* Vista previa de la página generada (perfiles cálido / sobrio) */
 .generated {

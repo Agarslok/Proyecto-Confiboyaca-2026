@@ -42,6 +42,20 @@ export function CaseDetailView({ id }: { id: string }) {
         ) : null}
       </header>
 
+      {item.doneForYou ? (
+        <section className="case-compare case-dfy">
+          <div className="card case-target">
+            <p className="micro accent">Lo que hacemos nosotros</p>
+            <p className="case-answer">{item.doneForYou}</p>
+          </div>
+          <div className="case-arrow" aria-hidden="true">+</div>
+          <div className="card">
+            <p className="micro">Lo único que hace usted</p>
+            <p className="case-answer">{item.ownerEffort}</p>
+          </div>
+        </section>
+      ) : null}
+
       {detail.question ? (
         <section className="case-compare">
           <div className="card case-today">

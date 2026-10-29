@@ -22,10 +22,10 @@ function answerAll(base: Partial<RadarAnswers>, pick: OptionKey | ((id: string) 
 }
 
 describe("banco del radar", () => {
-  it("tiene 12 industrias × 4 actividades y 64 casos", () => {
+  it("tiene 12 industrias × 4 actividades y 69 casos", () => {
     assert.equal(INDUSTRIES.length, 12);
     assert.ok(INDUSTRIES.every((industry) => industry.activities.length === 4));
-    assert.equal(CASES.length, 64);
+    assert.equal(CASES.length, 69);
   });
 
   it("no pasa de 18 pantallas en ningún nicho y nunca baja de 15", () => {
@@ -69,7 +69,10 @@ describe("puntaje del radar", () => {
     assert.equal(result.level, "alto");
     assert.ok(result.findings.every((finding) => finding.severity === "critico"));
     assert.equal(result.cases.length, 6);
-    assert.equal(result.cases[0].appliesTo, "alimentos");
+    /* Microempresa en papel: primero 3 primeros pasos sencillos, luego lo de su industria. */
+    assert.deepEqual(result.cases.slice(0, 3).map((item) => Boolean(item.forSmall)), [true, true, true]);
+    assert.equal(result.cases[3].appliesTo, "alimentos");
+    assert.ok(result.cases[0].doneForYou && result.cases[0].ownerEffort);
   });
 
   it("todo en D da 100 y riesgo bajo", () => {
@@ -98,7 +101,8 @@ describe("puntaje del radar", () => {
   });
 
   it("prioriza casos de la industria, luego del eslabón y por objetivos", () => {
-    const cases = pickCases("moderado", { industry: "turismo", activity: "turismo-hotel", goals: ["vender"] });
+    const cases = pickCases("moderado", { industry: "turismo", activity: "turismo-hotel", goals: ["vender"], size: "mediana", choices: {} });
+    assert.ok(cases.every((item) => !item.forSmall));
     assert.deepEqual(cases.slice(0, 2).map((item) => item.appliesTo), ["turismo", "turismo"]);
     assert.ok(cases.slice(2, 4).every((item) => item.appliesTo === "servicio"));
   });

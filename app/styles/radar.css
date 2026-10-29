@@ -359,7 +359,7 @@ button.sol-pill { cursor: pointer; }
 .flyer-toolbar button { padding: 10px 20px; border-radius: 60px; border: 0; background: #0a3b2b; color: #fff; font: 500 15px var(--f-body); cursor: pointer; }
 .flyer {
   width: 210mm; max-width: 100%; min-height: 297mm; margin: 0 auto; background: #fff; box-shadow: 0 10px 40px rgba(10, 59, 43, .2);
-  display: grid; grid-template-rows: auto auto auto auto 1fr; gap: 7mm; padding: 0 0 10mm; overflow: hidden;
+  display: grid; grid-template-rows: auto auto auto auto auto 1fr; gap: 6mm; padding: 0 0 10mm; overflow: hidden;
 }
 .flyer h1, .flyer h2, .flyer h3 { font-family: var(--f-display); margin: 0; }
 .flyer strong { color: inherit; font-weight: 600; }
@@ -413,3 +413,25 @@ button.sol-pill { cursor: pointer; }
   .flyer-toolbar { display: none; }
   .flyer { box-shadow: none; width: 210mm; height: 297mm; min-height: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---- Primeros pasos y acompañamiento por horas ---- */
+.radar-case.is-small { border-color: var(--teal-pulse); background: linear-gradient(160deg, rgba(151, 252, 215, .08), transparent 60%), var(--card); }
+.radar-case-effort { margin: 0; font-size: 14px; color: var(--fg); padding: 8px 10px; border-radius: 8px; background: var(--inset); }
+.radar-case strong { color: var(--mint-glow); font-weight: 500; }
+.radar-mentoring { padding: clamp(22px, 3vw, 32px); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 28px; border-color: var(--mint-glow); box-shadow: var(--glow); }
+@media (max-width: 860px) { .radar-mentoring { grid-template-columns: 1fr; } }
+.radar-mentoring h2 { font-size: clamp(1.5rem, 3vw, 2.1rem) !important; margin: 6px 0 8px !important; }
+.radar-mentoring h3 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 400; font-size: 1.1rem; }
+.radar-mentoring-promise { margin: 0 0 6px; font-size: 1.1rem; color: var(--fg); }
+.radar-mentoring-list { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.radar-mentoring-list li { position: relative; padding-left: 28px; color: var(--fg); }
+.radar-mentoring-list li::before { content: "✓"; position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; background: var(--mint-glow); color: var(--midnight-tide); }
+.radar-mentoring-side { display: grid; gap: 10px; align-content: start; padding: 18px; border-radius: var(--r-card); background: var(--inset); }
+.radar-mentoring-course { margin: 0; display: grid; gap: 2px; color: var(--fg); font-size: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.case-dfy .case-answer { font-family: var(--f-body); font-size: 1rem; line-height: 1.45; }
+.flyer-plan { margin: 0 12mm; padding: 4mm 5mm; border-radius: 3mm; background: #0a3b2b; color: #fff; display: flex; justify-content: space-between; align-items: center; gap: 6mm; }
+.flyer-plan div { display: grid; gap: 1mm; }
+.flyer-plan span { font-size: 8.5pt; letter-spacing: .06em; text-transform: uppercase; color: #c8a24a; }
+.flyer-plan strong { font-family: var(--f-display); font-size: 13pt; color: #fff; }
+.flyer-plan p { margin: 0; font-size: 9.5pt; color: #b9dccb; max-width: 95mm; }
+.flyer-plan > p { text-align: right; max-width: 55mm; }

@@ -2,7 +2,8 @@ import type { CaseItem, IndustryId, LevelId, LinkId, RadarGoalId } from "@/lib/r
 
 /* ============================================================================
    Biblioteca de casos hipotéticos: los 60 de la sección 6 del esquema, más
-   4 de minería y construcción, que se agregaron en esta rama.
+   4 de minería y construcción y 5 primeros pasos para microempresas en
+   papel, que se agregaron en esta rama.
    Los objetivos de cada caso (goals) no estaban en el esquema: se asignaron
    aquí para poder aplicar el +10 por objetivo coincidente.
    ========================================================================== */
@@ -31,7 +32,46 @@ function byIndustry(industry: IndustryId, basic: Row, advanced: Row): CaseItem[]
   }));
 }
 
+/**
+ * Primeros pasos para microempresas en papel, cuyos dueños muchas veces no
+ * quieren aprender una herramienta sino que se la dejen funcionando.
+ * Cada uno dice qué deja montado el equipo y qué le toca al dueño.
+ */
+const SMALL_FIRST_STEPS: CaseItem[] = [
+  {
+    id: "m-cuaderno", title: "Del cuaderno al celular", kind: "transversal", appliesTo: "todas", levels: ["alto"], forSmall: true,
+    technique: "Hoja en el celular con botones grandes · formulario de 3 campos", indicator: "Días para cerrar el mes", better: "menor", goals: ["automatizar", "nose"],
+    doneForYou: "Pasamos el cuaderno actual a una hoja en la nube y le dejamos en el celular un formulario de tres campos con letra grande.",
+    ownerEffort: "Anotar cada venta en el celular en vez del cuaderno: menos de un minuto por venta.",
+  },
+  {
+    id: "m-voz", title: "Anotar hablando: notas de voz que se vuelven tabla", kind: "transversal", appliesTo: "todas", levels: ["alto"], forSmall: true,
+    technique: "Notas de voz de WhatsApp · transcripción con IA · tabla automática", indicator: "Minutos al día anotando", better: "menor", goals: ["automatizar"],
+    doneForYou: "Configuramos un número de WhatsApp al que se le dicta el pedido o la venta; la IA lo transcribe y lo guarda en la tabla.",
+    ownerEffort: "Mandar una nota de voz, como ya lo hace con su familia.",
+  },
+  {
+    id: "m-whatsapp", title: "WhatsApp Business ordenado", kind: "transversal", appliesTo: "todas", levels: ["alto"], forSmall: true,
+    technique: "Catálogo · etiquetas de clientes · respuestas rápidas", indicator: "Pedidos que se pierden en el chat", better: "menor", goals: ["vender", "clientes"],
+    doneForYou: "Le montamos el catálogo con fotos y precios, las etiquetas (nuevo, pedido, pagado, entregado) y las respuestas a las preguntas de siempre.",
+    ownerEffort: "Tocar una etiqueta cuando cambia el estado del pedido.",
+  },
+  {
+    id: "m-caja", title: "La caja del día en cinco minutos", kind: "transversal", appliesTo: "todas", levels: ["alto"], forSmall: true,
+    technique: "Registro diario de ventas y gastos · resumen semanal automático", indicator: "Diferencia de caja sin explicar", better: "menor", goals: ["costos"],
+    doneForYou: "Dejamos una hoja de caja que suma sola y le envía cada lunes por WhatsApp un resumen: cuánto entró, cuánto salió y qué productos se vendieron más.",
+    ownerEffort: "Cerrar la caja en el celular al final del día.",
+  },
+  {
+    id: "m-facturas", title: "Facturas en foto que se ordenan solas", kind: "transversal", appliesTo: "todas", levels: ["alto"], forSmall: true,
+    technique: "Foto de la factura · lectura con IA · carpeta en la nube por mes", indicator: "Facturas de proveedores perdidas", better: "menor", goals: ["costos", "automatizar"],
+    doneForYou: "Configuramos una carpeta en la nube y un número de WhatsApp: cada foto de factura se guarda por mes con el valor y el proveedor ya leídos.",
+    ownerEffort: "Tomarle foto a la factura cuando llega el proveedor.",
+  },
+];
+
 export const CASES: CaseItem[] = [
+  ...SMALL_FIRST_STEPS,
   ...transversal("alto", [
     ["Información dispersa en papel, chats y memoria", "Modelo de datos relacional · formularios digitales · hoja maestra", "Días para cerrar el mes", "menor", ["automatizar"]],
     ["Duplicados y errores de digitación", "Limpieza de datos · llaves únicas · validación en captura", "Registros con errores", "menor", ["costos", "automatizar"]],

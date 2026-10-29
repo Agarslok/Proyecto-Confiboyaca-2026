@@ -7,6 +7,7 @@ import {
   SIZES,
   industryById,
 } from "@/lib/radar/bank";
+import type { PlanId } from "@/lib/radar/bank";
 import { CASES } from "@/lib/radar/cases";
 import { centralProblem } from "@/lib/radar/solution";
 import type {
@@ -117,12 +118,27 @@ function levelFor(index: number): LevelId {
   return "bajo";
 }
 
-export function pickCases(level: LevelId, answers: Pick<RadarAnswers, "industry" | "activity" | "goals">, count = 6): CaseItem[] {
+/** Microempresa o pequeña que registra en papel o en Excel suelto: necesita primeros pasos muy sencillos. */
+export function needsFirstSteps(answers: Pick<RadarAnswers, "size" | "choices">): boolean {
+  const small = answers.size === "micro" || answers.size === "pequena";
+  const record = answers.choices["datos-registro"];
+  return small && (record === "A" || record === "B" || record === "E");
+}
+
+/**
+ * Prioridad: industria +100, eslabón +50, transversal 0, +10 por objetivo.
+ * Si la empresa necesita primeros pasos, esos casos suben +150 y se muestran
+ * hasta 3, antes que los demás; si no, no se muestran.
+ */
+export function pickCases(level: LevelId, answers: Pick<RadarAnswers, "industry" | "activity" | "goals" | "size" | "choices">, count = 6): CaseItem[] {
   const { industry, activity } = activityOf(answers);
+  const firstSteps = needsFirstSteps(answers);
+  let small = 0;
   return CASES.map((item, order) => {
     let score = -1;
     if (item.levels.includes(level)) {
-      if (item.kind === "transversal") score = 0;
+      if (item.forSmall) score = firstSteps ? 150 : -1;
+      else if (item.kind === "transversal") score = 0;
       if (item.kind === "eslabon" && item.appliesTo === activity?.link) score = 50;
       if (item.kind === "industria" && item.appliesTo === industry?.id) score = 100;
     }
@@ -131,6 +147,7 @@ export function pickCases(level: LevelId, answers: Pick<RadarAnswers, "industry"
   })
     .filter((entry) => entry.score >= 0)
     .sort((a, b) => b.score - a.score || a.order - b.order)
+    .filter((entry) => !entry.item.forSmall || ++small <= 3)
     .slice(0, count)
     .map((entry) => entry.item);
 }
@@ -222,6 +239,10 @@ export function buildRadarResult(answers: RadarAnswers): RadarResult {
     questionsAnswered: score.scoredCount,
     unsure: score.unsure,
     central: centralProblem(score.findings, score.dimensions, answers.companyName, answers.industry),
+    ...(() => {
+      const { plan, next } = planFor(score.level, answers);
+      return { plan, nextPlan: next, firstSteps: needsFirstSteps(answers) };
+    })(),
   };
 }
 
@@ -238,4 +259,12 @@ export function coreQuestions(industryId?: Industry["id"], activityId?: string):
   const { industry, activity } = activityOf({ industry: industryId ?? "", activity: activityId ?? "" });
   const vocab = industry ? vocabFor(industry, activity) : { productos: "productos", clientes: "clientes", punto: "sede" };
   return CORE_QUESTIONS.map((question) => withVocab(question, vocab));
+}
+
+/** Plan de acompañamiento según el nivel y el tamaño; el siguiente queda como paso posterior. */
+export function planFor(level: LevelId, answers: Pick<RadarAnswers, "size" | "choices">): { plan: PlanId; next: PlanId | null } {
+  if (level === "bajo") return { plan: "crecer", next: null };
+  if (level === "moderado") return { plan: "orden", next: "crecer" };
+  const small = answers.size === "micro" || answers.size === "pequena";
+  return small || needsFirstSteps(answers) ? { plan: "arranque", next: "orden" } : { plan: "orden", next: "crecer" };
 }

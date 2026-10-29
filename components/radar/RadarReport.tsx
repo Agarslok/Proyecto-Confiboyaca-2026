@@ -8,7 +8,7 @@ import { RadarChart } from "@/components/radar/RadarChart";
 import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
 import { useSite } from "@/components/site/useSite";
 import { Button } from "@/components/ui/Button";
-import { COURSES, DIMENSIONS, LEVELS, ROUTES } from "@/lib/radar/bank";
+import { COURSES, DIMENSIONS, LEVELS, PLANS, ROUTES } from "@/lib/radar/bank";
 import { patchRadar, radarOf } from "@/lib/radar/store";
 import type { Finding, RadarResult } from "@/lib/radar/types";
 import type { SiteConfig } from "@/types/site";
@@ -61,7 +61,10 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
   const [allFindings, setAllFindings] = useState(false);
   const findings = allFindings ? result.findings : result.findings.slice(0, 5);
   const critical = result.findings.filter((finding) => finding.severity === "critico").length;
-  const courses = COURSES.filter((course) => course.levels.includes(result.level));
+  const plan = PLANS[result.plan];
+  const nextPlan = result.nextPlan ? PLANS[result.nextPlan] : null;
+  /* El curso de 12 h de IA generativa queda como opción, no como la solución. */
+  const course = COURSES.find((item) => item.title.startsWith("IA generativa")) ?? null;
 
   return (
     <article className="wrap radar-report">
@@ -170,23 +173,47 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
 
       <section aria-labelledby="radar-cases-title">
         <h2 id="radar-cases-title" className="radar-section-title">Casos para empezar</h2>
-        <p className="fine">Seis casos de su nivel, primero los de su industria y su eslabón, priorizados por sus objetivos. Abra cada uno para ver cómo tiene hoy el dato y cómo debería tenerlo.</p>
+        <p className="fine">
+          {result.firstSteps
+            ? "Primero, pasos muy sencillos que dejamos montados en su celular; después, los de su industria. Abra cada uno para ver cómo lo tiene hoy y cómo quedaría."
+            : "Seis casos de su nivel, primero los de su industria y su eslabón, priorizados por sus objetivos. Abra cada uno para ver cómo tiene hoy el dato y cómo debería tenerlo."}
+        </p>
         <div className="radar-cases">
           {result.cases.map((item) => (
-            <Link key={item.id} href={`/caso/${item.id}`} className="card radar-case">
-              <p className="radar-case-kind">{KIND[item.kind]}</p>
+            <Link key={item.id} href={`/caso/${item.id}`} className={item.forSmall ? "card radar-case is-small" : "card radar-case"}>
+              <p className="radar-case-kind">{item.forSmall ? "Primer paso · se lo dejamos montado" : KIND[item.kind]}</p>
               <h3>{item.title}</h3>
-              <p className="radar-case-tech">{item.technique}</p>
-              <CaseSpark item={item} />
+              {item.forSmall ? (
+                <>
+                  <p className="radar-case-tech"><strong>Nosotros:</strong> {item.doneForYou}</p>
+                  <p className="radar-case-effort"><strong>Usted:</strong> {item.ownerEffort}</p>
+                </>
+              ) : (
+                <>
+                  <p className="radar-case-tech">{item.technique}</p>
+                  <CaseSpark item={item} />
+                </>
+              )}
               <span className="radar-case-more">Ver hoy vs. cómo debería ser →</span>
             </Link>
           ))}
         </div>
       </section>
 
-      <section className="radar-plan">
-        <div className="card">
-          <h2>Ruta de 12 meses</h2>
+      <section className="card radar-mentoring" aria-labelledby="radar-mentoring-title">
+        <div>
+          <p className="micro accent">Acompañamiento por horas</p>
+          <h2 id="radar-mentoring-title">{plan.name}: {plan.hours} horas</h2>
+          <p className="radar-mentoring-promise">{plan.promise}</p>
+          <p className="fine">{plan.format}. Trabajamos dentro del sistema de su empresa y lo dejamos funcionando.</p>
+          <ul className="radar-mentoring-list">
+            {plan.includes.map((line, index) => (
+              <li key={line}>{index === 1 && result.central ? `Montamos ${result.central.name.toLowerCase()} y los primeros pasos` : line}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="radar-mentoring-side">
+          <h3>Ruta de 12 meses</h3>
           <ol className="radar-route">
             {ROUTES[result.level].map((stage) => (
               <li key={stage.title}>
@@ -195,17 +222,13 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
               </li>
             ))}
           </ol>
-        </div>
-        <div className="card">
-          <h2>Formación recomendada</h2>
-          <ul className="radar-courses">
-            {courses.map((course) => (
-              <li key={course.title}>
-                <span>{course.title}</span>
-                <span className="fine">{course.hours} h · {course.mode}</span>
-              </li>
-            ))}
-          </ul>
+          {nextPlan ? <p className="fine">Después: {nextPlan.name} ({nextPlan.hours} h).</p> : null}
+          {course ? (
+            <p className="radar-mentoring-course">
+              <span className="fine">Opcional, si quiere que su equipo aprenda:</span>
+              {course.title} · {course.hours} h · {course.mode.toLowerCase()}
+            </p>
+          ) : null}
         </div>
       </section>
 

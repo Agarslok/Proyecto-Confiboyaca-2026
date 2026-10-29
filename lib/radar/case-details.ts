@@ -21,6 +21,46 @@ interface Authored {
 }
 
 const AUTHORED: Record<string, Authored> = {
+  "m-cuaderno": {
+    question: "datos-registro",
+    notebook: ["Lunes: 40 {i1}, fiado {c1}", "martes igual + 12 {i2}", "¿cuánto vendí la semana pasada? ni idea"],
+    columns: ["Fecha", "Producto", "Cantidad", "Cliente"],
+    rows: [["Hoy 7:10", "{i1}", "40", "{c1}"], ["Hoy 8:25", "{i2}", "12", "{c2}"], ["Hoy 9:02", "{i3}", "2", "Mostrador"]],
+    steps: ["Pasamos a la hoja lo que hoy está en el cuaderno.", "Le dejamos en el celular un formulario de tres campos con letra grande.", "Practicamos juntos con sus ventas del día.", "A la semana revisamos con usted el primer resumen."],
+    benefit: "El cuaderno sigue existiendo si lo quiere, pero las ventas ya quedan sumadas solas y por día.",
+  },
+  "m-voz": {
+    question: "datos-registro",
+    notebook: ["(escribir cansa; muchas ventas no se anotan)", "pedidos por teléfono que se olvidan"],
+    columns: ["Hora", "Lo que dijo", "Producto", "Cantidad", "Cliente"],
+    rows: [["7:40", "«Doña Marta, veinte {i1} para mañana»", "{i1}", "20", "Marta Rojas"], ["9:15", "«Vendí dos {i3} a {c1}»", "{i3}", "2", "{c1}"]],
+    steps: ["Configuramos un número de WhatsApp que recibe notas de voz.", "La IA las transcribe y llena la tabla.", "Usted revisa una vez al día que todo esté bien.", "Ajustamos las palabras de sus productos para que lo entienda mejor."],
+    benefit: "Registrar una venta toma lo que dura una nota de voz, sin escribir.",
+  },
+  "m-whatsapp": {
+    question: "servicio-1",
+    notebook: ["«¿tiene {i1}?» → respondido tarde", "pedido de {c2} perdido entre 40 chats", "fotos de productos repetidas a cada cliente"],
+    columns: ["Cliente", "Etiqueta", "Pedido", "Estado"],
+    rows: [["{c1}", "Cliente frecuente", "30 {i1}", "Pagado"], ["{c2}", "Nuevo", "5 {i2}", "Pendiente de pago"], ["Marta Rojas", "Pedido", "1 {i3}", "Entregado"]],
+    steps: ["Pasamos su WhatsApp a WhatsApp Business, con el mismo número.", "Montamos el catálogo con fotos y precios.", "Creamos las etiquetas y las respuestas rápidas.", "Le mostramos cómo cambiar una etiqueta con un toque."],
+    benefit: "Ningún pedido se pierde en el chat y se ve de un vistazo qué falta por cobrar o entregar.",
+  },
+  "m-caja": {
+    question: "analitica-decisiones",
+    notebook: ["entró: 380.000 (?)", "pagué gas y harina", "no cuadra con lo de la caja"],
+    columns: ["Fecha", "Ventas", "Gastos", "Saldo del día"],
+    rows: [["Lunes", "$420.000", "$180.000", "$240.000"], ["Martes", "$395.000", "$95.000", "$300.000"], ["Miércoles", "$510.000", "$260.000", "$250.000"]],
+    steps: ["Dejamos una hoja de caja en su celular: ventas y gastos del día.", "La hoja suma sola y calcula el saldo.", "Cada lunes le llega un resumen por WhatsApp.", "Revisamos con usted el primer mes."],
+    benefit: "Sabe cada semana cuánto entró, cuánto salió y qué se vendió más, sin hacer cuentas.",
+  },
+  "m-facturas": {
+    question: "tec-proteccion",
+    notebook: ["facturas en una caja de zapatos", "la del proveedor de {i1} no aparece", "el contador las pide cada mes"],
+    columns: ["Fecha", "Proveedor", "Valor", "Foto"],
+    rows: [["03 oct", "Molinos del Valle", "$640.000", "factura-0310.jpg"], ["10 oct", "Lácteos El Valle", "$215.000", "factura-1010.jpg"], ["17 oct", "Gas Boyacá", "$98.000", "factura-1710.jpg"]],
+    steps: ["Configuramos un número de WhatsApp y una carpeta en la nube.", "Cada foto se guarda por mes, con el proveedor y el valor ya leídos.", "Le compartimos la carpeta a su contador.", "Revisamos que no falte ninguna al cierre del mes."],
+    benefit: "Las facturas no se pierden y el contador las tiene sin que usted se las lleve.",
+  },
   "t-alto-0": {
     question: "datos-registro",
     notebook: ["Lunes: vendí 40 {i1}, fiado {c1}", "pedido {c2} → pendiente?", "martes igual que ayer + 12 {i2}", "(el resto quedó en el WhatsApp)"],

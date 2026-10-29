@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { useSite } from "@/components/site/useSite";
-import { LEVELS, ROUTES } from "@/lib/radar/bank";
+import { LEVELS, PLANS, ROUTES } from "@/lib/radar/bank";
 import { radarOf } from "@/lib/radar/store";
 
 /* ============================================================================
@@ -80,6 +80,15 @@ export function RadarFlyer() {
             <h3>Casos para empezar</h3>
             <ul>{result.cases.slice(0, 3).map((item) => <li key={item.id}><strong>{item.title}.</strong> {item.technique}</li>)}</ul>
           </div>
+        </section>
+
+        <section className="flyer-plan">
+          <div>
+            <span>Acompañamiento recomendado</span>
+            <strong>{PLANS[result.plan].name} · {PLANS[result.plan].hours} horas</strong>
+            <p>{PLANS[result.plan].promise}</p>
+          </div>
+          <p>{PLANS[result.plan].format}</p>
         </section>
 
         <section className="flyer-route">
