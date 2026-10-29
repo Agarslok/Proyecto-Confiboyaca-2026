@@ -1,9 +1,11 @@
+import { PLAIN } from "@/lib/radar/case-language";
 import type { CaseItem, IndustryId, LevelId, LinkId, RadarGoalId } from "@/lib/radar/types";
 
 /* ============================================================================
    Biblioteca de casos hipotéticos: los 60 de la sección 6 del esquema, más
-   4 de minería y construcción y 5 primeros pasos para microempresas en
-   papel, que se agregaron en esta rama.
+   4 de minería y construcción, 5 primeros pasos para microempresas en
+   papel y 3 de operación diaria (inventario, fiados, proveedores), que se
+   agregaron en esta rama. Lo que ve el cliente está en case-language.ts.
    Los objetivos de cada caso (goals) no estaban en el esquema: se asignaron
    aquí para poder aplicar el +10 por objetivo coincidente.
    ========================================================================== */
@@ -70,8 +72,41 @@ const SMALL_FIRST_STEPS: CaseItem[] = [
   },
 ];
 
+/** La operación diaria de una pyme: lo que el dueño sí siente todos los días. */
+const EVERYDAY: CaseItem[] = [
+  {
+    id: "d-inventario", title: "Entradas y salidas del inventario", kind: "transversal", appliesTo: "todas", levels: ["alto", "moderado"], everyday: true,
+    technique: "Anotar lo que entra (compras) y lo que sale (ventas y consumo) para saber siempre cuánto hay.",
+    method: "Kardex simple · inventario mínimo-máximo", indicator: "Productos agotados por semana", better: "menor", goals: ["costos", "demanda"],
+    doneForYou: "Le dejamos una hoja de inventario que resta sola con cada venta, suma con cada compra y avisa cuando algo llega al mínimo.",
+    ownerEffort: "Registrar las compras cuando llega el proveedor.",
+  },
+  {
+    id: "d-fiados", title: "Fiados y cuentas por cobrar", kind: "transversal", appliesTo: "todas", levels: ["alto", "moderado"], everyday: true,
+    technique: "Una lista de quién debe, cuánto y desde cuándo, con un recordatorio amable por WhatsApp.",
+    method: "Cartera por edades · recordatorios automáticos", indicator: "Dinero por cobrar con más de 30 días", better: "menor", goals: ["costos", "clientes"],
+    doneForYou: "Pasamos el cuaderno de fiados a una lista que suma sola por cliente y le recuerda a quién cobrarle cada semana.",
+    ownerEffort: "Anotar el fiado y marcarlo como pagado cuando le paguen.",
+  },
+  {
+    id: "d-proveedores", title: "Compras a proveedores sin sorpresas", kind: "transversal", appliesTo: "todas", levels: ["alto", "moderado"], everyday: true,
+    technique: "Comparar los precios de cada proveedor y llevar lo que se les debe y cuándo se paga.",
+    method: "Registro de compras · comparativo de precios · calendario de pagos", indicator: "Costo de insumos sobre las ventas", better: "menor", goals: ["costos"],
+    doneForYou: "Organizamos sus compras por proveedor, con el precio de cada insumo y las fechas de pago, y le avisamos cuando un precio sube.",
+    ownerEffort: "Tomarle foto a la factura o anotar la compra.",
+  },
+];
+
+/** Cada caso del esquema, con su descripción en palabras del dueño y la técnica como nota. */
+function plainLanguage(item: CaseItem): CaseItem {
+  const plain = PLAIN[item.title];
+  if (!plain) return item;
+  return { ...item, title: plain.title ?? item.title, technique: plain.plain, method: item.technique, minSize: plain.minSize };
+}
+
 export const CASES: CaseItem[] = [
   ...SMALL_FIRST_STEPS,
+  ...EVERYDAY,
   ...transversal("alto", [
     ["Información dispersa en papel, chats y memoria", "Modelo de datos relacional · formularios digitales · hoja maestra", "Días para cerrar el mes", "menor", ["automatizar"]],
     ["Duplicados y errores de digitación", "Limpieza de datos · llaves únicas · validación en captura", "Registros con errores", "menor", ["costos", "automatizar"]],
@@ -177,4 +212,4 @@ export const CASES: CaseItem[] = [
   ...byIndustry("turismo",
     ["Comisiones sin control por canal", "Tablero de ocupación · ADR · RevPAR", "Comisiones a intermediarios", "menor", ["costos", "vender"]],
     ["Tarifas dinámicas (revenue management)", "Pronóstico de ocupación · optimización tarifaria", "RevPAR", "mayor", ["vender", "demanda"]]),
-];
+].map(plainLanguage);

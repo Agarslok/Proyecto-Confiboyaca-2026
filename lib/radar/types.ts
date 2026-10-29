@@ -125,6 +125,12 @@ export interface CaseItem {
   doneForYou?: string;
   /** Lo único que tiene que hacer el dueño. */
   ownerEffort?: string;
+  /** Técnica de ciencia de datos, solo como nota para el consultor. */
+  method?: string;
+  /** Tamaño mínimo de empresa para que el caso tenga sentido. */
+  minSize?: SizeId;
+  /** Operación del día a día (inventario, fiados, proveedores): sube para pymes. */
+  everyday?: boolean;
 }
 
 export interface DimensionScore {

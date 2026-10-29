@@ -116,3 +116,12 @@ Muchos dueños de microempresas no quieren aprender una herramienta: quieren que
 
 - «Cómo funciona»: la tarjeta de la red se centra en la pantalla, los pasos son más cortos y los interruptores de «Pruébalo tú» están dentro de la tarjeta, que se queda fija mientras se usa.
 - «Lo que se puede construir»: en lugar de tarjetas con texto, una vitrina donde se elige un negocio (panadería, hotel, mina) y un problema, y se ve el «antes» (cuaderno) y el «después» funcionando.
+
+## Casos en el idioma de la pyme
+
+Los casos del esquema venían descritos con su técnica (XGBoost, k-means, Apriori, NDVI…). A una panadería eso no le dice nada.
+
+- `lib/radar/case-language.ts`: cada caso tiene una descripción de «qué se hace» en palabras del dueño. La técnica queda como «nota para el consultor» en el detalle del caso. Una prueba verifica que ningún texto que ve el cliente tenga jerga técnica.
+- 14 casos que solo tienen sentido con escala (sensores, visión artificial, modelos de abandono…) tienen un tamaño mínimo y no se muestran a micro ni pequeñas empresas.
+- 3 casos nuevos de operación diaria: entradas y salidas del inventario, fiados y cuentas por cobrar, compras a proveedores. Para micro y pequeñas pesan más (+60) que los del eslabón (+50).
+- Los niveles y la ruta de 12 meses también se reescribieron: por ejemplo, «Dejar de anotar en papel → Medir ventas, inventario y caja → Decidir con esos números».

@@ -573,26 +573,26 @@ export const COURSES: { title: string; hours: number; mode: string; levels: ("al
 
 export const ROUTES: Record<"alto" | "moderado" | "bajo", { when: string; title: string }[]> = {
   alto: [
-    { when: "Mes 1 a 3", title: "Construir la base" },
-    { when: "Mes 4 a 6", title: "Medir lo esencial" },
-    { when: "Mes 7 a 12", title: "Primer análisis" },
+    { when: "Mes 1 a 3", title: "Dejar de anotar en papel" },
+    { when: "Mes 4 a 6", title: "Medir lo esencial: ventas, inventario y caja" },
+    { when: "Mes 7 a 12", title: "Decidir con esos números" },
   ],
   moderado: [
-    { when: "Mes 1 a 2", title: "Integrar fuentes" },
-    { when: "Mes 3 a 5", title: "Tableros que se usan" },
-    { when: "Mes 6 a 12", title: "Primer modelo" },
+    { when: "Mes 1 a 2", title: "Juntar la información en un solo lugar" },
+    { when: "Mes 3 a 5", title: "Ver los números del negocio cada semana" },
+    { when: "Mes 6 a 12", title: "Primer pronóstico de ventas" },
   ],
   bajo: [
-    { when: "Mes 1 a 2", title: "Priorizar casos de IA" },
-    { when: "Mes 3 a 6", title: "Modelos en producción" },
-    { when: "Mes 7 a 12", title: "Escalar y gobernar" },
+    { when: "Mes 1 a 2", title: "Elegir el uso de IA que más ahorra" },
+    { when: "Mes 3 a 6", title: "La IA funcionando en el día a día" },
+    { when: "Mes 7 a 12", title: "Extenderlo a otras áreas, con reglas claras" },
   ],
 };
 
 export const LEVELS: Record<"alto" | "moderado" | "bajo", { label: string; icon: string; reading: string; focus: string }> = {
-  alto: { label: "Riesgo alto", icon: "●", reading: "Sin bases de datos para decidir", focus: "Fundamentos y construcción de la base de datos" },
-  moderado: { label: "Riesgo moderado", icon: "◆", reading: "En transición analítica", focus: "Integración, tableros e indicadores" },
-  bajo: { label: "Riesgo bajo", icon: "▲", reading: "Lista para escalar con IA", focus: "Modelos predictivos e IA aplicada" },
+  alto: { label: "Riesgo alto", icon: "●", reading: "Todavía sin datos para decidir", focus: "Ordenar lo básico: registrar todo y no perder la información" },
+  moderado: { label: "Riesgo moderado", icon: "◆", reading: "Con datos, pero dispersos", focus: "Juntar la información y ver los números del negocio cada semana" },
+  bajo: { label: "Riesgo bajo", icon: "▲", reading: "Lista para usar IA", focus: "Pronósticos e IA en el día a día" },
 };
 
 /** Ejemplos para tablas y demostraciones: 3 productos o servicios y 2 clientes por industria. */

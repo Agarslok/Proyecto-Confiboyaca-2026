@@ -22,10 +22,10 @@ function answerAll(base: Partial<RadarAnswers>, pick: OptionKey | ((id: string) 
 }
 
 describe("banco del radar", () => {
-  it("tiene 12 industrias × 4 actividades y 69 casos", () => {
+  it("tiene 12 industrias × 4 actividades y 72 casos", () => {
     assert.equal(INDUSTRIES.length, 12);
     assert.ok(INDUSTRIES.every((industry) => industry.activities.length === 4));
-    assert.equal(CASES.length, 69);
+    assert.equal(CASES.length, 72);
   });
 
   it("no pasa de 18 pantallas en ningún nicho y nunca baja de 15", () => {
@@ -162,5 +162,33 @@ describe("nichos, casos en detalle y problema central", () => {
     assert.ok(detail.rows.some((row) => row.includes("Almojábana")));
     const generic = caseDetail(CASES.find((entry) => entry.kind === "eslabon")!, radar);
     assert.ok(generic.steps.length > 0 && generic.rows.length === 6);
+  });
+});
+
+describe("casos pensados para pymes", () => {
+  const JARGON = /xgboost|k-means|clustering|apriori|ndvi|gradient|regresi[oó]n|rag|iot|redes neuronales|machine learning|vrp|or-tools|prophet|etl|s&op/i;
+
+  it("ningún caso le habla al cliente con jerga técnica; la técnica queda para el consultor", () => {
+    for (const item of CASES) {
+      assert.ok(!JARGON.test(item.technique), `${item.title}: ${item.technique}`);
+      assert.ok(!JARGON.test(item.title), item.title);
+    }
+    assert.ok(CASES.some((item) => item.method && JARGON.test(item.method)));
+  });
+
+  it("a una microempresa no le muestra casos que solo sirven con escala", () => {
+    for (const level of ["alto", "moderado", "bajo"] as const) {
+      const cases = pickCases(level, { industry: "alimentos", activity: "alimentos-produccion", goals: [], size: "micro", choices: { "datos-registro": "C" } });
+      assert.ok(cases.every((item) => !item.minSize), `${level}: ${cases.map((item) => item.title).join(", ")}`);
+    }
+    const large = pickCases("bajo", { industry: "manufactura", activity: "manufactura-planta", goals: [], size: "grande", choices: {} });
+    assert.ok(large.some((item) => item.minSize));
+  });
+
+  it("a una pyme le prioriza la operación diaria: inventario, fiados, proveedores", () => {
+    const cases = pickCases("moderado", { industry: "comercio", activity: "comercio-fisica", goals: ["costos"], size: "pequena", choices: { "datos-registro": "C" } });
+    assert.ok(cases.filter((item) => item.everyday).length >= 2);
+    const big = pickCases("moderado", { industry: "comercio", activity: "comercio-fisica", goals: [], size: "grande", choices: {} });
+    assert.ok(big.filter((item) => item.everyday).length < cases.filter((item) => item.everyday).length);
   });
 });

@@ -266,7 +266,12 @@ export function caseDetail(item: CaseItem, answers: RadarAnswers): CaseDetail {
       const ok = item.better === "menor" ? value <= target : value >= target;
       return [month, value.toFixed(0), target.toFixed(0), ok ? "Sí" : "No"];
     }),
-    steps: item.technique.split(" · ").map((technique, index) => `${index + 1 === 1 ? "Empezar con" : "Sumar"} ${technique.charAt(0).toLowerCase()}${technique.slice(1)}.`),
+    steps: [
+      "Revisamos con usted cómo lo hace hoy, sin cambiarle nada.",
+      `Lo dejamos montado: ${item.technique.charAt(0).toLowerCase()}${item.technique.slice(1)}`,
+      "Le mostramos cómo usarlo con sus propios datos y lo ajustamos.",
+      `Medimos cada mes ${item.indicator.toLowerCase()} para ver si mejora.`,
+    ],
     benefit: `El indicador «${item.indicator.toLowerCase()}» se mide cada mes contra una meta (${item.better} es mejor).`,
   };
 }

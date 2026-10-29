@@ -35,6 +35,12 @@ export function CaseDetailView({ id }: { id: string }) {
         <p className="micro accent">{KIND[item.kind]}{state.config ? ` · ${state.config.companyName}` : ""}</p>
         <h1 className="display niche-title">{item.title}</h1>
         <p className="lead sm">{item.technique}</p>
+        {item.method ? (
+          <details className="radar-note">
+            <summary>Nota para el consultor</summary>
+            <p>Técnica: {item.method}.</p>
+          </details>
+        ) : null}
         {level ? (
           <p className={`radar-level is-${result!.level}`}>
             <span aria-hidden="true">{level.icon}</span> Caso para {level.label.toLowerCase()}

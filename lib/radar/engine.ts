@@ -9,6 +9,7 @@ import {
 } from "@/lib/radar/bank";
 import type { PlanId } from "@/lib/radar/bank";
 import { CASES } from "@/lib/radar/cases";
+import { fitsSize } from "@/lib/radar/case-language";
 import { centralProblem } from "@/lib/radar/solution";
 import type {
   Activity,
@@ -126,18 +127,23 @@ export function needsFirstSteps(answers: Pick<RadarAnswers, "size" | "choices">)
 }
 
 /**
- * Prioridad: industria +100, eslabón +50, transversal 0, +10 por objetivo.
+ * Prioridad: industria +100, operación diaria +60 si es micro o pequeña,
+ * eslabón +50, transversal 0, +10 por objetivo. Se excluyen los casos que
+ * requieren una empresa más grande (minSize).
  * Si la empresa necesita primeros pasos, esos casos suben +150 y se muestran
  * hasta 3, antes que los demás; si no, no se muestran.
  */
 export function pickCases(level: LevelId, answers: Pick<RadarAnswers, "industry" | "activity" | "goals" | "size" | "choices">, count = 6): CaseItem[] {
   const { industry, activity } = activityOf(answers);
   const firstSteps = needsFirstSteps(answers);
+  const sme = answers.size === "micro" || answers.size === "pequena";
   let small = 0;
   return CASES.map((item, order) => {
     let score = -1;
-    if (item.levels.includes(level)) {
+    if (item.levels.includes(level) && fitsSize(item.minSize, answers.size)) {
       if (item.forSmall) score = firstSteps ? 150 : -1;
+      /* Para una pyme, la operación diaria pesa más que un caso del eslabón. */
+      else if (item.everyday) score = sme ? 60 : 0;
       else if (item.kind === "transversal") score = 0;
       if (item.kind === "eslabon" && item.appliesTo === activity?.link) score = 50;
       if (item.kind === "industria" && item.appliesTo === industry?.id) score = 100;
