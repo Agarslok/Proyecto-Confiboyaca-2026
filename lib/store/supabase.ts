@@ -53,7 +53,9 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
     if (!response.ok) {
       /* Solo código y mensaje: el «details» de Postgres puede traer la fila con datos personales. */
       const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string; hint?: string };
-      throw new SupabaseError(`Supabase ${response.status}: ${[body.code, body.message, body.hint].filter(Boolean).join(" · ").slice(0, 300)}`);
+      /* Si la llave es rechazada, solo su formato (prefijo de 10 caracteres y largo) para diagnosticar. */
+      const keyHint = response.status === 401 ? ` [llave recibida: «${key.slice(0, 10)}…», ${key.length} caracteres]` : "";
+      throw new SupabaseError(`Supabase ${response.status}: ${[body.code, body.message, body.hint].filter(Boolean).join(" · ").slice(0, 300)}${keyHint}`);
     }
     return response;
   }
