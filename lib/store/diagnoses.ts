@@ -29,6 +29,13 @@ async function open(): Promise<DiagnosisStore> {
     const url = process.env.SUPABASE_URL?.trim().replace(/^["']|["']$/g, "");
     const key = process.env.SUPABASE_SECRET_KEY?.trim().replace(/^["']|["']$/g, "");
     if (!url || !key) throw new StoreNotConfiguredError("Faltan SUPABASE_URL y SUPABASE_SECRET_KEY para RADAR_STORE=supabase.");
+    /* Supabase muestra la llave enmascarada con «•»: si se copia así, no es la llave. */
+    if (/[^!-~]/.test(key)) {
+      throw new StoreNotConfiguredError("SUPABASE_SECRET_KEY tiene caracteres no válidos (¿se copió enmascarada con «•»?). Muéstrela con el ojo en Supabase y cópiela completa.");
+    }
+    if (!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url)) {
+      throw new StoreNotConfiguredError("SUPABASE_URL debe ser la Project URL de Supabase, como https://xxxx.supabase.co.");
+    }
     return createSupabaseStore(url, key);
   }
   if (kind !== "sqlite") throw new StoreNotConfiguredError(`RADAR_STORE no reconocido: «${kind}». Use sqlite o supabase.`);
