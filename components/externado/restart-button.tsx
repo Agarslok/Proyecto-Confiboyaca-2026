@@ -27,7 +27,7 @@ export function RestartButton({
       </button>
       {open ? (
         <div className="restart-pop" role="dialog" aria-label="Confirmar reinicio">
-          <p>¿Empezar de nuevo? Se borrarán las respuestas actuales.</p>
+          <p>¿Empezar una encuesta nueva, para otra empresa? Se borran las respuestas de este navegador. Los diagnósticos ya guardados siguen en el panel de consultores.</p>
           <div className="row">
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
               Cancelar

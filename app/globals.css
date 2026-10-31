@@ -4,6 +4,8 @@
 @import "./styles/experiences.css";
 @import "./styles/pitch-deck.css";
 @import "./styles/avatar-dock.css";
+@import "./styles/radar.css";
+@import "./styles/home.css";
 
 /* Vista previa de la página generada (perfiles cálido / sobrio) */
 .generated {

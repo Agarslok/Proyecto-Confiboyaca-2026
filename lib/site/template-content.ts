@@ -6,6 +6,10 @@ export interface TemplateCard {
   location: string;
   price: string;
   featured?: boolean;
+  /** Opcionales que algunas plantillas leen (la de tienda: imagen y precio anterior). */
+  image?: string;
+  oldPrice?: string;
+  description?: string;
 }
 
 export interface TemplateCopy {

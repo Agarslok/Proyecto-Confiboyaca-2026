@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts"
+    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts tests/radar.test.ts tests/storage.test.ts tests/supabase.test.ts"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.83.1",

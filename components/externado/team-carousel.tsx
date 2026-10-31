@@ -61,8 +61,11 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
+  /* Pausa elegida por el usuario (botón o flechas); la de hover es aparte. */
+  const [userPaused, setUserPaused] = useState(false);
+  const glideRef = useRef(0);
 
-  const paused = cardHovered || scrubbing;
+  const paused = cardHovered || scrubbing || userPaused;
   const loop = [...members, ...members];
   const marqueeOn = !reduceMotion;
   const nameSegment = `${members.map((m) => m.displayName).join(" · ")} · `;
@@ -98,15 +101,33 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
     setCardHovered(cardHoverCountRef.current > 0);
   }
 
+  /* Mueve una tarjeta con una transición corta, en vez de saltar. */
   const nudge = useCallback(
     (direction: -1 | 1) => {
       const trackAnim = findMarqueeAnimation(trackRef.current, "teamMarquee");
-      const current = (trackAnim?.currentTime as number | null) ?? 0;
-      const stepMs = MARQUEE_MS / members.length;
-      setMarqueeTime(current + direction * stepMs);
+      const from = (trackAnim?.currentTime as number | null) ?? 0;
+      const to = from + direction * (MARQUEE_MS / members.length);
+      window.cancelAnimationFrame(glideRef.current);
+      if (reduceMotion) {
+        setMarqueeTime(to);
+        return;
+      }
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / 420);
+        const eased = 1 - (1 - t) ** 3;
+        setMarqueeTime(from + (to - from) * eased);
+        if (t < 1) glideRef.current = window.requestAnimationFrame(step);
+      };
+      glideRef.current = window.requestAnimationFrame(step);
     },
-    [members.length, setMarqueeTime],
+    [members.length, reduceMotion, setMarqueeTime],
   );
+
+  const move = (direction: -1 | 1) => {
+    setUserPaused(true);
+    nudge(direction);
+  };
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -239,11 +260,11 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      nudge(-1);
+      move(-1);
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      nudge(1);
+      move(1);
     }
   };
 
@@ -257,7 +278,7 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
   const ribbonMarqueeStyle = marqueeOn
     ? {
         animationDuration: `${MARQUEE_DURATION_S}s`,
-        animationPlayState: scrubbing ? ("paused" as const) : ("running" as const),
+        animationPlayState: scrubbing || userPaused ? ("paused" as const) : ("running" as const),
       }
     : undefined;
 
@@ -330,6 +351,21 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
           ))}
         </ul>
       </div>
+
+      {marqueeOn ? (
+        <div className="team-controls">
+          <button type="button" className="team-control" onClick={() => move(-1)} aria-label="Integrante anterior">‹</button>
+          <button
+            type="button"
+            className="team-control is-toggle"
+            onClick={() => setUserPaused((value) => !value)}
+            aria-pressed={userPaused}
+          >
+            {userPaused ? "▶ Reanudar" : "❚❚ Pausar"}
+          </button>
+          <button type="button" className="team-control" onClick={() => move(1)} aria-label="Integrante siguiente">›</button>
+        </div>
+      ) : null}
 
       {marqueeOn && isDesktop ? (
         <div

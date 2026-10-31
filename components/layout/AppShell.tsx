@@ -13,17 +13,8 @@ import { useSite } from "@/components/site/useSite";
 import { resetWalkthrough } from "@/lib/session/browser-session";
 import { INTRO_SEEN_KEY, resetSite } from "@/lib/session/site-session";
 
-const CONSULTORIA_HOME = "/consultoria";
-
-function skipsConsultoriaChrome(pathname: string): boolean {
-  return (
-    pathname === "/" ||
-    pathname.startsWith("/pitch") ||
-    pathname.startsWith("/stand") ||
-    pathname.startsWith("/sitio") ||
-    pathname.startsWith("/solucion")
-  );
-}
+/** Entrada del stand (Radar IA): misma landing que antes vivía en la raíz del radar. */
+const STAND_HOME = "/consultoria";
 
 const introListeners = new Set<() => void>();
 
@@ -44,8 +35,20 @@ function introIsPending(): boolean {
   }
 }
 
+function skipsAppChrome(pathname: string): boolean {
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/pitch") ||
+    pathname.startsWith("/stand") ||
+    pathname.startsWith("/sitio") ||
+    pathname.startsWith("/solucion") ||
+    pathname.startsWith("/flyer") ||
+    pathname.startsWith("/consultor")
+  );
+}
+
 function screenClass(pathname: string): string {
-  if (pathname === CONSULTORIA_HOME) return "welcome";
+  if (pathname === STAND_HOME || pathname === "/stand") return "welcome";
   if (pathname.startsWith("/diagnostico")) return "form";
   if (pathname.startsWith("/resultado")) return "results";
   if (pathname.startsWith("/preview")) return "demo";
@@ -55,14 +58,14 @@ function screenClass(pathname: string): string {
 export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const skipsChrome = skipsConsultoriaChrome(pathname);
-  const isConsultoriaHome = pathname === CONSULTORIA_HOME;
+  const skipsChrome = skipsAppChrome(pathname);
+  const isStandHome = pathname === STAND_HOME;
   const state = useSite();
   const shellRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLButtonElement>(null);
   const showIntro = useSyncExternalStore(subscribeIntro, introIsPending, () => false);
   const [activeSection, setActiveSection] = useState("");
-  const inFlow = !isConsultoriaHome;
+  const inFlow = !isStandHome;
 
   const finishIntro = useCallback(() => {
     try {
@@ -80,7 +83,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   }, [showIntro]);
 
   useEffect(() => {
-    if (!isConsultoriaHome || typeof IntersectionObserver === "undefined") return;
+    if (!isStandHome || typeof IntersectionObserver === "undefined") return;
     const els = HOME_SECTIONS.map((s) => document.getElementById(s.id)).filter(Boolean) as HTMLElement[];
     const io = new IntersectionObserver(
       (entries) => {
@@ -99,7 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       io.disconnect();
       window.removeEventListener("scroll", onTop);
     };
-  }, [pathname, isConsultoriaHome]);
+  }, [pathname, isStandHome]);
 
   function replayIntro() {
     try {
@@ -115,18 +118,18 @@ export function AppShell({ children }: { children: ReactNode }) {
   function restart() {
     resetSite();
     resetWalkthrough();
-    router.push(CONSULTORIA_HOME);
+    router.push(STAND_HOME);
   }
 
   function onHome() {
-    router.push(CONSULTORIA_HOME);
+    router.push(STAND_HOME);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function onSection(id: string) {
-    if (isConsultoriaHome) scrollToSection(id);
+    if (isStandHome) scrollToSection(id);
     else {
-      router.push(CONSULTORIA_HOME);
+      router.push(STAND_HOME);
       window.setTimeout(() => scrollToSection(id), 120);
     }
   }
@@ -146,7 +149,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <FluidBackground />
         <SiteHeader
           inFlow={inFlow}
-          activeSection={isConsultoriaHome ? activeSection : ""}
+          activeSection={isStandHome ? activeSection : ""}
           onHome={onHome}
           onSection={onSection}
           onStart={() => router.push("/diagnostico")}

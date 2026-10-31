@@ -29,6 +29,8 @@ export function SiteFooter({ onReplay, onSection }: SiteFooterProps) {
           ))}
           <button type="button" className="foot-link" onClick={onReplay}>Repetir apertura</button>
           <Link href="/" className="foot-link">Elegir experiencia</Link>
+          <Link className="foot-link" href="/encuestas">Encuestas por nicho</Link>
+          <Link className="foot-link" href="/consultor">Acceso para consultores</Link>
         </nav>
         <div className="foot-col">
           <p className="micro">Universidad</p>

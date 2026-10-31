@@ -1,0 +1,10 @@
+# Netlify detecta Next.js y aplica su adaptador automáticamente.
+# Variables secretas (contraseña, llaves de Supabase): en el panel de Netlify,
+# Site configuration → Environment variables. Nunca en este archivo.
+# Pasos completos: docs/DESPLIEGUE.md
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"

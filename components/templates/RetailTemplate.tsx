@@ -454,7 +454,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
             {[0, 1, 2].map((k) => {
               const idx = (slide * 3 + k) % Math.max(1, products.length);
               const p = products[idx];
-              return p ? (<div key={k} className={styles.heroItem} style={{ "--k": k } as CSSProperties}><Pic p={{ ...p, image: undefined }} i={idx} /></div>) : null;
+              return p ? (<div key={k} className={styles.heroItem} style={{ "--k": k } as CSSProperties}><Pic p={p} i={idx} /></div>) : null;
             })}
           </div>
         </div>
@@ -492,7 +492,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
                 return (
                   <li key={c} className={styles.reveal} data-reveal style={{ "--d": `${(n % 6) * 60}ms` } as CSSProperties}>
                     <button type="button" className={styles.catTile} onClick={() => pickCat(c)}>
-                      <span className={styles.catPic}><Art kind={kindFor(products[first]?.title, first)} i={first} label="" /></span>
+                      <span className={styles.catPic}><Pic p={products[first] ?? {}} i={first} /></span>
                       <span className={styles.catName}>{c}</span>
                       <span className={styles.catCount}>{total} {total === 1 ? "producto" : "productos"}</span>
                     </button>

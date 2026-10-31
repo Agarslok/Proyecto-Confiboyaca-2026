@@ -15,7 +15,7 @@ const CHOICES = [
     href: "/consultoria",
     kicker: "Demostración",
     title: "Stand",
-    text: "Una experiencia práctica: la consultoría y el generador de página, con datos de ejemplo.",
+    text: "Radar IA: diagnóstico por industria, resultado con casos y página de muestra.",
   },
 ] as const;
 

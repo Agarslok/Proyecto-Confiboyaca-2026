@@ -1,32 +1,29 @@
 # Confi
 
-Aplicación de la feria con dos experiencias separadas y una consultoría de página web que ya existía.
+Aplicación de la feria: **pitch** (presentación con avatar) y **stand** (Radar IA + página de muestra).
 
-Esta versión no llama a Gemini ni a una base de datos. El diagnóstico del stand sale del motor de reglas local. Las demostraciones usan datos ficticios.
-
-## Rutas
+## Rutas principales
 
 | Ruta | Responsabilidad |
 | --- | --- |
-| `/` | Entrada. Elige pitch, stand o la consultoría existente. |
-| `/pitch` | Presentación de siete diapositivas. El avatar ocupa la sexta y todavía no está conectado. |
-| `/stand` | Abre la misma consultoría y el generador de página que `/consultoria`. |
-| `/stand/diagnostico` | Formulario del motor de diagnóstico ya existente. |
-| `/stand/resultado` | Lectura generada con reglas locales. |
-| `/stand/demo` | Demostración interactiva con datos ficticios. |
-| `/consultoria` | Página principal anterior: presentación, formulario de página web y consultoría. |
-| `/diagnostico`, `/resultado`, `/sitio`, `/preview` | Recorrido de la consultoría y de la página generada. Siguen operativos. |
-| `/demo` | Demostración del diagnóstico clásico, fuera del recorrido del stand. |
+| `/` | Elige **Pitch** o **Stand**. |
+| `/pitch` | Presentación de siete diapositivas; la sexta integra avatar + consultor (Gemini/Tavus con variables de entorno). |
+| `/consultoria` | **Stand:** landing Radar IA (misma que en `prueba/radar-ia`). |
+| `/stand` | Redirige a `/consultoria`. |
+| `/diagnostico` | Formulario Radar IA por industria. |
+| `/resultado` | Informe Radar IA y acceso a la página generada. |
+| `/encuestas`, `/caso/[id]`, `/flyer` | Catálogo y detalle de casos Radar. |
+| `/consultor` | Panel de consultores (requiere `.env.local`). |
+| `/sitio`, `/preview` | Página generada de demostración. |
+| `/solucion` | Ejemplo turismo enlazado desde el pitch. |
+
+Documentación Radar: `docs/RADAR-IA.md` y `docs/DESPLIEGUE.md`.
 
 ## Dónde vive cada cosa
 
-- `app/pitch/` y `app/stand/` componen las rutas. No contienen la lógica del diagnóstico.
-- `features/pitch/` guarda el guion, el escenario y las siete diapositivas. Las notas del presentador se abren con N.
-- `features/pitch/components/avatar-stage.tsx` reserva el avatar. No simula una conexión.
-- `features/stand/` guarda el sector del stand y el marco de navegación. El estado del sector vive en `sessionStorage` (`confi.stand.sector.v1`) y no se mezcla con el pitch.
-- `components/diagnostic/`, `components/demos/`, `lib/diagnostic/` y `lib/data/demos.ts` siguen siendo el motor y las demostraciones reutilizadas.
-- `components/externado/` y `components/site/` siguen siendo la consultoría.
-- Turismo y agro todavía no tienen textos propios en el motor. Esas entradas usan la plantilla de servicios profesionales hasta que existan lentes sectoriales. Metalurgia usa la plantilla industrial.
+- `features/pitch/` — diapositivas, avatar Tavus/Gemini.
+- `components/radar/`, `lib/radar/` — stand Radar IA.
+- `features/entry/experience-gate.tsx` — tarjetas Pitch / Stand.
 
 ## Puesta en marcha
 
@@ -35,7 +32,7 @@ npm install
 npm run dev
 ```
 
-Abra http://localhost:3000. Pitch está en `/pitch`. Stand abre http://localhost:3000/consultoria.
+Abra http://localhost:3000. **Pitch** → `/pitch`. **Stand** → `/consultoria` (Radar IA).
 
 ## Requisitos
 
