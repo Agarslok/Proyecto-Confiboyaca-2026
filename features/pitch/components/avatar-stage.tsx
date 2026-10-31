@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * Integración del avatar en vivo (Tavus + Gemini) para la diapositiva 6.
+ * Reservada: hoy el pitch usa `video-stage.tsx`. Para reactivar, monte `AvatarStage`
+ * en `slide-views.tsx` y envuelva `PitchDeck` con `TavusCviProvider`.
+ */
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { AvatarDockVideo } from "@/components/catch/AvatarDockVideo";
 import { TavusAiEcho } from "@/components/catch/TavusAiEcho";

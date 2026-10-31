@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { TavusCviProvider } from "@/components/catch/TavusCviProvider";
 import { pitchDeck } from "@/features/pitch/content/deck";
 import { slideViews } from "@/features/pitch/components/slide-views";
+
+const HUD_IDLE_MS = 5000;
 
 function subscribeMotion(onChange: () => void): () => void {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -30,18 +31,31 @@ export function PitchDeck() {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const slideRefs = useRef<Array<HTMLElement | null>>([]);
   const nodeRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const animations = useRef<Animation[]>([]);
   const generation = useRef(0);
+  const hudTimer = useRef<number | null>(null);
   const [index, setIndex] = useState(0);
   const [steps, setSteps] = useState<number[]>(() => pitchDeck.map(() => 0));
   const [visible, setVisible] = useState<number[]>([0]);
-  const [notesOpen, setNotesOpen] = useState(false);
   const [visits, setVisits] = useState<number[]>(() => pitchDeck.map(() => 0));
+  const [hudVisible, setHudVisible] = useState(true);
 
   const slide = pitchDeck[index];
   const total = pitchDeck.length;
+  const isVideoSlide = slide.id === "video";
+
+  const scheduleHudHide = useCallback(() => {
+    if (hudTimer.current) window.clearTimeout(hudTimer.current);
+    hudTimer.current = window.setTimeout(() => setHudVisible(false), HUD_IDLE_MS);
+  }, []);
+
+  const revealHud = useCallback(() => {
+    setHudVisible(true);
+    scheduleHudHide();
+  }, [scheduleHudHide]);
 
   function cancelMotion() {
     animations.current.forEach((animation) => animation.cancel());
@@ -141,6 +155,7 @@ export function PitchDeck() {
     const isBack = back ?? to < index;
     generation.current += 1;
     cancelMotion();
+    revealHud();
     setSteps((current) => {
       const nextSteps = [...current];
       nextSteps[to] = isBack ? pitchDeck[to].beats : 0;
@@ -161,6 +176,7 @@ export function PitchDeck() {
 
   function next() {
     cancelMotion();
+    revealHud();
     if (steps[index] < slide.beats) {
       setSteps((current) => current.map((value, item) => (item === index ? value + 1 : value)));
       return;
@@ -170,6 +186,7 @@ export function PitchDeck() {
 
   function prev() {
     cancelMotion();
+    revealHud();
     if (steps[index] > 0) {
       setSteps((current) => current.map((value, item) => (item === index ? value - 1 : value)));
       return;
@@ -177,57 +194,79 @@ export function PitchDeck() {
     if (index > 0) go(index - 1, true);
   }
 
+  function toggleVideoPlayback() {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) void video.play();
+    else video.pause();
+  }
+
   useEffect(() => {
     rootRef.current?.focus();
-  }, []);
+    scheduleHudHide();
+    return () => {
+      if (hudTimer.current) window.clearTimeout(hudTimer.current);
+    };
+  }, [scheduleHudHide]);
+
+  useEffect(() => {
+    function onPointer() {
+      revealHud();
+    }
+    window.addEventListener("mousemove", onPointer, { passive: true });
+    return () => window.removeEventListener("mousemove", onPointer);
+  }, [revealHud]);
+
+  useEffect(() => {
+    if (isVideoSlide) {
+      setHudVisible(false);
+      if (hudTimer.current) window.clearTimeout(hudTimer.current);
+    }
+  }, [isVideoSlide]);
+
+  useEffect(() => {
+    if (!isVideoSlide && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [isVideoSlide]);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isTypingTarget(event.target)) return;
       const key = event.key;
-      if (notesOpen && key === "Escape") {
-        event.preventDefault();
-        setNotesOpen(false);
-        return;
-      }
       if (key === "Escape" && document.fullscreenElement) {
         event.preventDefault();
         void document.exitFullscreen();
         return;
       }
-      if ((key === " " || key === "Enter") && event.target instanceof HTMLElement && event.target.closest("button, a")) return;
-      if (key === "ArrowRight" || key === "ArrowDown" || key === " " || key === "PageDown") {
+      if (pitchDeck[index]?.id === "video" && key === " ") {
+        event.preventDefault();
+        toggleVideoPlayback();
+        return;
+      }
+      if (key === "ArrowRight" || key === "ArrowDown" || key === "PageDown") {
         event.preventDefault();
         next();
       } else if (key === "ArrowLeft" || key === "ArrowUp" || key === "PageUp") {
         event.preventDefault();
         prev();
-      } else if (key === "n" || key === "N") {
+      } else if (key === " " || key === "Enter") {
         event.preventDefault();
-        setNotesOpen((open) => !open);
-      } else if (key === "f" || key === "F") {
-        event.preventDefault();
-        toggleFullscreen();
+        next();
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
-
-  function toggleFullscreen() {
-    const node = rootRef.current;
-    if (!node) return;
-    if (document.fullscreenElement) void document.exitFullscreen();
-    else if (node.requestFullscreen) void node.requestFullscreen();
-  }
+  }, [index]);
 
   function onStageClick(event: React.MouseEvent<HTMLDivElement>) {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
-    if (target.closest("a, button, input, textarea, select, .pd-avatar-live, .pd-avatar-side")) return;
+    if (target.closest("a, button, input, textarea, select, .pd-video-stage")) return;
     const bounds = stageRef.current?.getBoundingClientRect();
     if (!bounds) return;
+    revealHud();
     if ((event.clientX - bounds.left) / bounds.width < 0.22) prev();
     else next();
   }
@@ -235,39 +274,50 @@ export function PitchDeck() {
   const progress = total === 1 ? 1 : index / (total - 1);
 
   return (
-    <TavusCviProvider canStartTavus detached>
-    <div className="pd-root" ref={rootRef} tabIndex={-1}>
+    <div
+      className={`pd-root${isVideoSlide ? " pd-root--cinema" : ""}${hudVisible ? " pd-root--hud-open" : ""}`}
+      ref={rootRef}
+      tabIndex={-1}
+    >
       <div className="pd-stage" ref={stageRef} onClick={onStageClick}>
         {pitchDeck.map((item, itemIndex) => {
           const View = slideViews[itemIndex];
           const active = itemIndex === index;
-          const retainAvatar = item.id === "avatar" && visits[itemIndex] > 0;
-          if (!visible.includes(itemIndex) && !retainAvatar) return null;
-          const parked = retainAvatar && !visible.includes(itemIndex);
+          const retainVideo = item.id === "video" && visits[itemIndex] > 0;
+          if (!visible.includes(itemIndex) && !retainVideo) return null;
+          const parked = retainVideo && !visible.includes(itemIndex);
           return (
             <section
-              key={item.id === "avatar" ? item.id : `${item.id}-${visits[itemIndex]}`}
-              ref={(node) => { slideRefs.current[itemIndex] = node; }}
+              key={item.id === "video" ? item.id : `${item.id}-${visits[itemIndex]}`}
+              ref={(node) => {
+                slideRefs.current[itemIndex] = node;
+              }}
               className={active ? "pd-slide is-on" : parked ? "pd-slide pd-slide-parked" : "pd-slide"}
               aria-hidden={!active}
               aria-labelledby={active ? "pd-slide-title" : undefined}
               inert={parked}
             >
-              <View step={steps[itemIndex] ?? 0} />
+              <View
+                step={steps[itemIndex] ?? 0}
+                videoRef={item.id === "video" ? videoRef : undefined}
+                videoActive={item.id === "video" && active && !parked}
+              />
             </section>
           );
         })}
         <div className="pd-ring" ref={ringRef} hidden aria-hidden="true" />
       </div>
 
-      <footer className="pd-hud">
+      <footer className={`pd-hud${hudVisible ? " is-visible" : ""}`}>
         <div className="pd-hud-meta">
           <p className="pd-hud-count">
             <span>{String(index + 1).padStart(2, "0")}</span>
             <span aria-hidden="true"> / {String(total).padStart(2, "0")}</span>
             <span className="pd-sr">Diapositiva {index + 1} de {total}</span>
           </p>
-          <p className="pd-hud-label" id="pd-slide-title">{slide.label}</p>
+          <p className="pd-hud-label" id="pd-slide-title">
+            {slide.label}
+          </p>
         </div>
         <div className="pd-track" aria-hidden="true">
           <span style={{ width: `${progress * 100}%` }} />
@@ -275,38 +325,23 @@ export function PitchDeck() {
             {pitchDeck.map((item, itemIndex) => {
               const state = itemIndex === index ? "is-current" : itemIndex < index ? "is-done" : "";
               return (
-                <button
+                <span
                   key={item.id}
-                  ref={(node) => { nodeRefs.current[itemIndex] = node; }}
-                  type="button"
-                  className={`pd-node-btn ${state}`}
-                  aria-current={itemIndex === index ? "step" : undefined}
-                  aria-label={`${itemIndex + 1}. ${item.label}${itemIndex < index ? ", vista" : ""}`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    go(itemIndex);
+                  ref={(node) => {
+                    nodeRefs.current[itemIndex] = node as HTMLButtonElement | null;
                   }}
+                  className={`pd-node-dot ${state}`}
                 />
               );
             })}
           </div>
         </div>
         <div className="pd-hud-actions">
-          <button type="button" onClick={prev} disabled={index === 0 && steps[index] === 0}>Anterior</button>
-          <button type="button" onClick={next} disabled={index === total - 1 && steps[index] >= slide.beats}>Siguiente</button>
-          <button type="button" aria-pressed={notesOpen} onClick={() => setNotesOpen((open) => !open)}>Notas</button>
-          <button type="button" onClick={toggleFullscreen}>Pantalla</button>
-          <Link href="/">Salir</Link>
+          <Link href="/" onClick={() => revealHud()}>
+            Salir
+          </Link>
         </div>
       </footer>
-      <p className="pd-hint">Flechas para avanzar · N notas · F pantalla completa</p>
-      {notesOpen ? (
-        <aside className="pd-notes" aria-label="Notas del presentador">
-          <p><b>Diapositiva {index + 1}. {slide.label}</b></p>
-          <p>{slide.notes}</p>
-        </aside>
-      ) : null}
     </div>
-    </TavusCviProvider>
   );
 }
