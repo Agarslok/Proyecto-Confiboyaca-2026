@@ -6,6 +6,8 @@ export type TeamMember = {
   links: {
     linkedin?: string;
     github?: string;
+    /** Perfil docente en uexternado.edu.co cuando no hay LinkedIn */
+    profile?: string;
   };
 };
 
@@ -34,7 +36,17 @@ export const TEAM = {
       displayName: "Carlos Ruiz",
       role: "Docente",
       photo: "/equipo/Carlos-Fabian-Ruiz-Paredes.webp",
-      links: {},
+      links: {
+        profile: "https://www.uexternado.edu.co/profesores/carlos-fabian-ruiz-paredes/",
+      },
+    },
+    {
+      displayName: "Yessica L. Velásquez",
+      role: "Docente",
+      photo: "/equipo/Yessica-Liceth-Velasquez-Castiblanco.png",
+      links: {
+        profile: "https://www.uexternado.edu.co/profesores/yessica-liceth-velasquez-castiblanco/",
+      },
     },
     {
       displayName: "Juan Carlos Urueña",
@@ -67,6 +79,19 @@ export const TEAM = {
 
 export const DEPT_URL = "https://www.uexternado.edu.co/departamento-de-matematicas/";
 export const UNI_URL = "https://www.uexternado.edu.co/";
+
+/** Datos oficiales de contacto del departamento (pie de página). */
+export const DEPT_CONTACT = {
+  title: "Departamento de Matemáticas",
+  address: "Calle 12 No. 1-17 Este. Bogotá, Colombia. Bloque C, Cuarto Piso",
+  phones: "(57) (601) 3420288 y 3419900, ext: 3050 – 3051",
+  emails: [
+    { label: "Departamento de Matemáticas", address: "dptomatematicas@uexternado.edu.co" },
+    { label: "Estudiantes pregrado", address: "coordinacioncienciadedatos@uexternado.edu.co" },
+    { label: "Aspirantes", address: "cienciadedatospromocion@uexternado.edu.co" },
+  ],
+  hours: "Lunes a viernes de 7:00 a.m. a 6:00 p.m.",
+} as const;
 
 export const HOME_SECTIONS = [
   { id: "como-funciona", label: "Cómo funciona" },

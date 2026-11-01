@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { NicheIcon, type NicheIconName } from "@/components/externado/niche-icons";
 import { SolutionDemo } from "@/components/radar/SolutionSpotlight";
 import { SAMPLES } from "@/lib/radar/bank";
 import { SOLUTIONS, solutionHeadline, type SolutionKind } from "@/lib/radar/solution";
@@ -12,10 +13,10 @@ import type { IndustryId } from "@/lib/radar/types";
    «después» funcionando con datos de ejemplo que se pueden tocar.
    ========================================================================== */
 
-const EXAMPLES: { id: IndustryId; label: string; icon: string }[] = [
-  { id: "alimentos", label: "Panadería", icon: "🥐" },
-  { id: "turismo", label: "Hotel", icon: "🏨" },
-  { id: "mineria", label: "Mina de carbón", icon: "⛏️" },
+const EXAMPLES: { id: IndustryId; label: string; icon: NicheIconName }[] = [
+  { id: "alimentos", label: "Panadería", icon: "bakery" },
+  { id: "turismo", label: "Hotel", icon: "hotel-demo" },
+  { id: "mineria", label: "Mina de carbón", icon: "mine-demo" },
 ];
 
 const KINDS: { kind: SolutionKind; problem: string }[] = [
@@ -54,6 +55,13 @@ export function SolutionShowcase({ onStart }: { onStart: () => void }) {
   return (
     <div className="showcase reveal">
       <div className="showcase-bar">
+        <div className="showcase-bar-copy">
+          <p className="showcase-kicker">Lee el ejemplo interactivo</p>
+          <p className="fine showcase-hint">
+            Elija un tipo de negocio y un problema. Los números son ficticios: puede tocar botones y ver cómo cambia la
+            solución.
+          </p>
+        </div>
         <div className="showcase-examples" role="radiogroup" aria-label="Negocio de ejemplo">
           {EXAMPLES.map((example) => (
             <button
@@ -64,11 +72,13 @@ export function SolutionShowcase({ onStart }: { onStart: () => void }) {
               className={industry === example.id ? "showcase-chip on" : "showcase-chip"}
               onClick={() => setIndustry(example.id)}
             >
-              <span aria-hidden="true">{example.icon}</span> {example.label}
+              <span className="showcase-chip-icon">
+                <NicheIcon name={example.icon} />
+              </span>
+              {example.label}
             </button>
           ))}
         </div>
-        <p className="fine">Elija un negocio y un problema. Todo se puede tocar; son datos de ejemplo.</p>
       </div>
 
       <div className="showcase-body">

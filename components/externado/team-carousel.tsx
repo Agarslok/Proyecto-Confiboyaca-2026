@@ -8,9 +8,22 @@ import type { TeamMember } from "@/components/externado/team-config";
 /** Segundos para recorrer un ciclo completo (6 personas). Más alto = más lento. */
 const MARQUEE_DURATION_S = 85;
 const MARQUEE_MS = MARQUEE_DURATION_S * 1000;
-const DESKTOP_MQ = "(min-width: 981px)";
-/** Ancho del indicador respecto al riel (estilo barra de desplazamiento). */
 const THUMB_RATIO = 0.22;
+
+function TeamProfileLink({ href, person }: { href: string; person: string }) {
+  return (
+    <a
+      className="team-link team-link-social"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onPointerDown={(event) => event.stopPropagation()}
+    >
+      Perfil UExternado <ExtIcon />
+      <span className="sr-only"> de {person} (se abre en una pestaña nueva)</span>
+    </a>
+  );
+}
 
 function TeamSocialLink({
   kind,
@@ -41,9 +54,7 @@ function findMarqueeAnimation(
   name: "teamMarquee" | "teamRibbon",
 ): Animation | null {
   if (!el) return null;
-  return (
-    el.getAnimations().find((a) => (a as CSSAnimation).animationName === name) ?? null
-  );
+  return el.getAnimations().find((a) => (a as CSSAnimation).animationName === name) ?? null;
 }
 
 export function TeamCarousel({ members }: { members: TeamMember[] }) {
@@ -55,17 +66,10 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
   const scrubbingRef = useRef(false);
   const scrollDragRef = useRef(false);
 
-  const cardHoverCountRef = useRef(0);
-  const [cardHovered, setCardHovered] = useState(false);
   const [scrubbing, setScrubbing] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
   const [scrubValue, setScrubValue] = useState(0);
-  /* Pausa elegida por el usuario (botón o flechas); la de hover es aparte. */
-  const [userPaused, setUserPaused] = useState(false);
-  const glideRef = useRef(0);
 
-  const paused = cardHovered || scrubbing || userPaused;
   const loop = [...members, ...members];
   const marqueeOn = !reduceMotion;
   const nameSegment = `${members.map((m) => m.displayName).join(" · ")} · `;
@@ -91,58 +95,12 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
     [collectAnimations],
   );
 
-  function onCardPointerEnter() {
-    cardHoverCountRef.current += 1;
-    setCardHovered(true);
-  }
-
-  function onCardPointerLeave() {
-    cardHoverCountRef.current = Math.max(0, cardHoverCountRef.current - 1);
-    setCardHovered(cardHoverCountRef.current > 0);
-  }
-
-  /* Mueve una tarjeta con una transición corta, en vez de saltar. */
-  const nudge = useCallback(
-    (direction: -1 | 1) => {
-      const trackAnim = findMarqueeAnimation(trackRef.current, "teamMarquee");
-      const from = (trackAnim?.currentTime as number | null) ?? 0;
-      const to = from + direction * (MARQUEE_MS / members.length);
-      window.cancelAnimationFrame(glideRef.current);
-      if (reduceMotion) {
-        setMarqueeTime(to);
-        return;
-      }
-      const start = performance.now();
-      const step = (now: number) => {
-        const t = Math.min(1, (now - start) / 420);
-        const eased = 1 - (1 - t) ** 3;
-        setMarqueeTime(from + (to - from) * eased);
-        if (t < 1) glideRef.current = window.requestAnimationFrame(step);
-      };
-      glideRef.current = window.requestAnimationFrame(step);
-    },
-    [members.length, reduceMotion, setMarqueeTime],
-  );
-
-  const move = (direction: -1 | 1) => {
-    setUserPaused(true);
-    nudge(direction);
-  };
-
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const desktopMq = window.matchMedia(DESKTOP_MQ);
-    const update = () => {
-      setReduceMotion(mq.matches);
-      setIsDesktop(desktopMq.matches);
-    };
+    const update = () => setReduceMotion(mq.matches);
     update();
     mq.addEventListener("change", update);
-    desktopMq.addEventListener("change", update);
-    return () => {
-      mq.removeEventListener("change", update);
-      desktopMq.removeEventListener("change", update);
-    };
+    return () => mq.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
@@ -181,8 +139,6 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
   const startScrub = () => {
     scrubbingRef.current = true;
     setScrubbing(true);
-    setCardHovered(false);
-    cardHoverCountRef.current = 0;
   };
 
   const endScrub = () => {
@@ -209,12 +165,14 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
 
     const dx = event.clientX - dragRef.current.startX;
     if (!dragRef.current.active) {
-      if (Math.abs(dx) < 6) return;
+      if (Math.abs(dx) < 4) return;
       dragRef.current.active = true;
       root.setPointerCapture(event.pointerId);
     }
 
-    setMarqueeTime(dragRef.current.trackTime - dx * 2.2);
+    const width = root.clientWidth || window.innerWidth;
+    const deltaMs = (dx / width) * MARQUEE_MS;
+    setMarqueeTime(dragRef.current.trackTime - deltaMs);
   };
 
   const endDrag = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -257,28 +215,17 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
     endScrub();
   };
 
-  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "ArrowLeft") {
-      event.preventDefault();
-      move(-1);
-    }
-    if (event.key === "ArrowRight") {
-      event.preventDefault();
-      move(1);
-    }
-  };
-
   const trackMarqueeStyle = marqueeOn
     ? {
         animationDuration: `${MARQUEE_DURATION_S}s`,
-        animationPlayState: paused ? ("paused" as const) : ("running" as const),
+        animationPlayState: scrubbing ? ("paused" as const) : ("running" as const),
       }
     : undefined;
 
   const ribbonMarqueeStyle = marqueeOn
     ? {
         animationDuration: `${MARQUEE_DURATION_S}s`,
-        animationPlayState: scrubbing || userPaused ? ("paused" as const) : ("running" as const),
+        animationPlayState: scrubbing ? ("paused" as const) : ("running" as const),
       }
     : undefined;
 
@@ -293,10 +240,9 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
-      onKeyDown={onKeyDown}
       tabIndex={0}
       role="region"
-      aria-label="Equipo. Deslice o arrastre para mover el carrusel; pase el cursor sobre una tarjeta para pausar."
+      aria-label="Equipo. Arrastre horizontalmente o use la barra inferior para mover el carrusel."
     >
       <div className="team-name-ribbon" aria-hidden="true">
         <div
@@ -312,16 +258,11 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
       <div className="team-carousel-viewport">
         <ul
           ref={trackRef}
-          className={`team-carousel-track${marqueeOn ? " is-marquee" : ""}${cardHovered ? " is-paused" : ""}`}
+          className={`team-carousel-track${marqueeOn ? " is-marquee" : ""}`}
           style={trackMarqueeStyle}
         >
           {loop.map((member, index) => (
-            <li
-              key={`${member.displayName}-${index}`}
-              className="card team-carousel-card"
-              onMouseEnter={onCardPointerEnter}
-              onMouseLeave={onCardPointerLeave}
-            >
+            <li key={`${member.displayName}-${index}`} className="card team-carousel-card">
               <div className="team-carousel-photo-wrap">
                 <Image
                   className="team-carousel-photo"
@@ -337,8 +278,11 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
                 <h3 className="team-carousel-name">{member.displayName}</h3>
                 <p className="team-carousel-role">{member.role}</p>
               </div>
-              {member.links.linkedin || member.links.github ? (
+              {member.links.linkedin || member.links.github || member.links.profile ? (
                 <div className="team-links">
+                  {member.links.profile ? (
+                    <TeamProfileLink href={member.links.profile} person={member.displayName} />
+                  ) : null}
                   {member.links.linkedin ? (
                     <TeamSocialLink kind="linkedin" href={member.links.linkedin} person={member.displayName} />
                   ) : null}
@@ -353,21 +297,6 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
       </div>
 
       {marqueeOn ? (
-        <div className="team-controls">
-          <button type="button" className="team-control" onClick={() => move(-1)} aria-label="Integrante anterior">‹</button>
-          <button
-            type="button"
-            className="team-control is-toggle"
-            onClick={() => setUserPaused((value) => !value)}
-            aria-pressed={userPaused}
-          >
-            {userPaused ? "▶ Reanudar" : "❚❚ Pausar"}
-          </button>
-          <button type="button" className="team-control" onClick={() => move(1)} aria-label="Integrante siguiente">›</button>
-        </div>
-      ) : null}
-
-      {marqueeOn && isDesktop ? (
         <div
           ref={scrollTrackRef}
           className="team-loop-scroll"
@@ -376,7 +305,7 @@ export function TeamCarousel({ members }: { members: TeamMember[] }) {
           aria-valuemin={0}
           aria-valuemax={1000}
           aria-valuenow={scrubValue}
-          tabIndex={-1}
+          tabIndex={0}
           onPointerDown={onScrollTrackPointerDown}
           onPointerMove={onScrollTrackPointerMove}
           onPointerUp={onScrollTrackPointerUp}

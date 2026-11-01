@@ -8,17 +8,19 @@ import { TEAM } from "@/components/externado/team-config";
 import { TeamCarousel } from "@/components/externado/team-carousel";
 import { scrollToSection, useReveal } from "@/components/externado/use-reveal";
 
+import { NicheIcon, type NicheIconName } from "@/components/externado/niche-icons";
+
 /** Atajos de la portada: el negocio elegido abre la encuesta ya ubicada en su nicho. */
-const QUICK_NICHES = [
-  { icon: "🥐", label: "Panadería o alimentos", nicho: "alimentos-produccion" },
-  { icon: "🍽️", label: "Restaurante o cafetería", nicho: "alimentos-restaurante" },
-  { icon: "🛒", label: "Tienda o supermercado", nicho: "comercio-fisica" },
-  { icon: "👗", label: "Ropa", nicho: "moda-compraventa" },
-  { icon: "🏨", label: "Hotel u hospedaje", nicho: "turismo-hotel" },
-  { icon: "🩺", label: "Salud o estética", nicho: "salud-ips" },
-  { icon: "🌱", label: "Finca o agro", nicho: "agro-primaria" },
-  { icon: "🏭", label: "Taller o fábrica", nicho: "manufactura-planta" },
-  { icon: "⛏️", label: "Minería", nicho: "mineria-extraccion" },
+const QUICK_NICHES: { icon: NicheIconName; label: string; nicho: string }[] = [
+  { icon: "bakery", label: "Panadería o alimentos", nicho: "alimentos-produccion" },
+  { icon: "restaurant", label: "Restaurante o cafetería", nicho: "alimentos-restaurante" },
+  { icon: "retail", label: "Tienda o supermercado", nicho: "comercio-fisica" },
+  { icon: "fashion", label: "Ropa", nicho: "moda-compraventa" },
+  { icon: "hotel", label: "Hotel u hospedaje", nicho: "turismo-hotel" },
+  { icon: "health", label: "Salud o estética", nicho: "salud-ips" },
+  { icon: "farm", label: "Finca o agro", nicho: "agro-primaria" },
+  { icon: "factory", label: "Taller o fábrica", nicho: "manufactura-planta" },
+  { icon: "mining", label: "Minería", nicho: "mineria-extraccion" },
 ];
 
 export function ExternadoHomePage() {
@@ -54,7 +56,10 @@ export function ExternadoHomePage() {
           <div className="w-niches-list">
             {QUICK_NICHES.map((item) => (
               <button key={item.nicho} type="button" className="w-niche" onClick={() => router.push(`/diagnostico?nicho=${item.nicho}`)}>
-                <span aria-hidden="true">{item.icon}</span> {item.label}
+                <span className="w-niche-icon">
+                  <NicheIcon name={item.icon} />
+                </span>
+                {item.label}
               </button>
             ))}
             <button type="button" className="w-niche is-more" onClick={() => router.push("/encuestas")}>

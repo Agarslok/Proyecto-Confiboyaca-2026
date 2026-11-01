@@ -191,31 +191,31 @@ export const pitchDeck: PitchSlideContent[] = [
   {
     id: "era",
     label: "Una nueva era",
-    notes: "Mostrar los tres bloques del fondo (datos → orden → decisión). Luego el mensaje principal.",
-    beats: 1,
+    notes: "Beat 0: título grande. Luego definición, cierre narrativo y tres tarjetas datos→decisión.",
+    beats: 5,
   },
   {
     id: "que-es",
     label: "Qué es la inteligencia artificial",
-    notes: "Definición, diagrama central, ejemplos cotidianos y frase de cierre.",
-    beats: 2,
+    notes: "Título, definición, un ejemplo por flecha, diagrama y frase final.",
+    beats: 6,
   },
   {
     id: "como",
     label: "Cómo funciona",
-    notes: "Revelar entrada, proceso y resultado en ese orden. Insistir en que una persona revisa el resultado.",
-    beats: 2,
+    notes: "Título hero y luego una columna del flujo por avance.",
+    beats: 3,
   },
   {
     id: "datos",
     label: "De los datos a las decisiones",
-    notes: "Decir en voz alta que las barras son un ejemplo, no cifras de una empresa. Luego mostrar la decisión ilustrativa.",
-    beats: 1,
+    notes: "Título, embudo textual, cada barra del gráfico y decisión final.",
+    beats: 5,
   },
   {
     id: "sectores",
     label: "La IA en la empresa",
-    notes: "Un avance por sector: turismo, metalurgia y agro. No abrir el stand todavía.",
+    notes: "Título hero, lede y luego los tres sectores juntos.",
     beats: 2,
   },
   {
@@ -225,25 +225,28 @@ export const pitchDeck: PitchSlideContent[] = [
     beats: 0,
   },
   {
-    id: "paso-seguir",
+    id: "paso-seguir-intro",
     label: "Qué sigue",
-    notes:
-      "Beat 1: recorrer los tres pasos del diagrama. Beat 2: mostrar el reloj de 12 h y condiciones de feria. Beat 3: apoyo al presentador (no leer en voz alta si hay público).",
+    notes: "Solo mensaje de cierre de demo y mentorías en feria.",
+    beats: 0,
+  },
+  {
+    id: "paso-seguir-plan",
+    label: "Pasos en feria",
+    notes: "Beat 1: tres pasos. Beat 2: reloj 12 h y qué decir.",
     beats: 2,
   },
   {
     id: "oferta",
     label: "Oferta adicional",
-    notes:
-      "Beat 1: títulos y para quién es cada mentoría. Beat 2: tres entregables por tarjeta. Cerrar con la franja inferior sobre enfoque del stand.",
-    beats: 1,
+    notes: "Beat 1: lede. Beat 2: mentoría 1. Beat 3: mentoría 2. Beat 4: cierre.",
+    beats: 4,
   },
   {
     id: "cursos-medida",
     label: "Cursos a la medida",
-    notes:
-      "Beat 1: tres pilares (diagnóstico, horas, entrega). Beat 2: grilla de temas por etiqueta. Beat 3: guía de cierre hacia el stand.",
-    beats: 2,
+    notes: "Beat 1: lede y pilares. Beat 2: temas.",
+    beats: 1,
   },
   {
     id: "cierre",

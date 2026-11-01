@@ -204,7 +204,7 @@ export function AIStory() {
       <div className="story-stage">
         <div className="stage-card">
           <div className="stage-top">
-            <span className="tag">Ejemplo: una panadería</span>
+            <span className="tag">Lee el ejemplo · panadería</span>
             <ol className="stage-dots" aria-label="Pasos de la explicación">
               {STORY.map((s, i) => (
                 <li key={s.k}>

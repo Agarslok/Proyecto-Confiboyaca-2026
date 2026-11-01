@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   description:
     "Generador local de páginas web a partir de un formulario. El diagnóstico y la página salen de reglas en este equipo.",
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
-    apple: [{ url: "/favicon.png", type: "image/png" }],
+    icon: [{ url: "/favicon-externado.png", type: "image/png", sizes: "any" }],
+    apple: [{ url: "/favicon-externado.png", type: "image/png" }],
   },
 };
 

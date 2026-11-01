@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type Re
 import { ColibriIntro } from "@/components/brand/ColibriIntro";
 import { ColibriMark } from "@/components/brand/ColibriMark";
 import { FluidBackground } from "@/components/externado/fluid-background";
+import { HomeDiscoverDock } from "@/components/externado/home-discover-dock";
 import { SiteFooter } from "@/components/externado/site-footer";
 import { SiteHeader } from "@/components/externado/site-header";
 import { HOME_SECTIONS } from "@/components/externado/team-config";
@@ -165,6 +166,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
         <SiteFooter onReplay={replayIntro} onSection={onSection} />
+        {isStandHome && !showIntro ? (
+          <HomeDiscoverDock
+            onSection={onSection}
+            onStart={() => router.push("/diagnostico")}
+            onReplay={replayIntro}
+          />
+        ) : null}
         <ColibriMark buttonRef={markRef} hidden={showIntro} />
       </div>
     </>

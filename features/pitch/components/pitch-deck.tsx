@@ -5,7 +5,14 @@ import Link from "next/link";
 import { pitchDeck } from "@/features/pitch/content/deck";
 import { slideViews } from "@/features/pitch/components/slide-views";
 
-const HUD_IDLE_MS = 5000;
+const NAV_KEYS = new Set([
+  "ArrowRight",
+  "ArrowLeft",
+  "ArrowDown",
+  "ArrowUp",
+  "PageDown",
+  "PageUp",
+]);
 
 function subscribeMotion(onChange: () => void): () => void {
   const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -26,6 +33,11 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return Boolean(target.closest("input, textarea, select, [contenteditable='true']"));
 }
 
+type DeckState = {
+  index: number;
+  steps: number[];
+};
+
 export function PitchDeck() {
   const reduced = useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -33,29 +45,21 @@ export function PitchDeck() {
   const ringRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const slideRefs = useRef<Array<HTMLElement | null>>([]);
-  const nodeRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const nodeRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const animations = useRef<Animation[]>([]);
   const generation = useRef(0);
-  const hudTimer = useRef<number | null>(null);
+  const deckRef = useRef<DeckState>({ index: 0, steps: pitchDeck.map(() => 0) });
+
   const [index, setIndex] = useState(0);
   const [steps, setSteps] = useState<number[]>(() => pitchDeck.map(() => 0));
   const [visible, setVisible] = useState<number[]>([0]);
   const [visits, setVisits] = useState<number[]>(() => pitchDeck.map(() => 0));
-  const [hudVisible, setHudVisible] = useState(true);
+
+  deckRef.current = { index, steps };
 
   const slide = pitchDeck[index];
   const total = pitchDeck.length;
   const isVideoSlide = slide.id === "video";
-
-  const scheduleHudHide = useCallback(() => {
-    if (hudTimer.current) window.clearTimeout(hudTimer.current);
-    hudTimer.current = window.setTimeout(() => setHudVisible(false), HUD_IDLE_MS);
-  }, []);
-
-  const revealHud = useCallback(() => {
-    setHudVisible(true);
-    scheduleHudHide();
-  }, [scheduleHudHide]);
 
   function cancelMotion() {
     animations.current.forEach((animation) => animation.cancel());
@@ -75,154 +79,113 @@ export function PitchDeck() {
 
   function playTransition(from: number, to: number, back: boolean) {
     const token = generation.current;
-    const stage = stageRef.current;
     const incoming = slideRefs.current[to];
     const outgoing = slideRefs.current[from];
-    if (!stage || !incoming || !outgoing || reduced) {
+    if (!incoming || !outgoing || reduced) {
       setVisible([to]);
       return;
     }
 
-    const stageBox = stage.getBoundingClientRect();
-    const node = nodeRefs.current[to]?.getBoundingClientRect();
-    const x = node ? node.left + node.width / 2 - stageBox.left : stageBox.width / 2;
-    const y = node ? node.top + node.height / 2 - stageBox.top : stageBox.height - 48;
-    const radius = Math.hypot(Math.max(x, stageBox.width - x), Math.max(y, stageBox.height - y)) + 48;
-    const closed = `circle(0px at ${x}px ${y}px)`;
-    const opened = `circle(${radius}px at ${x}px ${y}px)`;
-    const top = back ? outgoing : incoming;
-    const bottom = back ? incoming : outgoing;
-    const duration = 900;
-    const easing = "cubic-bezier(.7,0,.2,1)";
+    const duration = 720;
+    const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
 
-    top.style.zIndex = "3";
-    bottom.style.zIndex = "2";
-    const reveal = top.animate(back ? [{ clipPath: opened }, { clipPath: closed }] : [{ clipPath: closed }, { clipPath: opened }], {
-      duration,
+    incoming.style.zIndex = "3";
+    outgoing.style.zIndex = "2";
+    incoming.style.opacity = "0";
+
+    const fadeIn = incoming.animate(
+      [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "translateY(0)" }],
+      { duration, easing, fill: "both" },
+    );
+    const fadeOut = outgoing.animate([{ opacity: 1 }, { opacity: 0.35 }], {
+      duration: duration + 120,
       easing,
       fill: "both",
     });
-    const inner = incoming.querySelector(".pd-inner");
-    const depth = !back && inner instanceof HTMLElement
-      ? inner.animate([{ transform: "scale(1.08)" }, { transform: "scale(1)" }], { duration: duration + 160, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" })
-      : null;
-    const bottomInner = bottom.querySelector(".pd-inner");
-    const settle = bottomInner instanceof HTMLElement
-      ? bottomInner.animate(
-          [{ transform: "scale(1)", filter: "blur(0px)" }, { transform: back ? "scale(1)" : "scale(0.96)", filter: "blur(5px)" }],
-          { duration, easing, fill: "both" },
-        )
-      : null;
-    const ring = ringRef.current;
-    let ringAnimation: Animation | null = null;
-    if (ring) {
-      ring.hidden = false;
-      ring.style.left = `${x}px`;
-      ring.style.top = `${y}px`;
-      ringAnimation = ring.animate(
-        back
-          ? [{ transform: `scale(${radius / 90})`, opacity: 0 }, { transform: "scale(0.2)", opacity: 0.8 }]
-          : [{ transform: "scale(0.2)", opacity: 0.8 }, { transform: `scale(${radius / 90})`, opacity: 0 }],
-        { duration, easing, fill: "both" },
-      );
-    }
-    animations.current = [reveal, depth, settle, ringAnimation].filter((item): item is Animation => item !== null);
+
+    animations.current = [fadeIn, fadeOut];
     let settled = false;
 
     const finish = () => {
       if (settled || token !== generation.current) return;
       settled = true;
-      top.style.clipPath = "";
-      top.style.zIndex = "";
-      bottom.style.zIndex = "";
-      if (inner instanceof HTMLElement) inner.style.transform = "";
-      if (bottomInner instanceof HTMLElement) {
-        bottomInner.style.transform = "";
-        bottomInner.style.filter = "";
-      }
-      if (ring) ring.hidden = true;
+      incoming.style.zIndex = "";
+      incoming.style.opacity = "";
+      incoming.style.transform = "";
+      outgoing.style.zIndex = "";
+      outgoing.style.opacity = "";
+      outgoing.style.filter = "";
+      if (ringRef.current) ringRef.current.hidden = true;
       animations.current = [];
       setVisible([to]);
     };
-    reveal.onfinish = finish;
-    reveal.oncancel = () => {
+    fadeIn.onfinish = finish;
+    fadeIn.oncancel = () => {
       if (token === generation.current) finish();
     };
   }
 
-  function go(to: number, back?: boolean) {
-    if (to < 0 || to >= total || to === index) return;
-    const isBack = back ?? to < index;
-    generation.current += 1;
-    cancelMotion();
-    revealHud();
-    setSteps((current) => {
-      const nextSteps = [...current];
-      nextSteps[to] = isBack ? pitchDeck[to].beats : 0;
-      return nextSteps;
-    });
-    setVisits((current) => current.map((value, item) => (item === to ? value + 1 : value)));
-    setIndex(to);
-    setVisible([index, to]);
-    const from = index;
-    const token = generation.current;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (token !== generation.current) return;
-        playTransition(from, to, isBack);
+  const go = useCallback(
+    (to: number, back?: boolean) => {
+      const { index: fromIndex } = deckRef.current;
+      if (to < 0 || to >= total || to === fromIndex) return;
+      const isBack = back ?? to < fromIndex;
+      generation.current += 1;
+      cancelMotion();
+      setSteps((current) => {
+        const nextSteps = [...current];
+        nextSteps[to] = isBack ? pitchDeck[to].beats : 0;
+        return nextSteps;
       });
-    });
-  }
+      setVisits((current) => current.map((value, item) => (item === to ? value + 1 : value)));
+      setIndex(to);
+      setVisible([fromIndex, to]);
+      const token = generation.current;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (token !== generation.current) return;
+          playTransition(fromIndex, to, isBack);
+        });
+      });
+    },
+    [total, reduced],
+  );
 
-  function next() {
+  const next = useCallback(() => {
+    const { index: i, steps: s } = deckRef.current;
+    const currentSlide = pitchDeck[i];
     cancelMotion();
-    revealHud();
-    if (steps[index] < slide.beats) {
-      setSteps((current) => current.map((value, item) => (item === index ? value + 1 : value)));
+    if (s[i] < currentSlide.beats) {
+      setSteps((current) => current.map((value, item) => (item === i ? value + 1 : value)));
       return;
     }
-    if (index < total - 1) go(index + 1, false);
-  }
+    if (i < total - 1) go(i + 1, false);
+  }, [go, total]);
 
-  function prev() {
+  const prev = useCallback(() => {
+    const { index: i, steps: s } = deckRef.current;
     cancelMotion();
-    revealHud();
-    if (steps[index] > 0) {
-      setSteps((current) => current.map((value, item) => (item === index ? value - 1 : value)));
+    if (s[i] > 0) {
+      setSteps((current) => current.map((value, item) => (item === i ? value - 1 : value)));
       return;
     }
-    if (index > 0) go(index - 1, true);
-  }
+    if (i > 0) go(i - 1, true);
+  }, [go]);
 
-  function toggleVideoPlayback() {
+  const toggleVideoPlayback = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) void video.play();
     else video.pause();
-  }
+  }, []);
 
   useEffect(() => {
-    rootRef.current?.focus();
-    scheduleHudHide();
-    return () => {
-      if (hudTimer.current) window.clearTimeout(hudTimer.current);
-    };
-  }, [scheduleHudHide]);
+    rootRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
-    function onPointer() {
-      revealHud();
-    }
-    window.addEventListener("mousemove", onPointer, { passive: true });
-    return () => window.removeEventListener("mousemove", onPointer);
-  }, [revealHud]);
-
-  useEffect(() => {
-    if (isVideoSlide) {
-      setHudVisible(false);
-      if (hudTimer.current) window.clearTimeout(hudTimer.current);
-    }
-  }, [isVideoSlide]);
+    rootRef.current?.focus({ preventScroll: true });
+  }, [index, steps]);
 
   useEffect(() => {
     if (!isVideoSlide && videoRef.current) {
@@ -231,55 +194,101 @@ export function PitchDeck() {
   }, [isVideoSlide]);
 
   useEffect(() => {
+    const nextFn = next;
+    const prevFn = prev;
+    const toggleVideo = toggleVideoPlayback;
+
     function onKey(event: KeyboardEvent) {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (isTypingTarget(event.target)) return;
+
       const key = event.key;
+      const { index: i } = deckRef.current;
+
       if (key === "Escape" && document.fullscreenElement) {
         event.preventDefault();
         void document.exitFullscreen();
         return;
       }
-      if (pitchDeck[index]?.id === "video" && key === " ") {
+
+      if (pitchDeck[i]?.id === "video" && key === " ") {
         event.preventDefault();
-        toggleVideoPlayback();
+        toggleVideo();
         return;
       }
+
+      const isNav = NAV_KEYS.has(key);
+      if (!isNav) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
       if (key === "ArrowRight" || key === "ArrowDown" || key === "PageDown") {
-        event.preventDefault();
-        next();
-      } else if (key === "ArrowLeft" || key === "ArrowUp" || key === "PageUp") {
-        event.preventDefault();
-        prev();
-      } else if (key === " " || key === "Enter") {
-        event.preventDefault();
-        next();
+        nextFn();
+      } else {
+        prevFn();
       }
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [index]);
 
-  function onStageClick(event: React.MouseEvent<HTMLDivElement>) {
-    const target = event.target;
-    if (!(target instanceof HTMLElement)) return;
-    if (target.closest("a, button, input, textarea, select, .pd-video-stage")) return;
-    const bounds = stageRef.current?.getBoundingClientRect();
-    if (!bounds) return;
-    revealHud();
-    if ((event.clientX - bounds.left) / bounds.width < 0.22) prev();
-    else next();
-  }
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
+  }, [next, prev, toggleVideoPlayback]);
 
-  const progress = total === 1 ? 1 : index / (total - 1);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const blockScroll = (event: Event) => {
+      const scrollHost = root.querySelector(".pd-inner.pd-story.pd-story--compact");
+      if (scrollHost instanceof HTMLElement && scrollHost.scrollHeight > scrollHost.clientHeight + 8) {
+        if (event.target instanceof Node && scrollHost.contains(event.target)) {
+          const wheel = event as WheelEvent;
+          const down = wheel.deltaY > 0;
+          const atTop = scrollHost.scrollTop <= 0;
+          const atBottom = scrollHost.scrollTop + scrollHost.clientHeight >= scrollHost.scrollHeight - 2;
+          if ((down && !atBottom) || (!down && !atTop)) return;
+        }
+      }
+      event.preventDefault();
+    };
+    root.addEventListener("wheel", blockScroll, { passive: false });
+    root.addEventListener("touchmove", blockScroll, { passive: false });
+    return () => {
+      root.removeEventListener("wheel", blockScroll);
+      root.removeEventListener("touchmove", blockScroll);
+    };
+  }, []);
+
+  const progressUnits = pitchDeck.reduce((sum, item) => sum + Math.max(1, item.beats + 1), 0);
+  let progressDone = 0;
+  for (let i = 0; i < index; i++) progressDone += Math.max(1, pitchDeck[i].beats + 1);
+  progressDone += (steps[index] + 1) / Math.max(1, pitchDeck[index].beats + 1);
+  const progress = progressUnits ? progressDone / progressUnits : 1;
 
   return (
     <div
-      className={`pd-root${isVideoSlide ? " pd-root--cinema" : ""}${hudVisible ? " pd-root--hud-open" : ""}`}
+      className={`pd-root${isVideoSlide ? " pd-root--cinema" : ""}`}
       ref={rootRef}
-      tabIndex={-1}
+      tabIndex={0}
+      role="application"
+      aria-label="Presentación del pitch. Use las flechas para avanzar."
     >
-      <div className="pd-stage" ref={stageRef} onClick={onStageClick}>
+      <div className="pd-top-progress" aria-hidden="true">
+        <span className="pd-top-progress-fill" style={{ width: `${Math.min(100, progress * 100)}%` }} />
+        {pitchDeck.map((item, itemIndex) => (
+          <span
+            key={item.id}
+            ref={(node) => {
+              nodeRefs.current[itemIndex] = node;
+            }}
+            className="pd-top-progress-node"
+            style={{ left: total <= 1 ? "50%" : `${(itemIndex / (total - 1)) * 100}%` }}
+          />
+        ))}
+      </div>
+      <p className="pd-sr" id="pd-slide-title">
+        {slide.label}
+      </p>
+      <div className="pd-stage" ref={stageRef}>
         {pitchDeck.map((item, itemIndex) => {
           const View = slideViews[itemIndex];
           const active = itemIndex === index;
@@ -308,40 +317,18 @@ export function PitchDeck() {
         <div className="pd-ring" ref={ringRef} hidden aria-hidden="true" />
       </div>
 
-      <footer className={`pd-hud${hudVisible ? " is-visible" : ""}`}>
-        <div className="pd-hud-meta">
-          <p className="pd-hud-count">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <span aria-hidden="true"> / {String(total).padStart(2, "0")}</span>
-            <span className="pd-sr">Diapositiva {index + 1} de {total}</span>
-          </p>
-          <p className="pd-hud-label" id="pd-slide-title">
-            {slide.label}
-          </p>
-        </div>
-        <div className="pd-track" aria-hidden="true">
-          <span style={{ width: `${progress * 100}%` }} />
-          <div className="pd-nodes">
-            {pitchDeck.map((item, itemIndex) => {
-              const state = itemIndex === index ? "is-current" : itemIndex < index ? "is-done" : "";
-              return (
-                <span
-                  key={item.id}
-                  ref={(node) => {
-                    nodeRefs.current[itemIndex] = node as HTMLButtonElement | null;
-                  }}
-                  className={`pd-node-dot ${state}`}
-                />
-              );
-            })}
-          </div>
-        </div>
-        <div className="pd-hud-actions">
-          <Link href="/" onClick={() => revealHud()}>
-            Salir
-          </Link>
-        </div>
-      </footer>
+      <Link href="/" className="pd-back-fab" aria-label="Volver a elegir Pitch o Stand">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M14.5 5.5 8 12l6.5 6.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </Link>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ExtIcon } from "@/components/externado/icons";
-import { DEPT_URL, HOME_SECTIONS, UNI_URL } from "@/components/externado/team-config";
+import { DEPT_CONTACT, DEPT_URL, HOME_SECTIONS, UNI_URL } from "@/components/externado/team-config";
 
 interface SiteFooterProps {
   onReplay: () => void;
@@ -19,6 +19,31 @@ export function SiteFooter({ onReplay, onSection }: SiteFooterProps) {
             Prototipo académico del Departamento de Matemáticas. La lectura y la página se generan con reglas locales
             en este navegador.
           </p>
+          <div className="foot-dept" aria-label="Contacto del departamento">
+            <p className="foot-dept-name">{DEPT_CONTACT.title}</p>
+            <dl className="foot-dept-list">
+              <div>
+                <dt>Dirección</dt>
+                <dd>{DEPT_CONTACT.address}</dd>
+              </div>
+              <div>
+                <dt>Teléfonos</dt>
+                <dd>{DEPT_CONTACT.phones}</dd>
+              </div>
+              {DEPT_CONTACT.emails.map((item) => (
+                <div key={item.address}>
+                  <dt>{item.label}</dt>
+                  <dd>
+                    <a href={`mailto:${item.address}`}>{item.address}</a>
+                  </dd>
+                </div>
+              ))}
+              <div>
+                <dt>Horario</dt>
+                <dd>{DEPT_CONTACT.hours}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
         <nav className="foot-col" aria-label="Secciones del pie">
           <p className="micro">Explorar</p>

@@ -1,17 +1,15 @@
-import type { CSSProperties, RefObject } from "react";
+import type { CSSProperties, ReactNode, RefObject } from "react";
 import Link from "next/link";
+import { PitchInstitutionIntro } from "@/features/pitch/components/pitch-institution-bar";
 import { VideoStage } from "@/features/pitch/components/video-stage";
 import {
-  pitchBars,
   pitchClosingQuote,
   pitchCustomCoursePillars,
-  pitchCustomCoursePresenterPoints,
   pitchCustomCourseTopics,
   pitchEraPillars,
   pitchFlow,
   pitchMentorshipOffers,
   pitchNextStepPhases,
-  pitchNextStepPresenterPoints,
   pitchOfferFooter,
   pitchSectors,
   pitchWhatExamples,
@@ -33,6 +31,62 @@ function topicTagKey(tag: string): string {
 
 function shown(step: number, beat: number): string {
   return step >= beat ? "pd-beat is-shown" : "pd-beat";
+}
+
+function storyMode(step: number, heroUntil = 0): "hero" | "compact" {
+  return step <= heroUntil ? "hero" : "compact";
+}
+
+function StoryShell({
+  step,
+  heroUntil = 0,
+  className = "",
+  kicker,
+  title,
+  large = false,
+  intro,
+  hideKickerOnCompact = false,
+  children,
+}: {
+  step: number;
+  heroUntil?: number;
+  className?: string;
+  kicker?: string;
+  title: ReactNode;
+  large?: boolean;
+  intro?: ReactNode;
+  hideKickerOnCompact?: boolean;
+  children?: ReactNode;
+}) {
+  const mode = storyMode(step, heroUntil);
+  const showKicker = kicker && !(hideKickerOnCompact && mode === "compact");
+  const showIntro = intro && mode === "hero";
+  return (
+    <div className={`pd-inner pd-story pd-story--${mode} ${className}`.trim()} data-step={step}>
+      <header className={`pd-story-head ${mode === "hero" ? "pd-story-head--center" : "pd-story-head--rail"}`}>
+        {showIntro ? (
+          <div className="pd-inst-wrap pd-rise" style={{ "--d": "0s" } as CSSProperties}>
+            {intro}
+          </div>
+        ) : null}
+        {showKicker ? (
+          <p
+            className={`pd-kicker ${mode === "hero" ? "pd-rise" : shown(step, heroUntil + 1)}`}
+            style={mode === "hero" ? ({ "--d": "0.1s" } as CSSProperties) : undefined}
+          >
+            {kicker}
+          </p>
+        ) : null}
+        <h2
+          className={`pd-display ${large ? "" : "pd-display-sm"} ${mode === "hero" ? "pd-rise" : "pd-story-title-compact"}`}
+          style={mode === "hero" ? ({ "--d": "0.35s" } as CSSProperties) : undefined}
+        >
+          {title}
+        </h2>
+      </header>
+      {mode === "compact" && children ? <div className="pd-story-body">{children}</div> : null}
+    </div>
+  );
 }
 
 function OfferIcon({ kind }: { kind: "analytics" | "ai" }) {
@@ -59,59 +113,46 @@ function OfferIcon({ kind }: { kind: "analytics" | "ai" }) {
   );
 }
 
-function PresenterPanel({ title, points, className }: { title: string; points: string[]; className?: string }) {
-  return (
-    <aside className={`pd-presenter ${className ?? ""}`.trim()} aria-label={title}>
-      <p className="pd-presenter-title">{title}</p>
-      <ul>
-        {points.map((point) => (
-          <li key={point}>{point}</li>
-        ))}
-      </ul>
-    </aside>
-  );
-}
-
 export function SlideEra({ step }: PitchSlideProps) {
   return (
-    <div className="pd-inner pd-era" data-step={step}>
-      <div className="pd-era-copy">
-        <p className="pd-kicker pd-rise" style={{ "--d": "0.15s" } as CSSProperties}>
-          Feria empresarial
-        </p>
-        <h1 className="pd-display pd-rise" style={{ "--d": "0.45s" } as CSSProperties}>
-          Una nueva
-          <span> era</span>
-        </h1>
-        <p className="pd-lede pd-rise" style={{ "--d": "0.9s" } as CSSProperties}>
-          La inteligencia artificial entra en el trabajo cotidiano de una empresa. No como magia: como una forma de
-          ordenar lo que ya ocurre.
-        </p>
-        <p className={`${shown(step, 1)} pd-era-foot`}>
-          Hoy mostramos cómo pasan los <strong>datos</strong> a una <strong>lectura clara</strong> y luego a una{" "}
-          <strong>decisión</strong> que ustedes confirman.
-        </p>
-      </div>
-      <div className="pd-era-field" aria-hidden="true">
-        <span className="pd-era-orb pd-era-orb-a" />
-        <span className="pd-era-orb pd-era-orb-b" />
-        <div className={`pd-era-story ${shown(step, 0)}`}>
+    <StoryShell
+      step={step}
+      heroUntil={0}
+      className="pd-era"
+      intro={<PitchInstitutionIntro />}
+      hideKickerOnCompact
+      kicker="Feria empresarial"
+      title={
+        <>
+          Una nueva <span className="pd-era-accent">era</span>
+        </>
+      }
+      large
+    >
+      <p className={`${shown(step, 1)} pd-lede pd-lede-center pd-lede-era-main`}>
+        La inteligencia artificial entra en el trabajo cotidiano de una empresa. No como magia: como una forma de
+        ordenar lo que ya ocurre.
+      </p>
+      <p className={`${shown(step, 2)} pd-era-foot pd-lede-center pd-text-marked`}>
+        Hoy mostramos cómo pasan los <strong>datos</strong> a una <strong>lectura clara</strong> y luego a una{" "}
+        <strong>decisión</strong> que ustedes confirman.
+      </p>
+      <div className={`pd-era-field ${shown(step, 3)}`} aria-hidden={step < 3}>
+        <div className="pd-era-story">
           {pitchEraPillars.map((pillar, index) => (
-            <article key={pillar.title} className="pd-era-card" style={{ "--d": `${index * 0.1}s` } as CSSProperties}>
+            <article
+              key={pillar.title}
+              className={`pd-era-card pd-era-card-pop ${shown(step, 3 + index)}`}
+              style={{ "--d": `${index * 0.14}s` } as CSSProperties}
+            >
               <span className="pd-era-card-num">0{index + 1}</span>
               <h3>{pillar.title}</h3>
               <p>{pillar.text}</p>
             </article>
           ))}
-          <svg className="pd-era-flow" viewBox="0 0 480 48" aria-hidden="true">
-            <path className="pd-draw is-live" d="M24 24 H456" />
-            <circle cx="48" cy="24" r="6" className="pd-era-dot" />
-            <circle cx="240" cy="24" r="6" className="pd-era-dot" />
-            <circle cx="432" cy="24" r="6" className="pd-era-dot" />
-          </svg>
         </div>
       </div>
-    </div>
+    </StoryShell>
   );
 }
 
@@ -121,131 +162,189 @@ export function SlideWhat({ step }: PitchSlideProps) {
     { title: "Patrones", text: "Lo que se repite y cuesta ver a tiempo en cuadernos o chats." },
     { title: "Criterio", text: "La decisión final la toma quien conoce el negocio." },
   ];
+  const split = step >= 5;
   return (
-    <div className="pd-inner pd-what">
-      <div className="pd-what-copy">
-        <p className="pd-kicker pd-rise">Concepto</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.12s" } as CSSProperties}>
-          Qué es la inteligencia artificial
-        </h2>
-        <p className={`${shown(step, 0)} pd-lede`}>
+    <StoryShell
+      step={step}
+      heroUntil={0}
+      className="pd-what"
+      kicker="Concepto"
+      title={
+        <>
+          Qué es
+          <span className="pd-title-accent-block">la inteligencia artificial</span>
+        </>
+      }
+    >
+      <div className={`pd-what-flow ${split ? "is-split" : ""}`}>
+        <p className={`${shown(step, 1)} pd-lede pd-lede-center pd-what-def`}>
           Es una herramienta que aprende de ejemplos para proponer un siguiente paso. No conoce la empresa si nadie le
           cuenta su situación.
         </p>
-        <ul className={`${shown(step, 0)} pd-friendly-list`}>
-          {pitchWhatExamples.map((line) => (
-            <li key={line}>{line}</li>
+        <ul className={`pd-friendly-list pd-what-examples ${split ? "is-side" : ""}`}>
+          {pitchWhatExamples.map((line, exampleIndex) => (
+            <li key={line} className={shown(step, 2 + exampleIndex)}>
+              {line}
+            </li>
           ))}
         </ul>
-        <p className={`${shown(step, 2)} pd-aside`}>Sirve para explicar una idea. No sustituye la explicación.</p>
+        <div className={`pd-what-diagram ${shown(step, 5)}`} aria-hidden={step < 5}>
+          <div className="pd-what-ia-hub">
+            <span className="pd-what-ia-mark">IA</span>
+            <p>Lee datos y patrones; la propuesta la valida quien conoce el negocio.</p>
+          </div>
+          <ol className="pd-what-pipeline">
+            {nodes.map((node, index) => (
+              <li key={node.title} className={shown(step, 5)} style={{ "--d": `${0.1 * index}s` } as CSSProperties}>
+                <article>
+                  <span className="pd-what-pipeline-num">0{index + 1}</span>
+                  <h3>{node.title}</h3>
+                  <p>{node.text}</p>
+                </article>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <p className={`${shown(step, 6)} pd-aside pd-lede-center`}>Sirve para explicar una idea. No sustituye la explicación.</p>
       </div>
-      <div className="pd-what-map" aria-hidden={step < 1}>
-        <span className={`pd-core ${shown(step, 1)}`}>IA</span>
-        {nodes.map((node, index) => (
-          <article
-            key={node.title}
-            className={`pd-node pd-node-${index} ${shown(step, 1)}`}
-            style={{ "--d": `${0.12 * index}s` } as CSSProperties}
-          >
-            <h3>{node.title}</h3>
-            <p>{node.text}</p>
-          </article>
-        ))}
-        <svg className="pd-what-lines" viewBox="0 0 640 520" aria-hidden="true">
-          <path className={step >= 1 ? "pd-draw is-live" : "pd-draw"} d="M320 250 L140 110" />
-          <path className={step >= 1 ? "pd-draw is-live pd-draw-late" : "pd-draw"} d="M320 250 L500 120" />
-          <path className={step >= 1 ? "pd-draw is-live pd-draw-later" : "pd-draw"} d="M320 250 L320 430" />
-        </svg>
-      </div>
-    </div>
+    </StoryShell>
   );
 }
 
 export function SlideHow({ step }: PitchSlideProps) {
+  const activeStep = step >= 3 ? 3 : step >= 2 ? 2 : step >= 1 ? 1 : 0;
+  const runnerLeft = activeStep <= 1 ? "8%" : activeStep === 2 ? "50%" : "92%";
   return (
-    <div className="pd-inner pd-how">
-      <p className="pd-kicker pd-rise">Proceso</p>
-      <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.1s" } as CSSProperties}>
-        Cómo funciona
-      </h2>
-      <ol className="pd-flow">
-        {pitchFlow.map((item, index) => (
-          <li key={item.title} className={shown(step, index)} style={{ "--d": `${index * 0.08}s` } as CSSProperties}>
-            <span className="pd-flow-index">0{index + 1}</span>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-            <p className="pd-flow-example">
-              {index === 0 && "Ej.: mensajes de clientes y pedidos del día."}
-              {index === 1 && "Ej.: agrupar lo repetido y señalar un hueco."}
-              {index === 2 && "Ej.: «conviene llamar a estos tres clientes»."}
-            </p>
-            {index < pitchFlow.length - 1 ? <span className="pd-flow-link" aria-hidden="true" /> : null}
-          </li>
-        ))}
-      </ol>
-    </div>
+    <StoryShell step={step} heroUntil={0} className="pd-how" kicker="Proceso" title="Cómo funciona">
+      <p className={`${shown(step, 1)} pd-lede pd-lede-center`}>
+        Tres pasos en cadena: lo que entra, lo que ordena la herramienta y lo que sale para decidir.
+      </p>
+      <div
+        className={`pd-how-track ${shown(step, 1)}`}
+        data-active={activeStep}
+        aria-label="Recorrido entrada, proceso y resultado"
+      >
+        <div className="pd-how-rail" aria-hidden="true">
+          <span className="pd-how-rail-fill" style={{ width: `${(activeStep / 3) * 100}%` }} />
+          <span
+            className="pd-how-runner"
+            style={{ left: runnerLeft }}
+          />
+        </div>
+        <ol className="pd-flow pd-flow-journey">
+          {pitchFlow.map((item, index) => (
+            <li
+              key={item.title}
+              className={`${shown(step, index + 1)} ${step >= index + 1 ? "is-active" : ""}`.trim()}
+              style={{ "--d": `${index * 0.12}s` } as CSSProperties}
+            >
+              <span className="pd-flow-index">0{index + 1}</span>
+              <p className="pd-flow-step-label">
+                {index === 0 ? "Entrada" : index === 1 ? "Proceso" : "Resultado"}
+              </p>
+              <h3>{item.title}</h3>
+              <p>{item.text}</p>
+              <p className="pd-flow-example">
+                {index === 0 && "Ej.: mensajes de clientes y pedidos del día."}
+                {index === 1 && "Ej.: agrupar lo repetido y señalar un hueco."}
+                {index === 2 && "Ej.: «conviene llamar a estos tres clientes»."}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </StoryShell>
   );
 }
 
 export function SlideData({ step }: PitchSlideProps) {
+  const barExplain = [
+    { label: "Consultas", plain: "Personas que preguntaron", value: 72 },
+    { label: "Seguimiento", plain: "A quienes se les respondió después", value: 46 },
+    { label: "Cierres", plain: "Ventas concretadas al final", value: 28 },
+  ] as const;
+
   return (
-    <div className="pd-inner pd-data">
-      <div>
-        <p className="pd-kicker pd-rise">Ejemplo ilustrativo</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.1s" } as CSSProperties}>
-          De los datos a las decisiones
-        </h2>
-        <p className="pd-lede pd-rise" style={{ "--d": "0.2s" } as CSSProperties}>
-          Estos valores no pertenecen a ninguna empresa. Sirven para mostrar cómo una lectura breve puede ordenar una
-          conversación.
+    <StoryShell
+      step={step}
+      heroUntil={0}
+      className="pd-data"
+      kicker="Ejemplo ilustrativo"
+      title="De los datos a las decisiones"
+    >
+      <div className="pd-data-stack">
+        <p className={`${shown(step, 1)} pd-lede pd-lede-center`}>
+          Números inventados: la pregunta es dónde se pierde gente entre el interés y el cierre.
         </p>
-        <p className={`${shown(step, 0)} pd-data-caption`}>
-          Tres etapas del embudo: más consultas arriba, menos cierres abajo — ahí suele estar la conversación.
-        </p>
-        <article className={`${shown(step, 1)} pd-decision`}>
-          <p className="pd-kicker">Decisión de ejemplo</p>
-          <p>Revisar primero el seguimiento: en este dibujo es donde más distancia hay entre el interés y el cierre.</p>
-        </article>
-      </div>
-      <div className="pd-chart" role="img" aria-label="Gráfico ilustrativo de consultas, seguimiento y cierres. No son datos reales.">
-        {pitchBars.map((bar) => (
-          <div key={bar.label} className="pd-bar">
-            <div className="pd-bar-track">
-              <span className={step >= 0 ? "is-grown" : undefined} style={{ height: `${bar.value}%` }} />
-            </div>
-            <b>{bar.value}</b>
-            <span>{bar.label}</span>
+        <div className={`pd-funnel-formula pd-funnel-row ${shown(step, 1)}`} aria-label="Embudo ilustrativo">
+          {barExplain.map((bar, barIndex) => (
+            <span key={bar.label} className={`pd-funnel-step ${shown(step, 2 + barIndex)}`}>
+              <b>{bar.value}</b>
+              <small>{bar.label}</small>
+              {barIndex < barExplain.length - 1 ? <span className="pd-funnel-op" aria-hidden="true">→</span> : null}
+            </span>
+          ))}
+        </div>
+        <figure
+          className={`pd-chart-panel ${shown(step, 2)}`}
+          aria-label="Gráfico ilustrativo. Valores ficticios de consultas, seguimiento y cierres."
+        >
+          <figcaption className="pd-chart-caption">
+            <span className="pd-kicker">Gráfico de ejemplo</span>
+            <p>Cada barra = personas en una etapa (números de muestra, no reales).</p>
+          </figcaption>
+          <div className="pd-chart">
+            {barExplain.map((bar, barIndex) => (
+              <div key={bar.label} className={`pd-bar ${shown(step, 2 + barIndex)}`}>
+                <div className="pd-bar-track">
+                  <span className={step >= 2 + barIndex ? "is-grown" : undefined} style={{ height: `${bar.value}%` }} />
+                </div>
+                <b>{bar.value}</b>
+                <span className="pd-bar-label">{bar.label}</span>
+                <span className="pd-bar-plain">{bar.plain}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </figure>
+        <p className={`${shown(step, 5)} pd-data-hook pd-lede-center`}>
+          <strong>Qué haríamos mañana:</strong> revisar el seguimiento antes que cualquier otra cosa.
+        </p>
       </div>
-    </div>
+    </StoryShell>
   );
 }
 
 export function SlideSectors({ step }: PitchSlideProps) {
   return (
-    <div className="pd-inner pd-sectors">
-      <header className="pd-sectors-head">
-        <p className="pd-kicker pd-rise">Tres sectores</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.08s" } as CSSProperties}>
-          La IA en el mundo empresarial
-        </h2>
-        <p className="pd-lede pd-rise" style={{ "--d": "0.16s" } as CSSProperties}>
-          Mismo método, distintos datos: turismo, metalurgia y agro.
-        </p>
-      </header>
-      <div className="pd-sector-grid">
+    <StoryShell step={step} heroUntil={0} className="pd-sectors" kicker="Tres sectores" title="La IA en el mundo empresarial">
+      <p className={`${shown(step, 1)} pd-lede pd-lede-center`}>Mismo método, distintos datos: turismo, metalurgia y agro.</p>
+      <div className={`pd-sector-grid ${shown(step, 2)}`}>
         {pitchSectors.map((sector, index) => (
-          <article key={sector.id} className={`pd-sector pd-sector-${sector.id} ${shown(step, index)}`}>
-            <p className="pd-kicker">0{index + 1}</p>
+          <article
+            key={sector.id}
+            className={`pd-sector pd-sector-${sector.id} pd-beat is-shown`}
+            style={{ "--d": `${index * 0.1}s` } as CSSProperties}
+          >
+            <div className="pd-sector-ribbon" aria-hidden="true" />
             <h3>{sector.title}</h3>
-            <p><b>Problema. </b>{sector.problem}</p>
-            <p><b>Oportunidad. </b>{sector.opportunity}</p>
-            <p><b>Aplicación. </b>{sector.application}</p>
+            <dl className="pd-sector-facts">
+              <div>
+                <dt>Problema</dt>
+                <dd>{sector.problem}</dd>
+              </div>
+              <div>
+                <dt>Oportunidad</dt>
+                <dd>{sector.opportunity}</dd>
+              </div>
+              <div>
+                <dt>Aplicación</dt>
+                <dd>{sector.application}</dd>
+              </div>
+            </dl>
           </article>
         ))}
       </div>
-    </div>
+    </StoryShell>
   );
 }
 
@@ -257,21 +356,28 @@ export function SlideVideo({ videoRef, videoActive }: PitchSlideProps) {
   );
 }
 
-export function SlideNextStep({ step }: PitchSlideProps) {
+export function SlideNextStepIntro() {
   return (
-    <div className="pd-inner pd-next-step">
-      <header className="pd-next-head">
+    <div className="pd-inner pd-story pd-next-intro pd-story--hero pd-story--center-block">
+      <header className="pd-story-head pd-story-head--center">
         <p className="pd-kicker pd-rise">Paso a seguir</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.1s" } as CSSProperties}>
+        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.12s" } as CSSProperties}>
           Qué sigue
         </h2>
-        <p className="pd-lede pd-rise" style={{ "--d": "0.22s" } as CSSProperties}>
-          Después de la demostración, las empresas de la feria pueden contratar mentorías del Departamento de
-          Matemáticas con condiciones especiales.
-        </p>
       </header>
-      <div className="pd-next-layout">
-        <ol className={`pd-next-phases ${shown(step, 0)}`}>
+      <p className="pd-lede pd-lede-center pd-next-intro-lede pd-rise" style={{ "--d": "0.28s" } as CSSProperties}>
+        Después de la demostración, las empresas de la feria pueden contratar mentorías del Departamento de Matemáticas
+        con condiciones especiales.
+      </p>
+    </div>
+  );
+}
+
+export function SlideNextStepPlan({ step }: PitchSlideProps) {
+  return (
+    <StoryShell step={step} heroUntil={0} className="pd-next-step" kicker="Paso a seguir" title="Pasos en feria">
+      <div className={`pd-next-layout ${shown(step, 1)}`}>
+        <ol className="pd-next-phases">
           {pitchNextStepPhases.map((phase, index) => (
             <li key={phase.title} style={{ "--d": `${index * 0.08}s` } as CSSProperties}>
               <span className="pd-next-phase-index">0{index + 1}</span>
@@ -282,7 +388,7 @@ export function SlideNextStep({ step }: PitchSlideProps) {
             </li>
           ))}
         </ol>
-        <div className={`pd-next-visual ${shown(step, 1)}`}>
+        <div className={`pd-next-visual ${shown(step, 2)}`}>
           <div className="pd-next-clock" role="img" aria-label="Ventana de contratación de doce horas">
             <svg viewBox="0 0 200 200" className="pd-next-clock-svg">
               <circle cx="100" cy="100" r="88" className="pd-next-clock-ring" />
@@ -302,32 +408,24 @@ export function SlideNextStep({ step }: PitchSlideProps) {
           </article>
         </div>
       </div>
-      <PresenterPanel
-        title="Apoyo al presentador"
-        points={pitchNextStepPresenterPoints}
-        className={shown(step, 2)}
-      />
-    </div>
+    </StoryShell>
   );
 }
 
 export function SlideOffer({ step }: PitchSlideProps) {
+  const showLede = step === 1;
   return (
-    <div className="pd-inner pd-offer">
-      <header className="pd-offer-head">
-        <p className="pd-kicker pd-rise">Feria</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.08s" } as CSSProperties}>
-          Oferta adicional
-        </h2>
-        <p className={`${shown(step, 0)} pd-lede pd-offer-lede`}>
+    <StoryShell step={step} heroUntil={0} className="pd-offer" kicker="Feria" title="Oferta adicional">
+      {showLede ? (
+        <p className={`${shown(step, 1)} pd-lede pd-lede-center pd-offer-lede`}>
           Dos mentorías ya definidas. Elijan la que mejor encaje con el reto; abajo, qué se lleva cada una.
         </p>
-      </header>
+      ) : null}
       <div className="pd-offer-grid">
         {pitchMentorshipOffers.map((offer, index) => (
           <article
             key={offer.title}
-            className={`pd-offer-card pd-offer-card-${offer.icon} ${shown(step, 0)}`}
+            className={`pd-offer-card pd-offer-card-${offer.icon} ${shown(step, index + 2)}`}
             style={{ "--d": `${index * 0.1}s` } as CSSProperties}
           >
             <div className="pd-offer-card-top">
@@ -338,7 +436,7 @@ export function SlideOffer({ step }: PitchSlideProps) {
                 <p className="pd-offer-sub">{offer.subtitle}</p>
               </div>
             </div>
-            <dl className={`pd-offer-meta ${shown(step, 0)}`}>
+            <dl className="pd-offer-meta">
               <div>
                 <dt>Para quién</dt>
                 <dd>{offer.audience}</dd>
@@ -348,7 +446,7 @@ export function SlideOffer({ step }: PitchSlideProps) {
                 <dd>{offer.format}</dd>
               </div>
             </dl>
-            <ul className={`pd-offer-outcomes ${shown(step, 1)}`}>
+            <ul className={`pd-offer-outcomes ${shown(step, index + 2)}`}>
               {offer.outcomes.map((item) => (
                 <li key={item}>{item}</li>
               ))}
@@ -356,26 +454,20 @@ export function SlideOffer({ step }: PitchSlideProps) {
           </article>
         ))}
       </div>
-      <p className={`pd-offer-footer ${shown(step, 1)}`}>{pitchOfferFooter}</p>
-    </div>
+      <p className={`${shown(step, 4)} pd-offer-footer pd-lede-center`}>{pitchOfferFooter}</p>
+    </StoryShell>
   );
 }
 
 export function SlideCustomCourses({ step }: PitchSlideProps) {
   return (
-    <div className="pd-inner pd-custom">
-      <header className="pd-custom-head">
-        <p className="pd-kicker pd-rise">A la medida</p>
-        <h2 className="pd-display pd-display-sm pd-rise" style={{ "--d": "0.08s" } as CSSProperties}>
-          Cursos a la medida
-        </h2>
-        <p className={`${shown(step, 0)} pd-lede`}>
-          Si el reto no encaja en una mentoría cerrada, se diseña un curso con temas y <strong>horas distintas</strong>{" "}
-          según lo que la empresa necesite.
-        </p>
-      </header>
-      <div className="pd-custom-layout">
-        <div className={`pd-custom-pillars ${shown(step, 0)}`}>
+    <StoryShell step={step} heroUntil={0} className="pd-custom" kicker="A la medida" title="Cursos a la medida">
+      <p className={`${shown(step, 1)} pd-lede pd-lede-center pd-custom-lede`}>
+        Si el reto no encaja en una mentoría cerrada, se diseña un curso con temas y <strong>horas distintas</strong>{" "}
+        según lo que la empresa necesite.
+      </p>
+      <div className={`pd-custom-layout ${shown(step, 1)}`}>
+        <div className="pd-custom-pillars">
           <p className="pd-kicker">Cómo se arma</p>
           <ol>
             {pitchCustomCoursePillars.map((pillar, index) => (
@@ -388,12 +480,6 @@ export function SlideCustomCourses({ step }: PitchSlideProps) {
               </li>
             ))}
           </ol>
-          <svg className="pd-custom-diagram" viewBox="0 0 320 120" aria-hidden="true">
-            <path className="pd-draw is-live" d="M24 60 H296" />
-            <circle cx="48" cy="60" r="10" className="pd-custom-node" />
-            <circle cx="160" cy="60" r="10" className="pd-custom-node" />
-            <circle cx="272" cy="60" r="10" className="pd-custom-node" />
-          </svg>
         </div>
         <div className={`pd-custom-topics ${shown(step, 1)}`}>
           <p className="pd-kicker">Temas de referencia</p>
@@ -409,27 +495,17 @@ export function SlideCustomCourses({ step }: PitchSlideProps) {
           </ul>
         </div>
       </div>
-      <PresenterPanel
-        title="Apoyo al presentador"
-        points={pitchCustomCoursePresenterPoints}
-        className={shown(step, 2)}
-      />
-    </div>
+    </StoryShell>
   );
 }
 
 export function SlideClose({ step }: PitchSlideProps) {
   return (
-    <div className="pd-inner pd-close">
-      <span className="pd-close-ring" aria-hidden="true" />
-      <p className="pd-kicker pd-rise">Muchas gracias</p>
-      <h2 className="pd-display pd-rise" style={{ "--d": "0.16s" } as CSSProperties}>
-        De la idea a la acción
-      </h2>
-      <p className="pd-lede pd-rise" style={{ "--d": "0.32s" } as CSSProperties}>
+    <StoryShell step={step} heroUntil={0} className="pd-close" kicker="Muchas gracias" title="De la idea a la acción" large>
+      <p className={`${shown(step, 1)} pd-lede pd-lede-center`}>
         La presentación muestra el mapa. El stand deja que cada visitante pruebe una lectura con su propio caso.
       </p>
-      <blockquote className={`${shown(step, 0)} pd-close-quote`}>
+      <blockquote className={`${shown(step, 1)} pd-close-quote`}>
         <p>«{pitchClosingQuote.text}»</p>
         <footer>— {pitchClosingQuote.author}</footer>
       </blockquote>
@@ -441,7 +517,7 @@ export function SlideClose({ step }: PitchSlideProps) {
           Volver al inicio
         </Link>
       </div>
-    </div>
+    </StoryShell>
   );
 }
 
@@ -452,7 +528,8 @@ export const slideViews = [
   SlideData,
   SlideSectors,
   SlideVideo,
-  SlideNextStep,
+  SlideNextStepIntro,
+  SlideNextStepPlan,
   SlideOffer,
   SlideCustomCourses,
   SlideClose,
