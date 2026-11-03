@@ -8,11 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts tests/radar.test.ts tests/storage.test.ts tests/supabase.test.ts"
+    "test": "node --import tsx --test tests/diagnosis.test.ts tests/site.test.ts tests/radar.test.ts tests/storage.test.ts tests/supabase.test.ts tests/solution-hole.test.ts tests/presentation.test.ts tests/create-solution.test.ts tests/solution-presentation.test.ts tests/solution-limits.test.ts tests/solution-matrix.test.ts tests/assistant.test.ts tests/solution-catalog.test.ts tests/demo-chat.test.ts"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.83.1",
     "next": "16.4.3",
+    "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"

@@ -1,0 +1,15 @@
+Fotos por industria. La página puede usarlas o dejar la ilustración.
+
+Formato WebP (más liviano que JPG). Misma regla de nombres:
+
+Nombre sin v  → computador (horizontal)
+Nombre que termina en v, antes de .webp → celular (vertical)
+
+Ejemplo: portada.webp y portadav.webp, apoyo-1.webp y apoyo-1v.webp.
+
+Moda y alimentos pueden usar nombres propios (panadería.webp, cafev.webp).
+
+portada     imagen grande
+apoyo-1     segunda toma (o nombre descriptivo)
+apoyo-2     tercera toma
+apoyo-3     cuarta toma

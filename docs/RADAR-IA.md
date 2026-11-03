@@ -66,6 +66,7 @@ Si el nombre de una empresa de alimentos dice «panadería», «pastelería» o 
 - `lib/radar/site-voice.ts`: tono de la página por actividad.
 - `components/radar/`: formulario, radar SVG, diagnóstico y minigráficas.
 - `tests/radar.test.ts`: pruebas (`npm test`).
+- `tests/solution-matrix.test.ts`: matriz pequeña catálogo/guía, Gemini caído y acción×plantilla (`tests/helpers/radar-answers.ts`).
 
 ## Nichos nuevos
 
@@ -75,9 +76,16 @@ Para aplicar la encuesta a un nicho concreto: `/encuestas` → «Aplicar encuest
 
 ## Problema central → página web
 
-El problema central sale de la dimensión donde la empresa pierde más puntos del índice, (100 − puntaje) × peso, y es su hallazgo más grave. Cada pregunta apunta a una solución (`lib/radar/solution.ts`): registro digital, producción según lo que se vende, base de clientes, solicitudes con estado, inventario, tablero de indicadores o respaldo de datos.
+El problema central sale de la dimensión donde la empresa pierde más puntos del índice, (100 − puntaje) × peso, y es su hallazgo más grave. Cada pregunta apunta a un tipo de solución (`lib/radar/solution.ts`); si la pregunta no está mapeada, el kind inferido es `indicadores`. La ocupación hotelera (`turismo-1`) cuenta como **registro** para ofrecer **agenda** bajo la portada cuando ese es el hallazgo central.
 
-En `/sitio` la portada usa un mensaje de esa solución y, después de la plantilla, aparece la sección «Solución de la consultoría» con una demostración interactiva (datos de ejemplo, no se guardan) y un botón flotante para llegar. Las plantillas siguen sin modificarse; por eso la sección va al final de la página.
+En `/sitio` y `/s/RAD-…` la solución aparece **solo** en el hueco bajo la portada (`SolutionBlock` / «Aquí va la solución»). No hay un segundo bloque de demostración al final de la página.
+
+### Límites de la IA en el hueco
+
+- Solo rellena el JSON del segundo bloque bajo la portada: **no** cambia menú, hero, pie ni fotos.
+- Datos, precios y nombres son **demostración**; no guarda operación real.
+- El **índice** de madurez y el **kind** principal los fija el motor de reglas al guardar el diagnóstico; Gemini no los recalcula (`primaryKind` y `action` se bloquean al validar).
+- En **modo guía**, la IA no debe prometer integraciones desplegadas ni cumplimiento legal; el `disclaimer` lo aclara y pide revisión de un consultor (`lib/radar/solution-limits.ts`).
 
 ## Dónde se guardan los diagnósticos
 

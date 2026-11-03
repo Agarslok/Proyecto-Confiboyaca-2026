@@ -25,6 +25,7 @@ interface BirdPose {
 interface ConsultoriaLoadingProps {
   companyName: string;
   onComplete: () => void;
+  note?: string;
 }
 
 function easeInOut(t: number): number {
@@ -48,7 +49,7 @@ function viewportCenter(): { x: number; y: number } {
   return { x: window.innerWidth / 2, y: window.innerHeight * 0.42 };
 }
 
-export function ConsultoriaLoading({ companyName, onComplete }: ConsultoriaLoadingProps) {
+export function ConsultoriaLoading({ companyName, onComplete, note }: ConsultoriaLoadingProps) {
   useScrollLock(true);
 
   const [progress, setProgress] = useState(0);
@@ -167,7 +168,7 @@ export function ConsultoriaLoading({ companyName, onComplete }: ConsultoriaLoadi
               <span className="consultoria-load-bar-fill" style={{ width: `${progress}%` }} />
             </div>
             <p className="fine consultoria-load-note">
-              Proceso demostrativo: no se envían datos a servicios externos.
+              {note ?? "Proceso demostrativo: no se envían datos a servicios externos."}
             </p>
           </div>
         </div>

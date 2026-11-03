@@ -34,6 +34,11 @@ export function patchRadar(partial: Partial<RadarAnswers>): void {
  */
 const DETACHED: Partial<RadarAnswers> = { recordId: undefined, recordCode: undefined, editToken: undefined, followUpRequested: undefined };
 
+/** Encuesta nueva sin atar al RAD anterior (desde la portada de consultoría). */
+export function beginFreshDiagnosis(): void {
+  patchRadar({ ...emptyRadarAnswers(), ...DETACHED, cursor: 0 });
+}
+
 /** Empieza una encuesta nueva ya ubicada en un nicho (desde el catálogo). */
 export function startNiche(activityId: string): boolean {
   const industry = INDUSTRIES.find((item) => item.activities.some((activity) => activity.id === activityId));

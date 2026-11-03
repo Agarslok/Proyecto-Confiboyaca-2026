@@ -1,0 +1,56 @@
+.band {
+  background: var(--paper, #fff);
+  color: var(--ink, #14241c);
+  border-top: 1px solid var(--line, rgba(20, 36, 28, 0.12));
+  border-bottom: 1px solid var(--line, rgba(20, 36, 28, 0.12));
+}
+
+.text {
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: clamp(28px, 5vw, 56px) 24px;
+  font: 600 clamp(22px, 3vw, 34px) / 1.2 var(--font, Outfit, "DM Sans", sans-serif);
+  letter-spacing: -0.03em;
+}
+
+.turismo {
+  --paper: #fffdf6;
+  --ink: #12362f;
+  --line: rgba(18, 54, 47, 0.14);
+  --font: Outfit, "Trebuchet MS", sans-serif;
+}
+
+.gastronomia {
+  --paper: #f7f4ec;
+  --ink: #143128;
+  --line: rgba(20, 49, 40, 0.12);
+  --font: "DM Sans", Inter, sans-serif;
+}
+
+.servicios {
+  --paper: #f6f3ee;
+  --ink: #111111;
+  --line: rgba(17, 17, 17, 0.1);
+  --font: Outfit, "DM Sans", sans-serif;
+}
+
+.agroindustria {
+  --paper: #f5f2e8;
+  --ink: #0f1a13;
+  --line: rgba(15, 26, 19, 0.14);
+  --font: Manrope, sans-serif;
+}
+
+.metalurgia {
+  --paper: #f4f3ef;
+  --ink: #0c0c0d;
+  --line: rgba(12, 12, 13, 0.16);
+  --font: Archivo, "Helvetica Neue", Arial, sans-serif;
+}
+
+.retail {
+  --paper: #f4f5f8;
+  --ink: #14171f;
+  --line: #e1e4ea;
+  --font: Inter, "DM Sans", sans-serif;
+}

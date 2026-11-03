@@ -10,7 +10,9 @@ import type { DimensionScore, Finding, IndustryId } from "@/lib/radar/types";
    quedan guardados en una tabla).
    ========================================================================== */
 
-export type SolutionKind = "registro" | "merma" | "clientes" | "solicitudes" | "inventario" | "indicadores" | "respaldo";
+export const SOLUTION_KINDS = ["registro", "merma", "clientes", "solicitudes", "inventario", "indicadores", "respaldo"] as const;
+
+export type SolutionKind = (typeof SOLUTION_KINDS)[number];
 
 const BY_QUESTION: Record<string, SolutionKind> = {
   "datos-registro": "registro",
@@ -32,6 +34,7 @@ const BY_QUESTION: Record<string, SolutionKind> = {
   "servicio-2": "solicitudes",
   "salud-1": "solicitudes",
   "salud-2": "solicitudes",
+  "turismo-1": "registro",
   "turismo-2": "solicitudes",
   "logistica-1": "solicitudes",
   "logistica-2": "solicitudes",
@@ -39,7 +42,10 @@ const BY_QUESTION: Record<string, SolutionKind> = {
   "comercio-1": "inventario",
   "comercial-1": "inventario",
   "moda-1": "inventario",
-  "construccion-2": "inventario",
+  "pecuaria-1": "registro",
+  "pecuaria-2": "merma",
+  "madera-1": "inventario",
+  "madera-2": "merma",
   "tec-proteccion": "respaldo",
   "ia-reglas": "respaldo",
 };
@@ -98,6 +104,14 @@ const RECORD_BY_INDUSTRY: Partial<Record<IndustryId, { headline: string; lead: (
   agro: {
     headline: "Cada cosecha queda registrada por lote",
     lead: (company) => `${company} registra cada lote: origen, cosecha y calidad trazables para sus compradores.`,
+  },
+  pecuaria: {
+    headline: "Cada animal o lote queda registrado",
+    lead: (company) => `${company} registra el hato: peso, partos y producción, sin depender de la libreta.`,
+  },
+  madera: {
+    headline: "Cada medida de madera queda registrada",
+    lead: (company) => `${company} registra especie, medida y corte: el inventario del taller deja de depender de la memoria.`,
   },
   salud: {
     headline: "Cada cita queda registrada, sin agenda de papel",

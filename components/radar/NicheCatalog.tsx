@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NicheIcon } from "@/components/externado/niche-icons";
 import { Button } from "@/components/ui/Button";
 import { DIMENSIONS, INDUSTRIES, LINKS } from "@/lib/radar/bank";
 import { coreQuestions, nicheSummary } from "@/lib/radar/engine";
@@ -93,7 +94,10 @@ export function NicheCatalog() {
       {industries.map(({ industry, activities }) => (
         <section key={industry.id} className="niche-industry" aria-labelledby={`niche-${industry.id}`}>
           <h2 id={`niche-${industry.id}`}>
-            <span aria-hidden="true">{industry.icon}</span> {industry.label}
+            <span className="radar-industry-icon" aria-hidden="true">
+              <NicheIcon name={industry.icon} />
+            </span>{" "}
+            {industry.label}
             <span className="fine"> · página: plantilla {templateLabel(industry.template)}</span>
           </h2>
           <div className="niche-grid">

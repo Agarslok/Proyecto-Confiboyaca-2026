@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import type { SectorFrame } from "@/lib/site/sector-gallery";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./turismo.module.css";
 
 /* ============================================================================
@@ -381,21 +384,23 @@ const SCENE_CAPTION: Record<SceneKind, string> = {
 /* Fotografía si hay URL; si no (o si falla), el paisaje dibujado */
 function Photo({
   src,
+  mobile,
   kind,
   seed,
   alt,
   className,
 }: {
   src?: string;
+  mobile?: string;
   kind: SceneKind;
   seed: number;
   alt: string;
   className: string;
 }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  useEffect(() => setFailed(false), [src, mobile]);
   if (!src || failed) return <Scene kind={kind} seed={seed} label={alt} />;
-  return <img src={src} alt={alt} className={className} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+  return <SectorImg desktop={src} mobile={mobile} alt={alt} className={className} onError={() => setFailed(true)} />;
 }
 
 /* ------------------------- Ventana modal accesible --------------------------- */
@@ -587,7 +592,14 @@ export function TurismoTemplate({ config }: Props) {
 
   /* --------------------------- Secuencia de portada ------------------------- */
   const heroImages = extras.heroImages?.filter(Boolean) ?? [];
-  const slideCount = heroImages.length || SCENE_ORDER.length;
+  const sectorFrames: SectorFrame[] = config.sectorPhotos
+    ? [config.sectorPhotos.hero, ...config.sectorPhotos.shots]
+    : [];
+  const roomShot = (i: number) => {
+    const shots = config.sectorPhotos?.shots ?? [];
+    return shots.length ? shots[i % shots.length] : undefined;
+  };
+  const slideCount = sectorFrames.length || heroImages.length || SCENE_ORDER.length;
   const [slide, setSlide] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -781,7 +793,7 @@ export function TurismoTemplate({ config }: Props) {
             Array.from({ length: slideCount }, (_, i) => (
               <div key={i} className={`${styles.slide}${i === slide ? ` ${styles.slideOn}` : ""}`} aria-hidden={i === slide ? undefined : "true"}>
                 <div className={`${styles.slideInner}${playing && i === slide ? ` ${styles.slideMoving}` : ""}`}>
-                  <Photo src={heroImages[i]} kind={SCENE_ORDER[i % SCENE_ORDER.length]} seed={i + 3} alt={slideAlt(i)} className={styles.slideImg} />
+                  <Photo src={sectorFrames[i]?.desktop ?? heroImages[i]} mobile={sectorFrames[i]?.mobile} kind={SCENE_ORDER[i % SCENE_ORDER.length]} seed={i + 3} alt={slideAlt(i)} className={styles.slideImg} />
                 </div>
               </div>
             ))
@@ -805,6 +817,8 @@ export function TurismoTemplate({ config }: Props) {
           </span>
         </div>
       </div>
+
+      <SolutionBlock solution={config.solution} tone="turismo" site={config} />
 
       {/* El hotel */}
       <section className={styles.section} id="hotel">
@@ -858,7 +872,7 @@ export function TurismoTemplate({ config }: Props) {
                 aria-haspopup="dialog"
               >
                 <span className={styles.cardMedia}>
-                  <Photo src={c.image} kind={sceneFor(i)} seed={i + 11} alt={c.title ?? "Habitación"} className={styles.cardImg} />
+                  <Photo src={c.image ?? roomShot(i)?.desktop} mobile={c.image ? undefined : roomShot(i)?.mobile} kind={sceneFor(i)} seed={i + 11} alt={c.title ?? "Habitación"} className={styles.cardImg} />
                   {featured ? <span className={styles.badge}>· Destacado</span> : c.tag ? <span className={styles.badge}>{c.tag}</span> : null}
                   <span className={styles.cardOpen}>Ver ficha ↗</span>
                 </span>
@@ -876,7 +890,7 @@ export function TurismoTemplate({ config }: Props) {
       {/* Boyacá (on location) */}
       <section className={styles.location} id="boyaca">
         <div className={styles.locationMedia} aria-hidden="true">
-          <Photo src={extras.locationImage} kind="paramo" seed={21} alt="Paisaje de Boyacá" className={styles.locationImg} />
+          <Photo src={extras.locationImage ?? roomShot(0)?.desktop ?? config.sectorPhotos?.hero.desktop} mobile={extras.locationImage ? undefined : roomShot(0)?.mobile ?? config.sectorPhotos?.hero.mobile} kind="paramo" seed={21} alt="Paisaje de Boyacá" className={styles.locationImg} />
           <div className={styles.locationShade} />
         </div>
         <div className={styles.locationIn}>
@@ -1110,7 +1124,7 @@ export function TurismoTemplate({ config }: Props) {
       {active ? (
         <Modal label={active.title ?? "Habitación"} onClose={() => setOpenCard(null)} wide>
           <div className={styles.dialogMedia}>
-            <Photo src={active.image} kind={sceneFor(openCard as number)} seed={(openCard as number) + 11} alt={active.title ?? "Habitación"} className={styles.cardImg} />
+            <Photo src={active.image ?? roomShot(openCard as number)?.desktop} mobile={active.image ? undefined : roomShot(openCard as number)?.mobile} kind={sceneFor(openCard as number)} seed={(openCard as number) + 11} alt={active.title ?? "Habitación"} className={styles.cardImg} />
           </div>
           <div className={styles.dialogBody}>
             {active.tag ? <p className={styles.label}>{active.tag}</p> : null}

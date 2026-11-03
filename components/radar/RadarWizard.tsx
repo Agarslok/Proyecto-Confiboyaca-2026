@@ -3,9 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { saveRadarDiagnosis } from "@/app/actions/radar";
+import { createRadarSolution, saveRadarDiagnosis } from "@/app/actions/radar";
+import { SOLUTION_GUIDE_LIMITS_SUMMARY, SOLUTION_LOADING_NOTE } from "@/lib/radar/solution-limits";
+import { applySolutionToSiteSession } from "@/lib/site/apply-solution-session";
 import { Icon } from "@/components/externado/icons";
+import { NicheIcon } from "@/components/externado/niche-icons";
 import { RadarChart } from "@/components/radar/RadarChart";
+import { RadarAvatarOverlay } from "@/components/radar/RadarAvatarOverlay";
 import { ConsultoriaLoading } from "@/components/site/ConsultoriaLoading";
 import { useSite } from "@/components/site/useSite";
 import { Button } from "@/components/ui/Button";
@@ -113,12 +117,12 @@ function CompanyScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<
           if (formatted && formatted !== radar.companyName) patchRadar({ companyName: formatted });
         }}
       />
-      <p className="fine radar-contact-note">Todos los datos son obligatorios: con ellos le enviamos el diagnóstico y le hacemos seguimiento.</p>
+      <p className="fine radar-contact-note">Todos los datos son obligatorios: con ellos le enviamos el diagnóstico y la solucción que le ofrecemos.</p>
       <div className="radar-contact">
         <ContactField id="contactName" label="Nombre de contacto" value={radar.contactName} error={errors.contactName} autoComplete="given-name" onChange={(contactName) => patchRadar({ contactName })} />
         <ContactField id="contactLastName" label="Apellido" value={radar.contactLastName} error={errors.contactLastName} autoComplete="family-name" onChange={(contactLastName) => patchRadar({ contactLastName })} />
         <ContactField id="email" type="email" label="Correo" value={radar.email} error={errors.email} autoComplete="email" placeholder="nombre@empresa.com" onChange={(email) => patchRadar({ email: email.trim() })} />
-        <ContactField id="phone" type="tel" label="Celular o WhatsApp" value={radar.phone} error={errors.phone} autoComplete="tel" placeholder="300 123 4567" onChange={(phone) => patchRadar({ phone: phone.replace(/[^\d+ ]/g, "") })} />
+        <ContactField id="companyPhone" type="tel" label="Teléfono de la empresa" value={radar.phone} error={errors.phone} autoComplete="tel-local" placeholder="601 123 4567" onChange={(phone) => patchRadar({ phone: phone.replace(/[^\d+ ]/g, "") })} />
         <ContactField id="city" label="Ciudad o municipio" value={radar.city} error={errors.city} autoComplete="address-level2" list="radar-cities" placeholder="Escriba o elija" onChange={(city) => patchRadar({ city })} />
         <datalist id="radar-cities">
           {CITY_SUGGESTIONS.map((city) => <option key={city} value={city} />)}
@@ -170,7 +174,9 @@ function SectorScreen({ radar, errors }: { radar: RadarAnswers; errors: Record<s
               checked={radar.industry === item.id}
               onChange={() => patchRadar({ industry: item.id, activity: "" })}
             />
-            <span className="radar-industry-icon" aria-hidden="true">{item.icon}</span>
+            <span className="radar-industry-icon" aria-hidden="true">
+              <NicheIcon name={item.icon} />
+            </span>
             <span className="radar-industry-label">{item.label}</span>
           </label>
         ))}
@@ -241,7 +247,7 @@ function MobileLive({ radar }: { radar: RadarAnswers }) {
   );
 }
 
-function LiveAside({ radar }: { radar: RadarAnswers }) {
+function LiveAside({ radar, onOpenAvatar }: { radar: RadarAnswers; onOpenAvatar: () => void }) {
   const live = useMemo(() => scoreRadar(radar), [radar]);
   const { industry, activity } = activityOf(radar);
   const answered = live.dimensions.some((dimension) => dimension.answered);
@@ -260,7 +266,18 @@ function LiveAside({ radar }: { radar: RadarAnswers }) {
         </div>
         <div className="aside-row">
           <dt>Industria</dt>
-          <dd><span>{industry ? `${industry.icon} ${industry.label}` : <span className="empty">Pendiente</span>}</span></dd>
+          <dd>
+            <span>
+              {industry ? (
+                <span className="radar-aside-industry">
+                  <NicheIcon name={industry.icon} />
+                  {industry.label}
+                </span>
+              ) : (
+                <span className="empty">Pendiente</span>
+              )}
+            </span>
+          </dd>
         </div>
         <div className="aside-row">
           <dt>Actividad</dt>
@@ -268,6 +285,9 @@ function LiveAside({ radar }: { radar: RadarAnswers }) {
         </div>
       </dl>
       <p className="aside-note">Las preguntas cambian según su industria, su actividad y lo que vaya respondiendo.</p>
+      <button type="button" className="link-btn radar-avatar-open" onClick={onOpenAvatar}>
+        Hacer formulario con el avatar
+      </button>
     </aside>
   );
 }
@@ -286,15 +306,22 @@ export function RadarWizard() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [direction, setDirection] = useState<"fwd" | "bwd">("fwd");
   const [generating, setGenerating] = useState(false);
+  const [avatarFormOpen, setAvatarFormOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveReady = useRef(false);
+  const animReady = useRef(false);
+  const resultOpened = useRef(false);
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
+  const nichoStarted = useRef<string | null>(null);
+
   /* Desde el catálogo: /diagnostico?nicho=turismo-hotel abre una encuesta nueva para ese nicho. */
   useEffect(() => {
-    if (!nicho) return;
+    if (!nicho || nichoStarted.current === nicho) return;
+    nichoStarted.current = nicho;
     startNiche(nicho);
     router.replace("/diagnostico");
   }, [nicho, router]);
@@ -331,6 +358,12 @@ export function RadarWizard() {
     }, ADVANCE_MS);
   }
 
+  function openResultIfReady() {
+    if (!saveReady.current || !animReady.current || resultOpened.current) return;
+    resultOpened.current = true;
+    router.push("/resultado");
+  }
+
   function generate() {
     if (radar.recordCode === "") patchRadar({ recordCode: undefined });
     const parsed = parseSiteBrief(state.draft);
@@ -340,20 +373,40 @@ export function RadarWizard() {
       return;
     }
     saveSiteConfig(buildSite(parsed.brief));
+    saveReady.current = false;
+    animReady.current = false;
+    resultOpened.current = false;
     setGenerating(true);
-    /* Se guarda en el servidor mientras corre la animación. Si falla, el diagnóstico sigue en este navegador. */
-    void saveRadarDiagnosis(radarOf(getSiteSnapshot())).then((saved) => {
-      if (saved.ok) {
-        patchRadar({ recordId: saved.id, recordCode: saved.code, editToken: saved.editToken || radar.editToken });
-      } else {
-        /* Código vacío = no se guardó; el informe lo avisa. */
+    /* El informe espera el RAD (o un tope) para que «Ver la página» y el QR ya tengan enlace. */
+    const giveUp = window.setTimeout(() => {
+      saveReady.current = true;
+      openResultIfReady();
+    }, 15000);
+    void saveRadarDiagnosis(radarOf(getSiteSnapshot()))
+      .then(async (saved) => {
+        if (saved.ok) {
+          patchRadar({ recordId: saved.id, recordCode: saved.code, editToken: saved.editToken || radar.editToken });
+          const again = parseSiteBrief(getSiteSnapshot().draft);
+          if (again.ok) saveSiteConfig(buildSite(again.brief));
+          const solution = await createRadarSolution(saved.id, saved.editToken);
+          if (solution.ok) applySolutionToSiteSession(solution.spec);
+        } else {
+          /* Código vacío = no se guardó; el informe abre /sitio con lo de este navegador. */
+          patchRadar({ recordCode: "" });
+          console.warn(saved.error);
+          const again = parseSiteBrief(getSiteSnapshot().draft);
+          if (again.ok) saveSiteConfig(buildSite(again.brief));
+        }
+      })
+      .catch((error) => {
         patchRadar({ recordCode: "" });
-        console.warn(saved.error);
-      }
-      /* patchRadar borra el resultado guardado: se vuelve a armar, haya o no guardado. */
-      const again = parseSiteBrief(getSiteSnapshot().draft);
-      if (again.ok) saveSiteConfig(buildSite(again.brief));
-    });
+        console.warn(error);
+      })
+      .finally(() => {
+        window.clearTimeout(giveUp);
+        saveReady.current = true;
+        openResultIfReady();
+      });
   }
 
   useEffect(() => {
@@ -374,7 +427,16 @@ export function RadarWizard() {
   });
 
   if (generating) {
-    return <ConsultoriaLoading companyName={radar.companyName} onComplete={() => router.push("/resultado")} />;
+    return (
+      <ConsultoriaLoading
+        companyName={radar.companyName}
+        note={`${SOLUTION_LOADING_NOTE} ${SOLUTION_GUIDE_LIMITS_SUMMARY}`}
+        onComplete={() => {
+          animReady.current = true;
+          openResultIfReady();
+        }}
+      />
+    );
   }
   if (!screen) return null;
 
@@ -382,25 +444,25 @@ export function RadarWizard() {
   const remaining = Math.max(0, screens.length - cursor - 1);
   const minutes = Math.max(1, Math.round((remaining * SECONDS_PER_QUESTION) / 60));
   const sectionIndex = sections.indexOf(screen.section);
-  const { industry } = activityOf(radar);
 
   let title = "";
   let help = "";
   if (screen.kind === "empresa") {
     title = "Cuéntenos de su empresa";
-    help = "El nombre aparece en el diagnóstico y en la página web que le generamos.";
+    help = "";
   } else if (screen.kind === "sector") {
     title = "¿En qué industria está su empresa?";
     help = "La industria y la actividad definen las preguntas que verá y el diseño de su página.";
   } else if (screen.kind === "question") {
     title = screen.question.text;
-    help = industry && screen.question.dimension === "negocio" ? `Pregunta propia de ${industry.label.toLowerCase()}.` : "";
+    help = "";
   } else {
     title = "¿Qué quieren lograr con los datos?";
     help = "Elija hasta 2. No puntúa: sirve para priorizar los casos que le mostramos.";
   }
 
   return (
+    <>
     <form
       noValidate
       className="wrap flow radar-flow"
@@ -496,8 +558,10 @@ export function RadarWizard() {
           </div>
         </div>
 
-        <LiveAside radar={radar} />
+        <LiveAside radar={radar} onOpenAvatar={() => setAvatarFormOpen(true)} />
       </div>
     </form>
+    <RadarAvatarOverlay open={avatarFormOpen} onClose={() => setAvatarFormOpen(false)} />
+    </>
   );
 }

@@ -138,7 +138,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum","kern"}
 
 /* ---- Botones píldora ---- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid transparent;border-radius:var(--r-pill);padding:14px 28px;font-weight:400;font-size:16px;line-height:1.2;cursor:pointer;transition:box-shadow .3s ease,background-color .3s ease,border-color .3s ease,color .3s ease,opacity .2s;white-space:nowrap;min-height:48px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border:1px solid transparent;border-radius:var(--r-pill);padding:14px 28px;font-weight:400;font-size:16px;line-height:1.2;cursor:pointer;text-decoration:none;transition:box-shadow .3s ease,background-color .3s ease,border-color .3s ease,color .3s ease,opacity .2s;white-space:nowrap;min-height:48px}
 .btn:disabled{opacity:.35;cursor:not-allowed}
 .btn svg{flex:none}
 .btn-primary{background:var(--mint-glow);color:var(--midnight-tide);text-decoration: none;}

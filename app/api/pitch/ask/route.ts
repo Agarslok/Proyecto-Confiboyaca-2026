@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { askFairConsultant } from "@/lib/avatar/ask-gemini";
+import { answerOffersAvatarSolution } from "@/lib/avatar/solution-offer";
 
 const bodySchema = z.object({
   question: z.string().trim().min(1).max(500),
@@ -21,7 +22,10 @@ export async function POST(request: Request) {
 
   try {
     const answer = await askFairConsultant(parsed.data.question);
-    return NextResponse.json({ answer });
+    return NextResponse.json({
+      answer,
+      solutionReady: answerOffersAvatarSolution(answer),
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo consultar al asistente.";
     const status = message.includes("GEMINI_API_KEY") ? 503 : 502;

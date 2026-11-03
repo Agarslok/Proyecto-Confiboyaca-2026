@@ -7,6 +7,12 @@
 @import "./styles/radar.css";
 @import "./styles/home.css";
 
+/* Página de solución por QR (/s/RAD-…): solo la plantilla generada, sin menú del stand. */
+.saved-solution-page {
+  min-height: 100vh;
+  background: var(--forest-depths, #072724);
+}
+
 /* Vista previa de la página generada (perfiles cálido / sobrio) */
 .generated {
   --site-bg: #f6f0e8;

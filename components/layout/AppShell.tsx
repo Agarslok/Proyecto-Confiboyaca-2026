@@ -42,7 +42,9 @@ function skipsAppChrome(pathname: string): boolean {
     pathname.startsWith("/pitch") ||
     pathname.startsWith("/stand") ||
     pathname.startsWith("/sitio") ||
+    pathname.startsWith("/s/") ||
     pathname.startsWith("/solucion") ||
+    pathname.startsWith("/boceto") ||
     pathname.startsWith("/flyer") ||
     pathname === "/consultor" ||
     pathname.startsWith("/consultor/")

@@ -3,6 +3,10 @@ import { buildRadarResult, isRadarComplete } from "@/lib/radar/engine";
 import { contactErrors } from "@/lib/radar/contact";
 import { normalizeRadarAnswers } from "@/lib/radar/session";
 import type { LevelId, RadarAnswers } from "@/lib/radar/types";
+import type { PresentationActionId, SolutionHoleSpec } from "@/lib/site/solution-slot";
+import { ASSISTANT_ACTION, SOLUTION_ACTIONS } from "@/lib/site/solution-slot";
+import { SOLUTION_KINDS, type SolutionKind } from "@/lib/radar/solution";
+import { parseSolutionHole } from "@/lib/validation/solution-hole";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/store/lead-status";
 
 /* ============================================================================
@@ -32,7 +36,15 @@ export interface DiagnosisRecord extends DiagnosisSummary {
   notes: string;
   email: string;
   phone: string;
+  contactPhone: string;
   consentAt: string;
+  /** Enfoque del hueco (paso 2), sin spec de página todavía. */
+  presentationMode: "catalogo" | "asistente" | "";
+  presentationKind: SolutionKind | "";
+  presentationAction: PresentationActionId | "";
+  /** JSON validado del hueco (`{ mode, spec }`); vacío hasta «Creando la solución». */
+  solutionMode: "catalogo" | "";
+  solutionSpec: SolutionHoleSpec | null;
   answers: RadarAnswers;
 }
 
@@ -61,6 +73,10 @@ export interface DiagnosisStore {
   stats(): Promise<{ total: number; byLevel: Record<LevelId, number>; interested: number }>;
   /** El cliente pide que lo llamen; solo con el token de su navegador. */
   requestFollowUp(id: string, editToken: string): Promise<boolean>;
+  /** El mismo navegador puede guardar el JSON ya validado del hueco. */
+  setSolutionSpec(id: string, editToken: string, spec: unknown): Promise<boolean>;
+  /** Comprueba el token antes de llamar al modelo. */
+  hasEditAccess(id: string, editToken: string): Promise<boolean>;
   /** Solo consultores: cambia el estado y las notas. */
   setStatus(id: string, status: LeadStatus, notes: string): Promise<boolean>;
   /** Todos los registros completos, para exportar. */
@@ -92,6 +108,37 @@ export function tokenMatches(token: string | undefined, hash: unknown): boolean 
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+export interface StoredSolution {
+  mode: "catalogo";
+  spec: SolutionHoleSpec;
+}
+
+/** Lee el JSON guardado: `{ mode, spec }` o el spec suelto de versiones anteriores. */
+export function parseStoredSolution(value: unknown): StoredSolution | null {
+  let data = value;
+  if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) return null;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const row = data as Record<string, unknown>;
+  const inner = row.spec && typeof row.spec === "object" ? row.spec : row.action ? row : null;
+  if (!inner) return null;
+  const hole = parseSolutionHole(inner);
+  if (!hole.ok) return null;
+  return { mode: "catalogo", spec: hole.spec };
+}
+
+export function solutionSpecJson(spec: unknown): string | null {
+  const stored = parseStoredSolution(spec);
+  return stored ? JSON.stringify(stored) : null;
+}
+
 /** Deja solo lo que el formulario puede producir y exige un diagnóstico completo con autorización. */
 export function validateForStorage(raw: unknown): { ok: true; answers: RadarAnswers } | { ok: false; error: string } {
   const answers = normalizeRadarAnswers(raw);
@@ -119,11 +166,22 @@ export function columnsFor(answers: RadarAnswers) {
     contact_name: `${answers.contactName.trim()} ${answers.contactLastName.trim()}`.trim(),
     email: answers.email.trim().toLowerCase(),
     phone: answers.phone.trim(),
+    contact_phone: (answers.contactPhone ?? "").trim(),
     industry: result.industryLabel,
     activity: result.activityLabel,
+    industry_id: answers.industry,
+    activity_id: answers.activity,
     index_score: result.index,
     level: result.level,
     central_problem: result.central?.problem ?? "",
+    presentation_mode: result.presentation?.mode ?? "",
+    presentation_kind: result.presentation?.kind ?? "",
+    presentation_action:
+      result.presentation?.mode === "catalogo"
+        ? result.presentation.action
+        : result.presentation?.mode === "asistente"
+          ? ASSISTANT_ACTION
+          : "",
     answers_json: JSON.stringify(answers),
   };
 }
@@ -160,13 +218,37 @@ export function toRecord(row: Row): DiagnosisRecord | null {
   }
   const answers = normalizeRadarAnswers(parsed);
   if (!answers) return null;
+  const mode = text(row.presentation_mode);
+  const presentationMode = mode === "catalogo" || mode === "asistente" ? mode : mode === "guia" ? "catalogo" : "";
+  const kind = text(row.presentation_kind);
+  const presentationKind = (SOLUTION_KINDS as readonly string[]).includes(kind) ? (kind as SolutionKind) : "";
+  const action = text(row.presentation_action);
+  const presentationAction =
+    (SOLUTION_ACTIONS as readonly string[]).includes(action) || action === ASSISTANT_ACTION
+      ? (action as PresentationActionId)
+      : "";
+  const stored = parseStoredSolution(text(row.solution_spec));
+  const solutionSpec = stored?.spec ?? null;
+  const solutionMode = stored?.mode ?? "";
   return {
     ...toSummary(row),
     notes: text(row.notes),
     email: text(row.email),
     phone: text(row.phone),
+    contactPhone: text(row.contact_phone),
     consentAt: text(row.consent_at),
-    answers: { ...answers, recordId: text(row.id), recordCode: text(row.code) },
+    presentationMode,
+    presentationKind,
+    presentationAction,
+    solutionMode,
+    solutionSpec,
+    answers: {
+      ...answers,
+      phone: text(row.phone) || answers.phone,
+      contactPhone: text(row.contact_phone) || answers.contactPhone,
+      recordId: text(row.id),
+      recordCode: text(row.code),
+    },
   };
 }
 

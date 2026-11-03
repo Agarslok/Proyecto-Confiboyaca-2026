@@ -12,7 +12,7 @@ En Netlify los datos **no** pueden quedar en un archivo (no hay disco que se con
 ## 1. Supabase (una vez)
 
 1. Entre a [supabase.com](https://supabase.com) y cree un proyecto (región: la más cercana, por ejemplo São Paulo). Guarde la contraseña de la base en un lugar seguro.
-2. Vaya a **SQL Editor → New query**, pegue todo el contenido de `supabase/schema.sql` y pulse **Run**. Crea las tablas `diagnoses` y `diagnoses_backup`, con RLS activado y sin políticas (nadie puede leerlas con la llave pública).
+2. Vaya a **SQL Editor → New query**, pegue todo el contenido de `supabase/schema.sql` y pulse **Run**. Crea el catálogo (`radar_industries`, `radar_activities`, `radar_questions`), los diagnósticos (`diagnoses`, `diagnosis_answers`, `diagnosis_goals`) y la copia `diagnoses_backup`. RLS queda activado y sin políticas (nadie puede leerlas con la llave pública). El catálogo de preguntas lo llena la aplicación al guardar el primer diagnóstico. Si el proyecto ya existía, vuelva a correr ese archivo: agrega columnas nuevas (`presentation_action`, `solution_spec`, etc.) sin borrar datos. Sin esas columnas el diagnóstico igual se guarda, pero el hueco de la solución no queda persistido.
 3. Vaya a **Project Settings → API** (o **API Keys**) y copie:
    - **Project URL** → será `SUPABASE_URL`.
    - La llave **secreta** (`service_role` o «secret key», nunca la `anon`/«publishable») → será `SUPABASE_SECRET_KEY`.
@@ -46,7 +46,7 @@ Use una contraseña y un secreto **distintos** a los de su `.env.local`.
 
 1. Llene una encuesta completa en el sitio publicado.
 2. Entre a `/consultor`: arriba debe decir «base: Supabase» y aparecer el diagnóstico.
-3. En Supabase, **Table Editor → diagnoses** debe mostrar la fila.
+3. En Supabase, **Table Editor → diagnoses** debe mostrar la fila, y **diagnosis_answers** una fila por pregunta. El QR del informe abre `/s/RAD-XXXXXX`.
 
 ## Exportar y empezar de cero
 

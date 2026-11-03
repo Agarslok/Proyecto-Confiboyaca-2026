@@ -1,0 +1,138 @@
+.assistant .layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.28fr);
+  gap: clamp(20px, 3vw, 36px);
+  margin-top: 28px;
+  align-items: start;
+}
+
+.proposal {
+  padding: 20px 22px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.proposalKicker {
+  margin: 0 0 8px;
+  font-family: var(--kicker);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.proposalText {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.disclaimer {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.chat {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.log {
+  min-height: 280px;
+  max-height: 420px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.user, .bot, .pending {
+  margin: 0;
+  max-width: 46ch;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.user {
+  justify-self: end;
+  background: var(--fill);
+  color: var(--fill-ink);
+}
+
+.bot, .pending {
+  justify-self: start;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+}
+
+.who {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--kicker);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.pending { color: var(--muted); font-style: italic; }
+
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.chip:hover:not(:disabled), .chip:focus-visible {
+  border-color: var(--accent);
+}
+
+.chip:disabled { opacity: 0.55; cursor: default; }
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.composer input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+.send {
+  width: auto;
+  min-width: 120px;
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .assistant .layout { grid-template-columns: 1fr; }
+}

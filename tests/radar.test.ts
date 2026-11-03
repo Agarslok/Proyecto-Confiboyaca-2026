@@ -22,10 +22,12 @@ function answerAll(base: Partial<RadarAnswers>, pick: OptionKey | ((id: string) 
 }
 
 describe("banco del radar", () => {
-  it("tiene 12 industrias × 4 actividades y 72 casos", () => {
-    assert.equal(INDUSTRIES.length, 12);
-    assert.ok(INDUSTRIES.every((industry) => industry.activities.length === 4));
-    assert.equal(CASES.length, 72);
+  it("tiene 14 industrias × 6 actividades y 76 casos", () => {
+    assert.equal(INDUSTRIES.length, 14);
+    assert.ok(INDUSTRIES.every((industry) => industry.activities.length === 6));
+    const ids = INDUSTRIES.flatMap((industry) => industry.activities.map((activity) => activity.id));
+    assert.equal(ids.length, new Set(ids).size);
+    assert.equal(CASES.length, 76);
   });
 
   it("no pasa de 18 pantallas en ningún nicho y nunca baja de 15", () => {
@@ -80,6 +82,7 @@ describe("puntaje del radar", () => {
     assert.equal(result.index, 100);
     assert.equal(result.level, "bajo");
     assert.equal(result.findings.length, 0);
+    assert.equal(result.presentation?.mode, "asistente");
   });
 
   it("con Datos por debajo de 55 no puede quedar en riesgo bajo", () => {
@@ -151,6 +154,10 @@ describe("nichos, casos en detalle y problema central", () => {
     assert.ok(result.central?.also.some((item) => item.kind === "merma"));
     const site = buildSite({ companyName: radar.companyName, sectorId: "gastronomia", activity: "", audience: "", goal: "", otherGoal: "", features: [], radar });
     assert.match(site.templateCopy.heroLead, /queda registrado/);
+    assert.match(site.sectorPhotos?.hero.desktop ?? "", /\/media\/sectores\/alimentos\/portada\.webp$/);
+    assert.ok(site.sectorPhotos?.shots.some((shot) => shot.desktop.includes("cafe.webp")));
+    const cattle = buildSite({ ...{ companyName: "Hato", sectorId: "agroindustria" as const, activity: "", audience: "" as const, goal: "" as const, otherGoal: "", features: [] }, radar: { ...radar, industry: "pecuaria", activity: "pecuaria-bovinos" } });
+    assert.match(cattle.sectorPhotos?.hero.desktop ?? "", /\/media\/sectores\/pecuaria\/portada\.webp$/);
   });
 
   it("el detalle de un caso compara la respuesta de hoy con el nivel integrado", () => {

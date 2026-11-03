@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./metalurgia.module.css";
 
 /* ============================================================================
@@ -629,7 +631,9 @@ export function MetalurgiaTemplate({ config }: Props) {
       {/* Portada */}
       <section className={styles.hero} id="inicio" style={heroStyle}>
         <div className={styles.heroMedia} aria-hidden="true">
-          {useVideo ? (
+          {config.sectorPhotos?.hero ? (
+            <SectorImg desktop={config.sectorPhotos.hero.desktop} mobile={config.sectorPhotos.hero.mobile} alt="" className={styles.heroVideo} />
+          ) : useVideo ? (
             <video ref={videoRef} className={styles.heroVideo} src={extras.heroVideoUrl} muted loop playsInline autoPlay={!prefersReducedMotion()} onError={() => setVideoFailed(true)} />
           ) : (
             <>
@@ -666,6 +670,8 @@ export function MetalurgiaTemplate({ config }: Props) {
           </button>
         </div>
       </section>
+
+      <SolutionBlock solution={config.solution} tone="metalurgia" site={config} />
 
       {/* Banda de declaración */}
       {hasStatement ? (
@@ -749,7 +755,16 @@ export function MetalurgiaTemplate({ config }: Props) {
             <div className={styles.procMedia}>
               {steps.map((s, i) => (
                 <div key={s.title} className={`${styles.procScene}${i === step ? ` ${styles.procSceneOn}` : ""}`} aria-hidden={i === step ? undefined : "true"}>
-                  <Scene kind={STEP_SCENE_FOR(i)} label={s.title} />
+                  {config.sectorPhotos?.shots.length ? (
+                    <SectorImg
+                      desktop={(config.sectorPhotos.shots[i % config.sectorPhotos.shots.length] ?? config.sectorPhotos.hero).desktop}
+                      mobile={(config.sectorPhotos.shots[i % config.sectorPhotos.shots.length] ?? config.sectorPhotos.hero).mobile}
+                      alt={s.title}
+                      className={styles.heroVideo}
+                    />
+                  ) : (
+                    <Scene kind={STEP_SCENE_FOR(i)} label={s.title} />
+                  )}
                 </div>
               ))}
               <span className={styles.procBadge}>

@@ -12,6 +12,7 @@ import { CASES } from "@/lib/radar/cases";
 import { contactErrors } from "@/lib/radar/contact";
 import { estimateEffort } from "@/lib/radar/effort";
 import { fitsSize } from "@/lib/radar/case-language";
+import { choosePresentation } from "@/lib/radar/presentation";
 import { centralProblem } from "@/lib/radar/solution";
 import type {
   Activity,
@@ -38,7 +39,7 @@ const SEVERITY_ORDER: Record<Finding["severity"], number> = { critico: 0, mejora
 
 export function emptyRadarAnswers(): RadarAnswers {
   return {
-    companyName: "", city: "", contactName: "", contactLastName: "", email: "", phone: "", consent: false,
+    companyName: "", city: "", contactName: "", contactLastName: "", email: "", phone: "", contactPhone: "", consent: false,
     size: "", industry: "", activity: "", choices: {}, goals: [], cursor: 0,
   };
 }
@@ -233,6 +234,11 @@ export function scoreRadar(answers: RadarAnswers) {
 export function buildRadarResult(answers: RadarAnswers): RadarResult {
   const { industry, activity } = activityOf(answers);
   const score = scoreRadar(answers);
+  const central = centralProblem(score.findings, score.dimensions, answers.companyName, answers.industry);
+  const vocab = industry
+    ? { ...industry.vocab, ...activity?.vocab }
+    : { productos: "productos", clientes: "clientes", punto: "sede" };
+  const { plan, next } = planFor(score.level, answers);
   return {
     index: score.index,
     level: score.level,
@@ -246,11 +252,23 @@ export function buildRadarResult(answers: RadarAnswers): RadarResult {
     sizeLabel: answers.size ? `${SIZES[answers.size].detail} (${SIZES[answers.size].label} personas)` : "",
     questionsAnswered: score.scoredCount,
     unsure: score.unsure,
-    central: centralProblem(score.findings, score.dimensions, answers.companyName, answers.industry),
-    ...(() => {
-      const { plan, next } = planFor(score.level, answers);
-      return { plan, nextPlan: next, firstSteps: needsFirstSteps(answers), effort: estimateEffort(plan, answers) };
-    })(),
+    central,
+    presentation: choosePresentation({
+      companyName: answers.companyName,
+      industryId: answers.industry,
+      activityId: answers.activity,
+      activityLabel: activity?.label ?? "",
+      vocab,
+      central,
+      dimensions: score.dimensions,
+      findings: score.findings,
+      index: score.index,
+      level: score.level,
+    }),
+    plan,
+    nextPlan: next,
+    firstSteps: needsFirstSteps(answers),
+    effort: estimateEffort(plan, answers),
   };
 }
 

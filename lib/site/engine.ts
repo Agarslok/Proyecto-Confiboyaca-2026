@@ -4,8 +4,10 @@ import type { RadarAnswers } from "@/lib/radar/types";
 import { audienceLabels, featureLabels, goalLabels, sectorLabels } from "@/lib/site/catalog";
 import { buildConsultancy } from "@/lib/site/consultancy";
 import { formatCompanyName } from "@/lib/site/format-company-name";
+import { photosFor } from "@/lib/site/sector-gallery";
 import { selectTemplate, templateLabel } from "@/lib/site/select-template";
 import { contentForTemplate } from "@/lib/site/template-content";
+import type { SolutionHoleSpec } from "@/lib/site/solution-slot";
 import type { FeatureId, SectorId, SiteConfig, SiteDraft } from "@/types/site";
 
 export interface SiteBrief {
@@ -17,6 +19,8 @@ export interface SiteBrief {
   otherGoal: string;
   features: FeatureId[];
   radar?: RadarAnswers;
+  /** Hueco ya generado (p. ej. tras «Creando la solución»). Si falta, la plantilla no lo pinta. */
+  solution?: SolutionHoleSpec;
 }
 
 function configId(companyName: string, sectorId: SectorId): string {
@@ -94,6 +98,11 @@ export function buildSite(brief: SiteBrief): SiteConfig {
     gaps,
     consultancy: buildConsultancy({ ...brief, companyName }),
     radar,
+    solution: brief.solution,
+    industryId: brief.radar?.industry || undefined,
+    activityId: brief.radar?.activity || undefined,
+    recordCode: brief.radar?.recordCode,
+    sectorPhotos: photosFor(brief.radar?.industry ?? ""),
     diagnosis: {
       need: `${companyName} recibirá la plantilla de ${sectorLabel.toLowerCase()}. La personalización visible es el nombre de la empresa; el sector fija el diseño.`,
       priority: `Regla del demo: sector → plantilla. Objetivo y características marcadas no cambian el resultado.`,

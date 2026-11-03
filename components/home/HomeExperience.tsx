@@ -43,7 +43,6 @@ export function HomeExperience() {
           Describa la empresa y vea una página hecha con esas respuestas
         </h1>
         <p className="lead w-lead">
-          Confi pregunta lo mínimo, explica qué entraría en el sitio y lo construye en este navegador.
           No usa una tienda externa ni un modelo de inteligencia artificial.
         </p>
         <div className="w-actions">

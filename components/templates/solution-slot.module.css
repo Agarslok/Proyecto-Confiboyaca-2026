@@ -1,0 +1,619 @@
+/* Hueco de solución. Cada clase copia la paleta de su plantilla para que
+   botones, filetes y tipo se sientan de esa página, no de un widget genérico. */
+
+.slot {
+  --headline: var(--accent, var(--ink));
+
+  --ink: #242429;
+  --muted: #5c5c63;
+  --paper: #ffffff;
+  --canvas: #f9f5f2;
+  --line: rgba(36, 36, 41, 0.18);
+  --fill: #242429;
+  --fill-ink: #f9f5f2;
+  --accent: #242429;
+  --radius: 0px;
+  --font: Cabin, "Trebuchet MS", sans-serif;
+  --display: Cabin, "Trebuchet MS", sans-serif;
+  --kicker: "Fira Mono", ui-monospace, monospace;
+
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.hueco {
+  position: relative;
+  z-index: 2;
+}
+
+.hueco :where(.slot) {
+  color: var(--ink);
+}
+
+.hueco .slot + .slot .inner {
+  padding-top: 8px;
+}
+
+.bridge {
+  margin: 0 0 14px;
+  max-width: 46ch;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.inner,
+.head {
+  color: var(--ink);
+}
+
+.head .title,
+.summaryTitle,
+.editorTitle,
+.notesTitle,
+.stepTitle {
+  color: var(--headline);
+}
+
+.inner {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: clamp(36px, 6vw, 72px) 0;
+}
+
+.kicker, .summaryKicker, .doneKicker {
+  margin: 0 0 8px;
+  font-family: var(--kicker);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.title, .doneTitle, .summaryTitle {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.title { font-size: clamp(32px, 4vw, 52px); max-width: 16ch; }
+.change { margin: 12px 0 0; max-width: 46ch; color: var(--muted); font-size: 15px; line-height: 1.45; }
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(240px, 0.8fr);
+  gap: clamp(20px, 3vw, 36px);
+  margin-top: 28px;
+  align-items: start;
+}
+
+.group { margin: 0 0 22px; padding: 0; border: 0; }
+.group legend {
+  margin-bottom: 10px;
+  font-family: var(--kicker);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.choices, .dates { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.choice, .date, .stepper button, .submit, .ghost {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease, transform 0.22s ease;
+}
+
+.choice, .date {
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+
+.choice { display: grid; gap: 4px; min-width: min(100%, 210px); flex: 1; padding: 14px 16px; }
+.choiceLabel { font-weight: 600; }
+.choiceDetail, .choicePrice { font-size: 13px; color: var(--muted); }
+.choiceOn, .dateOn {
+  background: var(--fill);
+  color: var(--fill-ink);
+  border-color: var(--fill);
+}
+.choiceOn .choiceDetail, .choiceOn .choicePrice { color: color-mix(in srgb, var(--fill-ink) 78%, transparent); }
+
+.date { padding: 10px 12px; font-size: 14px; }
+
+.party { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 280px; }
+.main .field { margin-top: 18px; max-width: 420px; }
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper button {
+  width: 36px;
+  height: 36px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.stepper strong { min-width: 1.5ch; text-align: center; font-size: 18px; }
+
+.summary {
+  position: sticky;
+  top: 16px;
+  padding: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.summaryTitle { font-size: 26px; margin-bottom: 12px; }
+.summary dl, .doneFacts { margin: 0; display: grid; gap: 8px; }
+.summary dl div, .doneFacts div { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
+.summary dt, .doneFacts dt { color: var(--muted); }
+.summary dd, .doneFacts dd { margin: 0; font-weight: 600; }
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: 16px 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+.total strong { font-size: 28px; letter-spacing: -0.03em; }
+
+.submit, .ghost {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+}
+.submit { background: var(--accent); color: var(--fill-ink); font-weight: 600; }
+.submit:hover, .choice:hover, .date:hover, .ghost:hover, .stepper button:hover:not(:disabled) { transform: translateY(-1px); }
+.ghost { margin-top: 18px; background: transparent; border-color: var(--line); }
+
+.done {
+  margin-top: 28px;
+  max-width: 520px;
+  padding: 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  animation: rise 0.35s ease;
+}
+.doneTitle { font-size: clamp(28px, 3vw, 40px); margin-bottom: 16px; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.slot :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Turismo · Kobu: papel, obsidiana, esquinas rectas, mono en etiquetas. */
+.turismo { --ink: #242429; --muted: #6b6b72; --paper: #ffffff; --canvas: #f9f5f2; --line: rgba(36, 36, 41, 0.22); --fill: #242429; --fill-ink: #f9f5f2; --accent: #242429; --headline: #242429; --radius: 0px; }
+
+/* Gastronomía · pergamino, azafrán, serif. */
+.gastronomia {
+  --ink: #2c2c2c;
+  --muted: #615b53;
+  --paper: #f6f1ea;
+  --canvas: #cfc3b2;
+  --line: rgba(44, 44, 44, 0.18);
+  --fill: #2c2c2c;
+  --fill-ink: #f6f1ea;
+  --accent: #d49653;
+  --headline: #2f6b4f;
+  --radius: 0px;
+  --display: "Cormorant Garamond", Georgia, serif;
+  --font: "DM Sans", Inter, sans-serif;
+  --kicker: "DM Sans", Inter, sans-serif;
+}
+.gastronomia .title, .gastronomia .doneTitle, .gastronomia .summaryTitle { text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.gastronomia .submit { color: #2c2c2c; }
+
+/* Servicios · crema, coral, esquinas suaves. */
+.servicios {
+  --ink: #2d2142;
+  --muted: #62586f;
+  --paper: #ffffff;
+  --canvas: #fbf6ef;
+  --line: #e8dfd3;
+  --fill: #2d2142;
+  --fill-ink: #fbf6ef;
+  --accent: #c9502f;
+  --headline: #a8442e;
+  --radius: 16px;
+  --display: Fraunces, Georgia, serif;
+  --font: "DM Sans", Inter, sans-serif;
+  --kicker: "DM Sans", Inter, sans-serif;
+}
+.servicios .submit { color: #fff; }
+.servicios .inner { width: min(1120px, calc(100% - 32px)); }
+
+/* Agro · crema y verde hoja, cápsulas. */
+.agroindustria {
+  --ink: #0f1a13;
+  --muted: #55645a;
+  --paper: #fbfaf5;
+  --canvas: #f5f2e8;
+  --line: rgba(15, 26, 19, 0.14);
+  --fill: #0c2318;
+  --fill-ink: #f5f2e8;
+  --accent: #1d4a30;
+  --headline: #1d4a30;
+  --radius: 24px;
+  --font: Manrope, sans-serif;
+  --display: Manrope, sans-serif;
+  --kicker: Manrope, sans-serif;
+}
+.agroindustria .submit { background: #b9e05b; color: #0c2318; }
+
+/* Metalurgia · hueso y amarillo seguridad, después de la portada negra. */
+.metalurgia {
+  --ink: #0c0c0d;
+  --muted: #494b52;
+  --paper: #ffffff;
+  --canvas: #f4f3ef;
+  --line: rgba(12, 12, 13, 0.16);
+  --fill: #0c0c0d;
+  --fill-ink: #ffd21f;
+  --accent: #ffd21f;
+  --headline: #8a6f00;
+  --radius: 0px;
+  --font: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --display: Archivo, "Helvetica Neue", Arial, sans-serif;
+  --kicker: "JetBrains Mono", ui-monospace, monospace;
+}
+.metalurgia .submit { color: #0c0c0d; }
+
+/* Retail · azul de marca, radio corto. */
+.retail {
+  --ink: #14171f;
+  --muted: #5b6270;
+  --paper: #ffffff;
+  --canvas: #f4f5f8;
+  --line: #e1e4ea;
+  --fill: #1c4ed8;
+  --fill-ink: #ffffff;
+  --accent: #1c4ed8;
+  --headline: #1c4ed8;
+  --radius: 10px;
+  --font: Inter, "DM Sans", sans-serif;
+  --display: Inter, "DM Sans", sans-serif;
+  --kicker: Inter, "DM Sans", sans-serif;
+}
+
+.tableWrap {
+  margin-top: 28px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.table th {
+  font-family: var(--kicker);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--canvas) 70%, var(--paper));
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.tableSubmit {
+  margin-top: 20px;
+  max-width: 320px;
+}
+
+.workbook { margin-top: 28px; }
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.toolbar .submit { width: auto; min-width: 200px; }
+.toolbarNote {
+  margin: 20px 0 0;
+  max-width: 54ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.workbook .toolbarNote { margin: 0; }
+.empty {
+  margin: 0;
+  padding: 20px;
+  background: var(--paper);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.rowOn td { background: color-mix(in srgb, var(--accent) 10%, var(--paper)); }
+.rowActions {
+  vertical-align: top;
+}
+.cellActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  min-width: 7.5rem;
+}
+.cellActions .linkish {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-decoration: none;
+  text-align: center;
+}
+.cellActions .linkish:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.linkish {
+  margin-left: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.linkish:first-child { margin-left: 0; }
+.editor {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.editorTitle {
+  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.fields {
+  display: grid;
+  gap: 12px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.field input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--canvas);
+  color: var(--ink);
+  font: inherit;
+}
+.editorActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.editorActions .submit, .editorActions .ghost {
+  width: auto;
+  min-width: 180px;
+  margin-top: 0;
+}
+.flash {
+  margin: 16px 0 0;
+  max-width: 54ch;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.bookings {
+  margin-top: 36px;
+  padding: 20px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.bookings .editorTitle {
+  margin-bottom: 4px;
+}
+.bookingList {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.bookingList li {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 14px 16px;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.bookingList p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+.bookingOn {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.bookingFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.bookingFooter .linkish {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  text-decoration: none;
+}
+.bookingFooter .linkish:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.demoChat {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+}
+.demoLog {
+  min-height: 240px;
+  max-height: 420px;
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 16px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.demoUser, .demoBot {
+  margin: 0;
+  max-width: 48ch;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.demoUser {
+  justify-self: end;
+  background: var(--fill);
+  color: var(--fill-ink);
+}
+.demoBot {
+  justify-self: start;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+}
+.demoWho {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--kicker);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.demoChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.demoChip {
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.demoChip:hover, .demoChip:focus-visible { border-color: var(--accent); }
+.demoChip:disabled { opacity: 0.55; cursor: default; }
+.demoTyping {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  min-height: 1em;
+}
+.demoTyping i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  animation: demoBlink 1s infinite ease-in-out;
+}
+.demoTyping i:nth-child(2) { animation-delay: 0.15s; }
+.demoTyping i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes demoBlink {
+  0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
+  40% { opacity: 1; transform: translateY(-2px); }
+}
+.demoComposer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.demoComposer input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+.demoComposer .submit {
+  width: auto;
+  min-width: 120px;
+  margin: 0;
+}
+.demoComposer .submit:disabled,
+.demoComposer input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 800px) {
+  .grid { grid-template-columns: 1fr; }
+  .summary { position: static; }
+}

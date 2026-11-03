@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./servicios.module.css";
 
 /* ============================================================================
@@ -110,7 +112,7 @@ function targetFor(label: string, index: number, ids: string[]): string {
   const rules: [RegExp, string][] = [
     [/inicio|home/, "inicio"],
     [/servicio|especialidad|tratamiento|atencion/, "servicios"],
-    [/proceso|como funciona|pasos/, "proceso"],
+    [/proceso|como funciona|pasos/, "servicios"],
     [/equipo|medic|profesional|doctor|nosotros/, "equipo"],
     [/sede|ubicacion|clinica|consultorio|virtual/, "sedes"],
     [/pago|plan|precio|seguro|eps/, "pagos"],
@@ -241,64 +243,12 @@ function Layer({ label, onClose, side, children }: { label: string; onClose: () 
   );
 }
 
-/* Un minuto de calma: respiración guiada (4 – 4 – 6) */
-const PHASES = [
-  { label: "Inhala", secs: 4, scale: 1.0 },
-  { label: "Sostén", secs: 4, scale: 1.0 },
-  { label: "Exhala", secs: 6, scale: 0.55 },
-] as const;
-
-function Breath({ name }: { name: string }) {
-  const [on, setOn] = useState(false);
-  const [phase, setPhase] = useState(2);
-  const [left, setLeft] = useState(0);
-  const [cycles, setCycles] = useState(0);
-
-  useEffect(() => {
-    if (!on) return;
-    let p = 0;
-    let remaining: number = PHASES[0].secs;
-    setPhase(0);
-    setLeft(remaining);
-    const id = window.setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        p = (p + 1) % PHASES.length;
-        if (p === 0) setCycles((c) => c + 1);
-        remaining = PHASES[p].secs;
-        setPhase(p);
-      }
-      setLeft(remaining);
-    }, 1000);
-    return () => window.clearInterval(id);
-  }, [on]);
-
-  const cur = PHASES[phase];
-  const still = prefersReducedMotion();
-  return (
-    <div className={styles.breath}>
-      <div className={styles.breathStage} aria-hidden="true">
-        <div className={styles.breathRing} />
-        <div className={styles.breathOrb} style={{ transform: `scale(${on ? cur.scale : 0.55})`, transitionDuration: still ? "0s" : `${on ? cur.secs : 1}s` }} />
-      </div>
-      <div className={styles.breathText}>
-        <p className={styles.kicker}>Un respiro</p>
-        <h3 className={styles.h3}>Un minuto de calma antes de tu cita</h3>
-        <p className={styles.body}>Respira al ritmo del círculo: inhala 4, sostén 4, exhala 6. Es un ejercicio de relajación, no un tratamiento. En {name} también cuidamos cómo te sientes al llegar.</p>
-        <div className={styles.breathCtl}>
-          <button type="button" className={`${styles.btn} ${styles.btnDark}`} onClick={() => { setOn((v) => !v); if (on) setCycles(0); }} aria-pressed={on}>{on ? "Terminar" : "Empezar"}</button>
-          <p className={styles.breathNow} aria-live="polite">{on ? `${cur.label} · ${left}s` : cycles ? "Muy bien." : "Listo cuando tú quieras"}{on && cycles ? ` · ${cycles} ${cycles === 1 ? "ciclo" : "ciclos"}` : ""}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ================================ Plantilla =================================== */
 
 export function SaludTemplate({ config }: { config: SiteConfig }) {
   const copy = config.templateCopy;
   const extras = config as SiteConfig & Extras;
+  const sectorShots = config.sectorPhotos?.shots ?? [];
   const rootRef = useRef<HTMLDivElement>(null);
 
   /* El nombre sale del formulario */
@@ -306,7 +256,6 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
 
   const services = useMemo(() => (copy?.cards ?? []) as unknown as Service[], [copy?.cards]);
   const navItems = useMemo(() => (copy?.nav ?? []) as string[], [copy?.nav]);
-  const steps = extras.steps?.length ? extras.steps : DEFAULT_STEPS;
   const team = extras.team?.length ? extras.team : DEFAULT_TEAM;
   const usingDemoTeam = !extras.team?.length;
   const places = extras.locations?.length ? extras.locations : DEFAULT_PLACES;
@@ -322,7 +271,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
   const emergency = extras.emergency ?? "123";
   const areas = useMemo(() => Array.from(new Set(services.map((s) => s.tag).filter(Boolean))) as string[], [services]);
 
-  const ids = useMemo(() => ["inicio", "servicios", "proceso", "equipo", "sedes", "pagos", "opiniones", "preguntas", "agenda", "contacto-demo"], []);
+  const ids = useMemo(() => ["inicio", "servicios", "equipo", "sedes", "pagos", "opiniones", "preguntas", "agenda", "contacto-demo"], []);
   const target = useCallback((label: string, i: number) => targetFor(label, i, ids), [ids]);
 
   /* ------------------------------ Interfaz ----------------------------------- */
@@ -365,9 +314,6 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
   const [open, setOpen] = useState<number | null>(null);
   useEffect(() => { setArea("Todo"); }, [areas.join("|")]);
   const visible = services.map((s, i) => ({ s, i })).filter(({ s }) => (area === "Todo" || s.tag === area) && (modeF === "todas" || modesOf(s.location).includes(modeF)));
-
-  /* -------------------------------- Proceso ---------------------------------- */
-  const [step, setStep] = useState(0);
 
   /* ---------------------------------- Equipo --------------------------------- */
   const [member, setMember] = useState<number | null>(null);
@@ -450,7 +396,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
       <a className={styles.skip} href="#servicios" onClick={(e) => { e.preventDefault(); goTo("servicios"); }}>Saltar al contenido</a>
 
       {/* Cabecera */}
-      <header className={`${styles.header}${stuck ? ` ${styles.headerStuck}` : ""}`}>
+      <header className={`${styles.header}${stuck ? ` ${styles.headerStuck}` : ""}${!stuck ? ` ${styles.headerOnHero}` : ""}`}>
         <div className={styles.headIn}>
           <button type="button" className={styles.logo} onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" })} title={companyName} aria-label={`${companyName}. Ir al inicio`}>
             <span className={styles.logoMark} aria-hidden="true">{I.plus}</span>
@@ -480,40 +426,47 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
 
       {/* Portada */}
       <section className={styles.hero} id="inicio">
-        <div className={styles.heroIn}>
-          <div className={styles.heroText}>
-            <p className={styles.kicker}>{copy.heroKicker}</p>
-            <h1 className={styles.title} style={titleStyle}>{companyName}</h1>
-            <p className={styles.lead}>{copy.heroLead}</p>
-            <div className={styles.heroBtns}>
-              <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("agenda")}>{copy.contactCta} {I.arrow}</button>
-              <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => goTo("servicios")}>Ver servicios</button>
-            </div>
-
-            {areas.length ? (
-              <div className={styles.finder}>
-                <p className={styles.finderTitle} id="sal-finder">¿En qué te podemos ayudar hoy?</p>
-                <div className={styles.finderChips} role="group" aria-labelledby="sal-finder">
-                  {areas.map((a) => (<button key={a} type="button" className={`${styles.pill}${need === a ? ` ${styles.pillOn}` : ""}`} aria-pressed={need === a} onClick={() => setNeed(need === a ? null : a)}>{a}</button>))}
-                </div>
-                {rec >= 0 ? (
-                  <div className={styles.finderRes} role="status">
-                    <span className={styles.finderIcon}><Glyph kind={iconFor(`${services[rec].tag} ${services[rec].title}`)} /></span>
-                    <span className={styles.finderInfo}>
-                      <span className={styles.finderLabel}>Te sugerimos</span>
-                      <strong>{services[rec].title}</strong>
-                      <span className={styles.small}>{services[rec].location} · {services[rec].price}</span>
-                    </span>
-                    <button type="button" className={`${styles.btn} ${styles.btnDark} ${styles.btnSm}`} onClick={() => startBooking(rec)}>Agendar</button>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+        <div className={styles.heroMedia} aria-hidden="true">
+          {config.sectorPhotos?.hero ? (
+            <SectorImg desktop={config.sectorPhotos.hero.desktop} mobile={config.sectorPhotos.hero.mobile} alt="" className={styles.heroPhotoFull} />
+          ) : (
+            <HeroArt />
+          )}
+          <div className={styles.heroShade} />
+        </div>
+        <div className={styles.heroInner}>
+          <p className={styles.kicker}>{copy.heroKicker}</p>
+          <h1 className={styles.title} style={titleStyle}>{companyName}</h1>
+          <p className={styles.lead}>{copy.heroLead}</p>
+          <div className={styles.heroBtns}>
+            <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("agenda")}>{copy.contactCta} {I.arrow}</button>
+            <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => goTo("servicios")}>Ver servicios</button>
           </div>
-          <div className={styles.heroVisual}><HeroArt /></div>
+
+          {areas.length ? (
+            <div className={styles.finder}>
+              <p className={styles.finderTitle} id="sal-finder">¿En qué te podemos ayudar hoy?</p>
+              <div className={styles.finderChips} role="group" aria-labelledby="sal-finder">
+                {areas.map((a) => (<button key={a} type="button" className={`${styles.pill}${need === a ? ` ${styles.pillOn}` : ""}`} aria-pressed={need === a} onClick={() => setNeed(need === a ? null : a)}>{a}</button>))}
+              </div>
+              {rec >= 0 ? (
+                <div className={styles.finderRes} role="status">
+                  <span className={styles.finderIcon}><Glyph kind={iconFor(`${services[rec].tag} ${services[rec].title}`)} /></span>
+                  <span className={styles.finderInfo}>
+                    <span className={styles.finderLabel}>Te sugerimos</span>
+                    <strong>{services[rec].title}</strong>
+                    <span className={styles.small}>{services[rec].location} · {services[rec].price}</span>
+                  </span>
+                  <button type="button" className={`${styles.btn} ${styles.btnDark} ${styles.btnSm}`} onClick={() => startBooking(rec)}>Agendar</button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <p className={styles.urgent}>¿Es una urgencia? Esta página no es para emergencias. Llama al <strong>{emergency}</strong> o ve al servicio de urgencias más cercano.</p>
       </section>
+
+      <SolutionBlock solution={config.solution} tone="servicios" site={config} />
 
       {/* Pilares (como las 3 tarjetas de Kindbody) */}
       <section className={styles.pillars} aria-label="Por qué elegirnos">
@@ -544,6 +497,16 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
             </div>
             <p className={styles.headText}>{copy.aboutBody}</p>
           </div>
+
+          {sectorShots.length >= 2 ? (
+            <ul className={styles.svcPhotos} aria-hidden="true">
+              {sectorShots.slice(0, 3).map((shot, i) => (
+                <li key={shot.desktop}>
+                  <SectorImg desktop={shot.desktop} mobile={shot.mobile} alt="" className={styles.svcPhoto} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           <div className={styles.filters}>
             {areas.length > 1 ? (
@@ -592,41 +555,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      {/* Cómo funciona */}
-      <section className={styles.section} id="proceso">
-        <div className={styles.wrap}>
-          <div {...reveal(0, styles.head)}>
-            <div><p className={styles.kicker}>Cómo funciona</p><h2 className={styles.h2}>Tu visita, paso a paso</h2></div>
-          </div>
-          <div className={styles.proc}>
-            <ol className={styles.procList}>
-              {steps.map((s, i) => (
-                <li key={s.title}>
-                  <button type="button" className={`${styles.procBtn}${i === step ? ` ${styles.procOn}` : ""}`} onClick={() => setStep(i)} aria-current={i === step ? "step" : undefined}>
-                    <span className={styles.procNum}>{i + 1}</span><span>{s.title}</span>
-                  </button>
-                </li>
-              ))}
-            </ol>
-            <div className={styles.procCard} key={step} aria-live="polite">
-              <span className={styles.procBig} aria-hidden="true">{step + 1}</span>
-              <h3 className={styles.h3}>{steps[step].title}</h3>
-              <p className={styles.body}>{steps[step].text}</p>
-              <div className={styles.procBar} aria-hidden="true"><span style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
-              <div className={styles.procBtns}>
-                <button type="button" className={`${styles.btn} ${styles.btnLine} ${styles.btnSm}`} onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>Anterior</button>
-                {step < steps.length - 1 ? (
-                  <button type="button" className={`${styles.btn} ${styles.btnDark} ${styles.btnSm}`} onClick={() => setStep((s) => s + 1)}>Siguiente</button>
-                ) : (
-                  <button type="button" className={`${styles.btn} ${styles.btnCoral} ${styles.btnSm}`} onClick={() => goTo("agenda")}>{copy.contactCta}</button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Equipo */}
+      {/* Cifras */}
       <section className={`${styles.section} ${styles.alt}`} id="equipo">
         <div className={styles.wrap}>
           <div {...reveal(0, styles.head)}>
@@ -646,11 +575,6 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
           </ul>
           {usingDemoTeam ? <p className={styles.sample}>Perfiles de ejemplo. Reemplázalos con tu equipo real.</p> : null}
         </div>
-      </section>
-
-      {/* Calma */}
-      <section className={styles.calm}>
-        <div className={styles.wrap}><Breath name={companyName} /></div>
       </section>
 
       {/* Sedes */}

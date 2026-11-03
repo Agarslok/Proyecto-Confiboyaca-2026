@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./gastronomia.module.css";
 
 /* ============================================================================
@@ -221,10 +223,12 @@ function Scene({ kind, seed = 0, label }: { kind: SceneKind; seed?: number; labe
 }
 
 /* Foto con respaldo: si falla o no hay, se dibuja la ilustración */
-function Photo({ src, kind, seed, label }: { src?: string; kind: SceneKind; seed?: number; label: string }) {
+function Photo({ src, mobile, kind, seed, label }: { src?: string; mobile?: string; kind: SceneKind; seed?: number; label: string }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
-  if (src && !failed) return <img className={styles.photo} src={src} alt={label} loading="lazy" onError={() => setFailed(true)} />;
+  useEffect(() => setFailed(false), [src, mobile]);
+  if (src && !failed) {
+    return <SectorImg className={styles.photo} desktop={src} mobile={mobile} alt={label} onError={() => setFailed(true)} />;
+  }
   return <Scene kind={kind} seed={seed} label={label} />;
 }
 
@@ -363,6 +367,8 @@ function Modal({ label, onClose, children }: { label: string; onClose: () => voi
 export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
   const copy = config.templateCopy as typeof config.templateCopy & { statement?: string };
   const extras = config as SiteConfig & Extras;
+  const sectorShots = config.sectorPhotos?.shots ?? [];
+  const shotAt = (i: number) => (sectorShots.length ? sectorShots[i % sectorShots.length] : undefined);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -554,42 +560,46 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
       {/* Portada */}
       <section className={styles.hero} id="inicio">
         <div className={styles.heroMedia} aria-hidden="true">
-          <Photo src={extras.heroImage} kind="hall" label="" />
+          <Photo src={extras.heroImage ?? config.sectorPhotos?.hero.desktop} mobile={extras.heroImage ? undefined : config.sectorPhotos?.hero.mobile} kind="hall" label="" />
           <div className={styles.heroShade} />
         </div>
 
-        <div className={styles.heroMeta}>
-          <span className={styles.meta}>{copy.heroKicker}</span>
-          <span className={styles.meta}>Desde {since}</span>
-        </div>
+        <div className={styles.heroOverlay}>
+          <div className={styles.heroMeta}>
+            <span className={styles.meta}>{copy.heroKicker}</span>
+            <span className={styles.meta}>Desde {since}</span>
+          </div>
 
-        <div className={styles.heroMain}>
-          <Wordmark name={companyName} />
-          <div className={styles.heroRow}>
-            <p className={styles.lead}>{copy.heroLead}</p>
-            <div className={styles.heroSide}>
-              <div className={styles.ratingRow} aria-label={`Calificación ${rating.score} de 5`}>
-                <span className={styles.stars} aria-hidden="true">
-                  {[0, 1, 2, 3, 4].map((n) => (
-                    <span key={n}>{I.star}</span>
-                  ))}
-                </span>
-                <span className={styles.ratingText}>
-                  {rating.score.toLocaleString("es-CO", { minimumFractionDigits: 1 })}/5 · {rating.count.toLocaleString("es-CO")} reseñas en {rating.source ?? "Google"}
-                </span>
-              </div>
-              <div className={styles.heroBtns}>
-                <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("carta")}>
-                  Ver la carta
-                </button>
-                <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("reservas")}>
-                  {copy.contactCta}
-                </button>
+          <div className={styles.heroMain}>
+            <Wordmark name={companyName} />
+            <div className={styles.heroRow}>
+              <p className={styles.lead}>{copy.heroLead}</p>
+              <div className={styles.heroSide}>
+                <div className={styles.ratingRow} aria-label={`Calificación ${rating.score} de 5`}>
+                  <span className={styles.stars} aria-hidden="true">
+                    {[0, 1, 2, 3, 4].map((n) => (
+                      <span key={n}>{I.star}</span>
+                    ))}
+                  </span>
+                  <span className={styles.ratingText}>
+                    {rating.score.toLocaleString("es-CO", { minimumFractionDigits: 1 })}/5 · {rating.count.toLocaleString("es-CO")} reseñas en {rating.source ?? "Google"}
+                  </span>
+                </div>
+                <div className={styles.heroBtns}>
+                  <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("carta")}>
+                    Ver la carta
+                  </button>
+                  <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("reservas")}>
+                    {copy.contactCta}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      <SolutionBlock solution={config.solution} tone="gastronomia" site={config} />
 
       {/* Cinta de platos */}
       {marquee.length ? (
@@ -653,7 +663,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
               <li key={`${d.title ?? "p"}-${i}`} className={styles.reveal} data-reveal style={{ "--d": `${(n % 4) * 70}ms` } as CSSProperties}>
                 <button type="button" className={styles.dish} onClick={() => setOpenDish(i)} aria-haspopup="dialog">
                   <span className={styles.dishImg}>
-                    <Photo src={d.image} kind={DISH_KINDS[i % DISH_KINDS.length]} seed={i} label={d.title ?? "Plato"} />
+                    <Photo src={d.image ?? shotAt(i)?.desktop} mobile={d.image ? undefined : shotAt(i)?.mobile} kind={DISH_KINDS[i % DISH_KINDS.length]} seed={i} label={d.title ?? "Plato"} />
                     {picked.includes(i) ? <span className={styles.pickedTag}>En tu visita</span> : null}
                   </span>
                   <span className={styles.dishTop}>
@@ -697,7 +707,13 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
             {events.map((ev, i) => (
               <li key={ev.title} {...reveal(i)}>
                 <div className={styles.eventImg}>
-                  <Scene kind={(["tray", "hall", "plate"] as SceneKind[])[i % 3]} seed={i + 3} label={ev.title} />
+                  <Photo
+                    src={shotAt(i + 2)?.desktop}
+                    mobile={shotAt(i + 2)?.mobile}
+                    kind={(["tray", "hall", "plate"] as SceneKind[])[i % 3]}
+                    seed={i + 3}
+                    label={ev.title}
+                  />
                 </div>
                 <h3 className={styles.eventTitle}>{ev.title}</h3>
                 <p className={styles.eventText}>{ev.text}</p>
@@ -984,7 +1000,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
       {dish ? (
         <Modal label={dish.title ?? "Plato"} onClose={() => setOpenDish(null)}>
           <div className={styles.dlgImg}>
-            <Photo src={dish.image} kind={DISH_KINDS[(openDish ?? 0) % DISH_KINDS.length]} seed={openDish ?? 0} label={dish.title ?? "Plato"} />
+            <Photo src={dish.image ?? shotAt(openDish ?? 0)?.desktop} mobile={dish.image ? undefined : shotAt(openDish ?? 0)?.mobile} kind={DISH_KINDS[(openDish ?? 0) % DISH_KINDS.length]} seed={openDish ?? 0} label={dish.title ?? "Plato"} />
           </div>
           <div className={styles.dlgBody}>
             <p className={styles.caption}>{dish.tag}</p>

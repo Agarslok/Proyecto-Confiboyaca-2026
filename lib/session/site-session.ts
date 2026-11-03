@@ -1,4 +1,5 @@
 import { buildSite } from "@/lib/site/engine";
+import { isRadarComplete } from "@/lib/radar/engine";
 import { parseSiteBrief } from "@/lib/validation/site";
 import type { FeatureId, SectorId, SiteConfig, SiteDraft, SiteState } from "@/types/site";
 import { FEATURE_IDS, SECTOR_IDS } from "@/types/site";
@@ -44,9 +45,17 @@ function emit(): void {
 function persist(next: SiteState): SiteState {
   if (typeof window === "undefined") return next;
   try {
-    const stored = { ...next, storageWarning: null };
-    localStorage.setItem(SITE_STORAGE_KEY, JSON.stringify(stored));
-    return stored;
+    localStorage.setItem(
+      SITE_STORAGE_KEY,
+      JSON.stringify({
+        version: next.version,
+        step: next.step,
+        maxStep: next.maxStep,
+        draft: next.draft,
+        storageWarning: null,
+      }),
+    );
+    return { ...next, storageWarning: null };
   } catch {
     return {
       ...next,
@@ -120,11 +129,34 @@ export function hasSiteProgress(current: SiteState): boolean {
   return Boolean(current.config || current.draft.companyName || current.draft.sectorId || current.step > 0);
 }
 
+const RADAR_META_KEYS = new Set([
+  "contactPhone",
+  "followUpRequested",
+  "recordId",
+  "recordCode",
+  "editToken",
+  "cursor",
+]);
+
+function radarPatchIsMetaOnly(partial: Partial<SiteDraft>): boolean {
+  if (!partial.radar) return false;
+  if (Object.keys(partial).some((key) => key !== "radar")) return false;
+  return Object.keys(partial.radar).every((key) => RADAR_META_KEYS.has(key));
+}
+
 export function patchSiteDraft(partial: Partial<SiteDraft>): void {
   const current = getSiteSnapshot();
   const draft = normalizeDraft({ ...current.draft, ...partial });
   if (JSON.stringify(draft) === JSON.stringify(current.draft)) return;
-  update({ ...current, draft, config: null });
+
+  let config: SiteConfig | null = current.config;
+  if (radarPatchIsMetaOnly(partial) && current.config) {
+    /* Teléfono o metadatos del registro: no regenerar todo el informe. */
+  } else {
+    config = configFromDraft(draft);
+  }
+
+  update({ ...current, draft, config });
 }
 
 export function setSiteStep(step: number): void {
@@ -141,7 +173,9 @@ export function saveSiteConfig(config: SiteConfig): void {
 
 function configFromDraft(draft: SiteDraft): SiteConfig | null {
   const parsed = parseSiteBrief(draft);
-  return parsed.ok ? buildSite(parsed.brief) : null;
+  if (!parsed.ok) return null;
+  if (draft.radar && !isRadarComplete(draft.radar)) return null;
+  return buildSite(parsed.brief);
 }
 
 export function rebuildSiteConfig(): SiteConfig | null {

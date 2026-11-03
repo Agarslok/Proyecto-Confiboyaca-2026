@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { createRadarSolution } from "@/app/actions/radar";
 import { Button } from "@/components/ui/Button";
 import { ConsultoriaQr } from "@/components/site/ConsultoriaQr";
 import { ConsultoriaSignals } from "@/components/site/ConsultoriaSignals";
 import { RadarReport } from "@/components/radar/RadarReport";
 import { useSite } from "@/components/site/useSite";
+import { radarOf } from "@/lib/radar/store";
+import { applySolutionToSiteSession } from "@/lib/site/apply-solution-session";
 import { buildConsultancy } from "@/lib/site/consultancy";
 import { setSiteStep } from "@/lib/session/site-session";
 
@@ -28,6 +31,15 @@ export function SiteDiagnosis() {
       features: [],
     });
   }, [config]);
+
+  useEffect(() => {
+    if (!config?.radar) return;
+    const radar = radarOf(state);
+    if (!radar.recordId || !radar.editToken || config.solution) return;
+    void createRadarSolution(radar.recordId, radar.editToken).then((result) => {
+      if (result.ok) applySolutionToSiteSession(result.spec);
+    });
+  }, [config?.radar, config?.solution, state]);
 
   if (config?.radar) return <RadarReport config={{ ...config, radar: config.radar }} />;
 

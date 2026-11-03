@@ -1,0 +1,266 @@
+{
+  "agro": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "alimentos": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "cafe.webp",
+      "mobile": "cafev.webp"
+    },
+    {
+      "desktop": "mostrador.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "panadería.webp",
+      "mobile": "panaderíav.webp"
+    }
+  ],
+  "comercio": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "construccion": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "madera": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "manufactura": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "mineria": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "moda": [
+    {
+      "desktop": "portada.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "prenda terminada.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "prenda terminada2.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "taller de confección.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "taller de confección0.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "taller de confección2.webp",
+      "mobile": null
+    },
+    {
+      "desktop": "tela doblada.webp",
+      "mobile": null
+    }
+  ],
+  "otra": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "pecuaria": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "salud": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "servicios": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "transporte": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ],
+  "turismo": [
+    {
+      "desktop": "portada.webp",
+      "mobile": "portadav.webp"
+    },
+    {
+      "desktop": "apoyo-1.webp",
+      "mobile": "apoyo-1v.webp"
+    },
+    {
+      "desktop": "apoyo-2.webp",
+      "mobile": "apoyo-2v.webp"
+    },
+    {
+      "desktop": "apoyo-3.webp",
+      "mobile": "apoyo-3v.webp"
+    }
+  ]
+}

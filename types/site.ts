@@ -1,5 +1,7 @@
 import type { RadarAnswers, RadarResult } from "@/lib/radar/types";
 import type { ConsultancyReport } from "@/lib/site/consultancy";
+import type { SolutionHoleSpec } from "@/lib/site/solution-slot";
+import type { SectorPhotos } from "@/lib/site/sector-gallery";
 import type { TemplateCopy } from "@/lib/site/template-content";
 
 export const SECTOR_IDS = [
@@ -76,7 +78,16 @@ export interface SiteConfig {
   templateCopy: TemplateCopy;
   gaps: string[];
   consultancy: ConsultancyReport;
+  /** Hueco bajo la portada: widget del catálogo, guía o asistente. Vacío hasta que el diagnóstico lo rellene. */
+  solution?: SolutionHoleSpec;
   radar?: RadarResult;
+  /** Industria y actividad del diagnóstico, para el asistente y las fotos. */
+  industryId?: string;
+  activityId?: string;
+  /** Código RAD-… si el diagnóstico ya se guardó. */
+  recordCode?: string;
+  /** Fotos de public/media/sectores/<industria>/, según la industria del diagnóstico. */
+  sectorPhotos?: SectorPhotos;
   diagnosis: {
     need: string;
     priority: string;

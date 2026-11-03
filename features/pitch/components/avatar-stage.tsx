@@ -5,11 +5,12 @@
  * Reservada: hoy el pitch usa `video-stage.tsx`. Para reactivar, monte `AvatarStage`
  * en `slide-views.tsx` y envuelva `PitchDeck` con `TavusCviProvider`.
  */
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AvatarDockVideo } from "@/components/catch/AvatarDockVideo";
 import { TavusAiEcho } from "@/components/catch/TavusAiEcho";
 import { useTavusCvi } from "@/components/catch/TavusCviProvider";
 import { AVATAR_SOLUTION_HREF } from "@/features/pitch/avatar-solution";
+import { answerOffersAvatarSolution } from "@/lib/avatar/solution-offer";
 import { useIaVoiceDictation } from "@/hooks/useIaVoiceDictation";
 
 type Line = { role: "user" | "assistant"; text: string };
@@ -47,24 +48,113 @@ function PowerIcon() {
   );
 }
 
-export function AvatarStage() {
+type AvatarStageProps = {
+  /** En el formulario radar: video a ancho completo y columna de chat compacta. */
+  foldSideColumn?: boolean;
+};
+
+function TypewriterBubble({
+  text,
+  animate,
+  onTick,
+}: {
+  text: string;
+  animate: boolean;
+  onTick?: () => void;
+}) {
+  const [shown, setShown] = useState(animate ? "" : text);
+
+  useEffect(() => {
+    if (!animate) {
+      setShown(text);
+      return;
+    }
+    const reduced =
+      typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      setShown(text);
+      onTick?.();
+      return;
+    }
+
+    setShown("");
+    let index = 0;
+    let timer: number | undefined;
+
+    const step = () => {
+      index += 1;
+      setShown(text.slice(0, index));
+      onTick?.();
+      if (index < text.length) {
+        const ch = text[index - 1] ?? "";
+        const pause = ch === "." || ch === "?" || ch === "!" ? 120 : ch === "," ? 70 : ch === " " ? 28 : 16;
+        timer = window.setTimeout(step, pause);
+      }
+    };
+
+    timer = window.setTimeout(step, 48);
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [text, animate, onTick]);
+
+  const typing = animate && shown.length < text.length;
+
+  return (
+    <p className="pd-bubble pd-bubble-ai">
+      {shown}
+      {typing ? <span className="pd-type-cursor" aria-hidden="true" /> : null}
+    </p>
+  );
+}
+
+export function AvatarStage({ foldSideColumn = false }: AvatarStageProps) {
   const tavus = useTavusCvi();
   const logRef = useRef<HTMLDivElement>(null);
   const [thread, setThread] = useState<Line[]>([]);
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
-  const [askStatus, setAskStatus] = useState("");
   const [answer, setAnswer] = useState("");
   const [echoId, setEchoId] = useState(-1);
-  const [chatOpen, setChatOpen] = useState(true);
-  const voice = useIaVoiceDictation((text) => setQuestion(text));
+  const [solutionUnlocked, setSolutionUnlocked] = useState(false);
+  const [chatScrollTick, setChatScrollTick] = useState(0);
+  const askingRef = useRef(false);
+  const sendTimerRef = useRef<number | null>(null);
+  const bargeInRef = useRef(false);
+  const submitRef = useRef<(raw?: string) => Promise<void>>(async () => {});
+  const tavusRef = useRef(tavus);
+  tavusRef.current = tavus;
+
+  const onVoiceText = useCallback((text: string, isFinal: boolean) => {
+    const spoken = text.trim();
+    if (!spoken) return;
+    setQuestion(spoken);
+    const session = tavusRef.current;
+    if (session.tavusActive && !bargeInRef.current) {
+      session.interruptSpeech();
+      bargeInRef.current = true;
+    }
+    if (sendTimerRef.current) window.clearTimeout(sendTimerRef.current);
+    const wait = isFinal ? 700 : 1400;
+    sendTimerRef.current = window.setTimeout(() => {
+      sendTimerRef.current = null;
+      bargeInRef.current = false;
+      void submitRef.current(spoken);
+    }, wait);
+  }, []);
+
+  const voice = useIaVoiceDictation(onVoiceText);
   const sessionOpen = tavus.status === "connected" || tavus.status === "starting";
 
   useEffect(() => {
     const log = logRef.current;
     if (!log) return;
     log.scrollTop = log.scrollHeight;
-  }, [thread, asking, chatOpen]);
+  }, [thread, asking, chatScrollTick]);
+
+  const bumpChatScroll = useCallback(() => {
+    setChatScrollTick((value) => value + 1);
+  }, []);
 
   function toggleAvatar() {
     if (sessionOpen) {
@@ -75,16 +165,18 @@ export function AvatarStage() {
   }
 
   function toggleMic() {
-    setChatOpen(true);
     voice.toggle();
   }
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    const text = question.trim();
-    if (!text || asking) return;
+  async function submitQuestion(raw?: string) {
+    const text = (raw ?? question).trim();
+    if (!text || askingRef.current) return;
+    if (sendTimerRef.current) {
+      window.clearTimeout(sendTimerRef.current);
+      sendTimerRef.current = null;
+    }
+    askingRef.current = true;
     setAsking(true);
-    setAskStatus("");
     setThread((prev) => [...prev, { role: "user", text }]);
     setQuestion("");
     if (voice.listening) voice.stop();
@@ -94,7 +186,7 @@ export function AvatarStage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text }),
       });
-      const data = (await response.json()) as { answer?: string; error?: string };
+      const data = (await response.json()) as { answer?: string; error?: string; solutionReady?: boolean };
       if (!response.ok || !data.answer) {
         setThread((prev) => [
           ...prev,
@@ -105,26 +197,53 @@ export function AvatarStage() {
       setThread((prev) => [...prev, { role: "assistant", text: data.answer! }]);
       setAnswer(data.answer);
       setEchoId((value) => value + 1);
-      setAskStatus(tavus.tavusActive ? "El avatar está leyendo la respuesta." : "Inicia el avatar para escucharla.");
+      if (data.solutionReady ?? answerOffersAvatarSolution(data.answer)) {
+        setSolutionUnlocked(true);
+        window.dispatchEvent(
+          new CustomEvent("avatar-solution-ready", {
+            detail: { href: AVATAR_SOLUTION_HREF, answer: data.answer },
+          }),
+        );
+      }
     } catch {
       setThread((prev) => [...prev, { role: "assistant", text: "No se pudo consultar al asistente." }]);
     } finally {
+      askingRef.current = false;
       setAsking(false);
     }
   }
 
-  return (
-    <>
-      <TavusAiEcho answer={answer} echoId={echoId} />
-      <div className="pd-avatar-stage">
-        <div className="pd-avatar-live" onClick={(event) => event.stopPropagation()}>
-          <AvatarDockVideo
-            active
-            tavusUi="dock"
-            showRaiseHand={false}
-            micSupported={false}
-          />
-          <div className="pd-avatar-tools">
+  submitRef.current = submitQuestion;
+
+  useEffect(() => {
+    return () => {
+      if (sendTimerRef.current) window.clearTimeout(sendTimerRef.current);
+    };
+  }, []);
+
+  const stageBlock = (
+    <div className={`pd-avatar-stage pd-avatar-stage--fluid${foldSideColumn ? " pd-avatar-stage--radar" : ""}`}>
+      <div className={`pd-avatar-live${foldSideColumn ? " pd-avatar-live--fill" : ""}`} onClick={(event) => event.stopPropagation()}>
+        <AvatarDockVideo active tavusUi="dock" showRaiseHand={false} micSupported={false} />
+        <div className="pd-avatar-tools">
+          <div className="pd-avatar-tools-left">
+            <a
+              className={`pd-avatar-solution-chip${solutionUnlocked ? " is-ready" : ""}`}
+              href={solutionUnlocked ? AVATAR_SOLUTION_HREF : undefined}
+              target={solutionUnlocked ? "_blank" : undefined}
+              rel={solutionUnlocked ? "noreferrer" : undefined}
+              aria-disabled={!solutionUnlocked}
+              tabIndex={solutionUnlocked ? 0 : -1}
+              title={solutionUnlocked ? "Abrir solución del avatar" : "La solución se activa cuando el consultor la indique"}
+              onClick={(event) => {
+                if (!solutionUnlocked) event.preventDefault();
+              }}
+            >
+              <span className="pd-avatar-solution-mark">S</span>
+              <span className="pd-avatar-solution-label">Solución del avatar</span>
+            </a>
+          </div>
+          <div className="pd-avatar-tools-right">
             <button
               type="button"
               className={sessionOpen ? "pd-avatar-icon is-on" : "pd-avatar-icon"}
@@ -155,56 +274,81 @@ export function AvatarStage() {
           </div>
         </div>
       </div>
-      <aside className="pd-avatar-side" onClick={(event) => event.stopPropagation()}>
-        <div className="pd-side-head">
-          <div>
-            <p className="pd-kicker">Estado</p>
-            <p className="pd-status">{statusText(tavus.status)}</p>
-          </div>
-          <button
-            type="button"
-            className="pd-chat-toggle"
-            aria-expanded={chatOpen}
-            onClick={() => setChatOpen((open) => !open)}
-          >
-            {chatOpen ? "Ocultar chat" : "Mostrar chat"}
-          </button>
-        </div>
-        {tavus.error && !chatOpen ? <p className="pd-side-note">{tavus.error}</p> : null}
-        {chatOpen ? (
-          <form className="pd-chat" onSubmit={(event) => void onSubmit(event)}>
-            <div className="pd-chat-log" ref={logRef} aria-live="polite" aria-label="Historial del chat">
-              {thread.length === 0 ? (
-                <p className="pd-chat-empty">Pregunte por turismo, metalurgia o agro.</p>
-              ) : (
-                thread.map((line, index) => (
-                  <p key={`${line.role}-${index}`} className={line.role === "user" ? "pd-bubble pd-bubble-user" : "pd-bubble pd-bubble-ai"}>
+    </div>
+  );
+
+  const sideBlock = (
+    <aside className="pd-avatar-side" onClick={(event) => event.stopPropagation()}>
+      <div className="pd-side-head pd-side-head--inline">
+        <p className="pd-kicker">Estado</p>
+        <p className="pd-status">{statusText(tavus.status)}</p>
+      </div>
+      {tavus.error ? <p className="pd-side-note">{tavus.error}</p> : null}
+      <div className="pd-chat" role="group" aria-label="Chat con el consultor">
+        <div className="pd-chat-log" ref={logRef} aria-live="polite" aria-label="Historial del chat">
+          {thread.length === 0 ? (
+            <p className="pd-chat-empty">Pregunte por turismo, metalurgia o agro.</p>
+          ) : (
+            thread.map((line, index) => {
+              if (line.role === "user") {
+                return (
+                  <p key={`user-${index}`} className="pd-bubble pd-bubble-user">
                     {line.text}
                   </p>
-                ))
-              )}
-            </div>
-            <p className="pd-chat-hint">Si el avatar está conectado, lee la respuesta en voz alta.</p>
-            <div className="pd-chat-row">
-              <input
-                value={question}
-                onChange={(event) => setQuestion(event.target.value)}
-                placeholder="Escriba su pregunta para el consultor…"
-                aria-label="Pregunta para el consultor"
-                autoComplete="off"
-                disabled={asking}
-              />
-              <button type="submit" disabled={asking || !question.trim()}>
-                {asking ? "…" : "Enviar"}
-              </button>
-            </div>
-            {askStatus ? <p className="pd-chat-status">{askStatus}</p> : null}
-          </form>
-        ) : null}
-        <a className="pd-btn pd-btn-solid pd-solution" href={AVATAR_SOLUTION_HREF} target="_blank" rel="noreferrer">
-          Solución del avatar
-        </a>
-      </aside>
+                );
+              }
+              const animate = index === thread.length - 1;
+              return (
+                <TypewriterBubble
+                  key={`ai-${index}-${line.text.length}`}
+                  text={line.text}
+                  animate={animate}
+                  onTick={animate ? bumpChatScroll : undefined}
+                />
+              );
+            })
+          )}
+        </div>
+        <div className="pd-chat-row pd-chat-row--flat">
+          <input
+            value={question}
+            onChange={(event) => setQuestion(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                void submitQuestion();
+              }
+            }}
+            placeholder="Escriba su consulta"
+            aria-label="Pregunta para el consultor"
+            autoComplete="off"
+            disabled={asking}
+          />
+          <button type="button" disabled={asking || !question.trim()} onClick={() => void submitQuestion()}>
+            {asking ? "…" : "Enviar"}
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+
+  if (foldSideColumn) {
+    return (
+      <>
+        <TavusAiEcho answer={answer} echoId={echoId} />
+        <div className="pd-avatar-radar-split">
+          {stageBlock}
+          {sideBlock}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <TavusAiEcho answer={answer} echoId={echoId} />
+      {stageBlock}
+      {sideBlock}
     </>
   );
 }

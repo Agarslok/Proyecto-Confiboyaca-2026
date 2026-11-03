@@ -10,7 +10,7 @@ const date = (iso: string) => (iso ? iso.slice(0, 19).replace("T", " ") : "");
 /** Hoja 1: una fila por empresa, con contacto, resultado, plan y seguimiento. */
 export function diagnosesSheet(records: DiagnosisRecord[]): Sheet {
   const header: Cell[] = [
-    "Código", "Empresa", "Contacto", "Correo", "Teléfono", "Ciudad", "Industria", "Actividad", "Tamaño",
+    "Código", "Empresa", "Contacto", "Correo", "Teléfono empresa", "Teléfono contacto", "Ciudad", "Industria", "Actividad", "Tamaño",
     "Índice (0-100)", "Nivel", "Negocio", "Datos", "Tecnología", "Analítica e IA", "Equipo", "Estrategia",
     "Problema central", "Solución en la página", "Objetivos", "Plan", "Horas estimadas", "Visitas", "Meses",
     "Hallazgos críticos", "Respuestas «No sé»", "Seguimiento", "Pidió llamada", "Notas", "Autorizó datos", "Creado", "Actualizado",
@@ -19,7 +19,7 @@ export function diagnosesSheet(records: DiagnosisRecord[]): Sheet {
     const result = buildRadarResult(record.answers);
     const score = (id: string) => result.dimensions.find((dimension) => dimension.id === id)?.score ?? null;
     return [
-      record.code, record.companyName, record.contactName, record.email, record.phone, record.city,
+      record.code, record.companyName, record.contactName, record.email, record.phone, record.contactPhone, record.city,
       record.industry, record.activity, record.answers.size ? SIZES[record.answers.size].detail : "",
       result.index, LEVELS[result.level].label,
       score("negocio"), score("datos"), score("tecnologia"), score("analitica"), score("equipo"), score("estrategia"),

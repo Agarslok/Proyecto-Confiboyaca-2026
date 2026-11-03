@@ -7,6 +7,7 @@ import { SolutionShowcase } from "@/components/externado/solution-showcase";
 import { TEAM } from "@/components/externado/team-config";
 import { TeamCarousel } from "@/components/externado/team-carousel";
 import { scrollToSection, useReveal } from "@/components/externado/use-reveal";
+import { beginFreshDiagnosis } from "@/lib/radar/store";
 
 import { NicheIcon, type NicheIconName } from "@/components/externado/niche-icons";
 
@@ -19,6 +20,8 @@ const QUICK_NICHES: { icon: NicheIconName; label: string; nicho: string }[] = [
   { icon: "hotel", label: "Hotel u hospedaje", nicho: "turismo-hotel" },
   { icon: "health", label: "Salud o estética", nicho: "salud-ips" },
   { icon: "farm", label: "Finca o agro", nicho: "agro-primaria" },
+  { icon: "cattle", label: "Ganadería", nicho: "pecuaria-bovinos" },
+  { icon: "wood", label: "Madera o carpintería", nicho: "madera-carpinteria" },
   { icon: "factory", label: "Taller o fábrica", nicho: "manufactura-planta" },
   { icon: "mining", label: "Minería", nicho: "mineria-extraccion" },
 ];
@@ -27,9 +30,15 @@ export function ExternadoHomePage() {
   const router = useRouter();
   useReveal([]);
 
-  const onStart = () => router.push("/diagnostico");
+  const onStart = () => {
+    beginFreshDiagnosis();
+    router.push("/diagnostico");
+  };
   const onSection = (id: string) => scrollToSection(id);
-  const onDemo = () => router.push("/diagnostico");
+  const onDemo = () => {
+    beginFreshDiagnosis();
+    router.push("/diagnostico");
+  };
 
   return (
     <>
@@ -41,7 +50,7 @@ export function ExternadoHomePage() {
         <h1 id="w-title" className="display w-title">Descubre nuevas oportunidades para tu empresa</h1>
         <p className="lead w-lead">
           Responde unas 15 preguntas sobre tu negocio y recibe tu diagnóstico: cuál es tu problema central, cómo
-          lo resolvemos contigo y una página web de muestra para tu empresa.
+          lo resolvemos contigo.
         </p>
         <div className="w-actions">
           <button type="button" className="btn btn-primary btn-lg" onClick={onStart}>

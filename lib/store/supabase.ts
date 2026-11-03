@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
-import type { LevelId } from "@/lib/radar/types";
+import type { LevelId, RadarAnswers } from "@/lib/radar/types";
 import { LEAD_STATUSES } from "@/lib/store/lead-status";
+import {
+  activityCatalog,
+  answerRowsFor,
+  goalRowsFor,
+  industryCatalog,
+  questionCatalog,
+} from "@/lib/store/normalized";
 import {
   columnsFor,
   emptyStats,
@@ -10,6 +17,7 @@ import {
   toRecord,
   toSummary,
   tokenMatches,
+  solutionSpecJson,
   validateForStorage,
   type DiagnosisRecord,
   type DiagnosisStore,
@@ -60,9 +68,81 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
     return response;
   }
 
+  /** PGRST204: el esquema remoto aún no tiene una columna nueva (p. ej. presentation_action). */
+  function unknownColumn(error: unknown): string | null {
+    if (!(error instanceof SupabaseError)) return null;
+    const match = error.message.match(/Could not find the '([^']+)' column/i);
+    return match?.[1] ?? null;
+  }
+
+  /**
+   * Escribe en diagnoses. Si PostgREST rechaza una columna que el SQL local
+   * ya tiene, la omite y reintenta: el RAD se crea igual y el informe no queda bloqueado.
+   */
+  async function mutate(
+    path: string,
+    method: "POST" | "PATCH",
+    body: Record<string, unknown>,
+    prefer: string,
+  ): Promise<Response> {
+    let payload: Record<string, unknown> = { ...body };
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      try {
+        return await request(path, { method, body: JSON.stringify(payload), prefer });
+      } catch (error) {
+        const column = unknownColumn(error);
+        if (!column || !(column in payload)) throw error;
+        console.warn(
+          `[radar] diagnoses no tiene la columna ${column}. Se guarda el diagnóstico sin ella. Vuelva a correr supabase/schema.sql en el SQL Editor.`,
+        );
+        const next = { ...payload };
+        delete next[column];
+        payload = next;
+      }
+    }
+    throw new SupabaseError("No se pudo guardar el diagnóstico: el esquema de diagnoses está incompleto.");
+  }
+
   async function rows(path: string): Promise<Row[]> {
     const response = await request(path);
     return (await response.json()) as Row[];
+  }
+
+  let catalogReady = false;
+
+  function missingTable(error: unknown): boolean {
+    return error instanceof SupabaseError && /404|PGRST205|42P01/.test(error.message);
+  }
+
+  async function upsert(table: string, body: unknown[], conflict: string) {
+    if (body.length === 0) return;
+    await request(`/${table}?on_conflict=${conflict}`, {
+      method: "POST",
+      body: JSON.stringify(body),
+      prefer: "resolution=merge-duplicates,return=minimal",
+    });
+  }
+
+  /** Catálogo completo (14 industrias, actividades y preguntas) y las respuestas de este diagnóstico. */
+  async function writeNormalized(diagnosisId: string, answers: RadarAnswers) {
+    try {
+      if (!catalogReady) {
+        await upsert("radar_industries", industryCatalog(), "id");
+        await upsert("radar_activities", activityCatalog(), "id");
+        await upsert("radar_questions", questionCatalog(), "id");
+        catalogReady = true;
+      }
+      await request(`/diagnosis_answers?diagnosis_id=eq.${encodeURIComponent(diagnosisId)}`, { method: "DELETE", prefer: "return=minimal" });
+      await request(`/diagnosis_goals?diagnosis_id=eq.${encodeURIComponent(diagnosisId)}`, { method: "DELETE", prefer: "return=minimal" });
+      const answersRows = answerRowsFor(diagnosisId, answers);
+      const goals = goalRowsFor(diagnosisId, answers);
+      if (answersRows.length) await request("/diagnosis_answers", { method: "POST", body: JSON.stringify(answersRows), prefer: "return=minimal" });
+      if (goals.length) await request("/diagnosis_goals", { method: "POST", body: JSON.stringify(goals), prefer: "return=minimal" });
+    } catch (error) {
+      /* El esquema viejo solo tiene diagnoses: el diagnóstico igual queda guardado. */
+      if (missingTable(error)) return;
+      throw error;
+    }
   }
 
   /**
@@ -104,11 +184,8 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
         if (!options.asConsultant && !tokenMatches(options.editToken, existing.edit_token_hash)) {
           return { ok: false, error: "No tiene permiso para modificar ese diagnóstico." };
         }
-        await request(`/diagnoses?id=eq.${encodeURIComponent(options.id)}`, {
-          method: "PATCH",
-          body: JSON.stringify({ ...fields, updated_at: now }),
-          prefer: "return=minimal",
-        });
+        await mutate(`/diagnoses?id=eq.${encodeURIComponent(options.id)}`, "PATCH", { ...fields, updated_at: now }, "return=minimal");
+        await writeNormalized(options.id, valid.answers);
         return { ok: true, id: options.id, code: String(existing.code), editToken: options.editToken ?? "" };
       }
 
@@ -118,11 +195,13 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
       for (let attempt = 0; attempt < 5; attempt += 1) {
         const code = newCode();
         try {
-          await request("/diagnoses", {
-            method: "POST",
-            body: JSON.stringify({ ...fields, id, code, edit_token_hash: hashToken(editToken), status: "nuevo", notes: "", consent_at: now, created_at: now, updated_at: now }),
-            prefer: "return=minimal",
-          });
+          await mutate(
+            "/diagnoses",
+            "POST",
+            { ...fields, id, code, edit_token_hash: hashToken(editToken), status: "nuevo", notes: "", consent_at: now, created_at: now, updated_at: now },
+            "return=minimal",
+          );
+          await writeNormalized(id, valid.answers);
           return { ok: true, id, code, editToken };
         } catch (error) {
           if (!(error instanceof SupabaseError) || !error.message.startsWith("Supabase 409")) throw error;
@@ -181,6 +260,30 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
       return true;
     },
 
+    async hasEditAccess(id, editToken) {
+      const row = await getRow(id);
+      return Boolean(row && row.id === id && tokenMatches(editToken, row.edit_token_hash));
+    },
+
+    async setSolutionSpec(id, editToken, spec) {
+      const json = solutionSpecJson(spec);
+      if (!json || !(await this.hasEditAccess(id, editToken))) return false;
+      try {
+        const response = await request(`/diagnoses?id=eq.${encodeURIComponent(id)}&select=id`, {
+          method: "PATCH",
+          body: JSON.stringify({ solution_spec: json, updated_at: new Date().toISOString() }),
+          prefer: "return=representation",
+        });
+        return ((await response.json()) as Row[]).length > 0;
+      } catch (error) {
+        if (unknownColumn(error) === "solution_spec") {
+          console.warn("[radar] diagnoses no tiene solution_spec. Vuelva a correr supabase/schema.sql.");
+          return false;
+        }
+        throw error;
+      }
+    },
+
     async setStatus(id, status, notes) {
       if (!(LEAD_STATUSES as readonly string[]).includes(status)) return false;
       const response = await request(`/diagnoses?id=eq.${encodeURIComponent(id)}&select=id`, {
@@ -203,6 +306,12 @@ export function createSupabaseStore(url: string, key: string, fetchImpl: Fetch =
       for (let i = 0; i < existing.length; i += 500) {
         const chunk = existing.slice(i, i + 500).map((row) => ({ ...row, backup_id: randomUUID(), backup_batch: batch }));
         await request("/diagnoses_backup", { method: "POST", body: JSON.stringify(chunk), prefer: "return=minimal" });
+      }
+      try {
+        await request("/diagnosis_answers?diagnosis_id=not.is.null", { method: "DELETE", prefer: "return=minimal" });
+        await request("/diagnosis_goals?diagnosis_id=not.is.null", { method: "DELETE", prefer: "return=minimal" });
+      } catch (error) {
+        if (!missingTable(error)) throw error;
       }
       await request("/diagnoses?id=not.is.null", { method: "DELETE", prefer: "return=minimal" });
       return { removed: existing.length, backup: `tabla diagnoses_backup, lote «${batch}»` };

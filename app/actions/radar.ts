@@ -13,6 +13,8 @@ import {
   passwordMatches,
   registerFailure,
 } from "@/lib/auth/session";
+import { createSolutionSpec } from "@/lib/radar/create-solution";
+import type { SolutionHoleSpec } from "@/lib/site/solution-slot";
 import { getDiagnosisStore, type LeadStatus, type SaveResult } from "@/lib/store/diagnoses";
 
 /**
@@ -38,6 +40,28 @@ export async function saveRadarDiagnosis(raw: unknown): Promise<SaveResult> {
   } catch (error) {
     logStoreError("guardar el diagnóstico", error);
     return { ok: false, error: "No se pudo guardar el diagnóstico en el servidor." };
+  }
+}
+
+/** Redacta el hueco y lo guarda junto al RAD. Si ya hay spec, no llama a Gemini salvo regenerar. */
+export async function createRadarSolution(
+  recordId: string,
+  editToken: string,
+  regenerate = false,
+): Promise<{ ok: true; spec: SolutionHoleSpec } | { ok: false; error: string }> {
+  try {
+    const store = await getDiagnosisStore();
+    if (!(await store.hasEditAccess(recordId, editToken))) return { ok: false, error: "No tiene permiso para redactar esa solución." };
+    const record = await store.get(recordId);
+    if (!record) return { ok: false, error: "Ese diagnóstico ya no existe." };
+    if (record.solutionSpec && !regenerate) return { ok: true, spec: record.solutionSpec };
+    const drafted = await createSolutionSpec(record.answers);
+    const mode = "catalogo" as const;
+    const saved = await store.setSolutionSpec(recordId, editToken, { mode, spec: drafted.spec });
+    return saved ? { ok: true, spec: drafted.spec } : { ok: false, error: "No se pudo guardar la solución." };
+  } catch (error) {
+    logStoreError("redactar la solución", error);
+    return { ok: false, error: "No se pudo redactar la solución." };
   }
 }
 

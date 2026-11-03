@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import { createSessionToken, loginBlocked, passwordMatches, registerFailure, verifySessionToken } from "../lib/auth/session";
 import { emptyRadarAnswers, screensFor } from "../lib/radar/engine";
 import type { RadarAnswers } from "../lib/radar/types";
+import { parseStoredSolution, solutionSpecJson } from "../lib/store/shared";
 import { createSqliteStore } from "../lib/store/sqlite";
 import { contactErrors } from "../lib/radar/contact";
 
@@ -40,11 +41,97 @@ describe("diagnósticos guardados", () => {
     const record = await store.get(saved.id);
     assert.equal(record?.companyName, "Panadería Carlitos");
     assert.equal(record?.level, "alto");
+    assert.equal(record?.presentationMode, "catalogo");
+    assert.equal(record?.presentationKind, "registro");
+    assert.equal(record?.presentationAction, "registro");
+    assert.equal(record?.solutionSpec, null);
     assert.equal(record?.answers.recordCode, saved.code);
     assert.equal((await store.get(saved.code.toLowerCase()))?.id, saved.id);
     assert.equal((await store.list({ search: "carlitos" })).total, 1);
     assert.equal((await store.list({ search: "tunja", level: "bajo" })).total, 0);
     assert.equal((await store.stats()).byLevel.alto, 1);
+  });
+
+  it("asigna un código RAD distinto a cada diagnóstico nuevo", async () => {
+    const store = createSqliteStore(":memory:");
+    const first = await store.save(complete());
+    const second = await store.save(complete({ companyName: "Hotel Villa del Sol" }));
+    assert.ok(first.ok && second.ok);
+    if (!first.ok || !second.ok) return;
+    assert.notEqual(first.code, second.code);
+    assert.notEqual(first.id, second.id);
+  });
+
+  it("guarda la spec del hueco solo con el token y si el JSON es válido", async () => {
+    const store = createSqliteStore(":memory:");
+    const saved = await store.save(complete());
+    assert.ok(saved.ok);
+    if (!saved.ok) return;
+    const spec = {
+      action: "registro",
+      visitorTitle: "Cada pedido queda anotado",
+      businessChange: "El cierre del día sale de la lista, no del cuaderno.",
+      submitLabel: "Dejar registrado",
+      columns: ["Pedido", "Producto", "Estado"],
+      rows: [["Hoy", "Almojábana", "Por anotar"]],
+    };
+    assert.equal(await store.setSolutionSpec(saved.id, "otro", spec), false);
+    assert.equal(await store.setSolutionSpec(saved.id, saved.editToken, { ...spec, visitorTitle: "<b>Hola</b>" }), false);
+    assert.equal(await store.setSolutionSpec(saved.id, saved.editToken, spec), true);
+    const stored = await store.get(saved.id);
+    assert.equal(stored?.solutionSpec?.action, "registro");
+    assert.equal(stored?.solutionMode, "catalogo");
+  });
+
+  it("guarda { mode, spec }, lee el JSON viejo y no borra el hueco al actualizar el diagnóstico", async () => {
+    const store = createSqliteStore(":memory:");
+    const saved = await store.save(complete());
+    assert.ok(saved.ok);
+    if (!saved.ok) return;
+    const spec = {
+      action: "registro",
+      visitorTitle: "Cada pedido queda anotado",
+      businessChange: "El cierre del día sale de la lista, no del cuaderno.",
+      submitLabel: "Dejar registrado",
+      columns: ["Pedido", "Producto", "Estado"],
+      rows: [["Hoy", "Almojábana", "Por anotar"]],
+    };
+    assert.equal(await store.setSolutionSpec(saved.id, saved.editToken, { mode: "catalogo", spec }), true);
+    const first = await store.get(saved.id);
+    assert.equal(first?.solutionMode, "catalogo");
+    assert.equal(first?.solutionSpec?.action, "registro");
+
+    const updated = await store.save(complete({ companyName: "Panadería Carlitos Centro" }), {
+      id: saved.id,
+      editToken: saved.editToken,
+    });
+    assert.equal(updated.ok, true);
+    const again = await store.get(saved.id);
+    assert.equal(again?.companyName, "Panadería Carlitos Centro");
+    assert.equal(again?.solutionSpec?.action, "registro");
+    assert.equal(again?.solutionMode, "catalogo");
+  });
+
+  it("migra specs antiguos con guia al guardar", () => {
+    const spec = {
+      action: "guia",
+      visitorTitle: "Cómo dejar constancia",
+      businessChange: "Cada movimiento queda escrito el mismo día.",
+      problemFocus: "Hoy no hay una lista única.",
+      steps: [
+        { title: "Anotar", detail: "Escribe el movimiento cuando ocurre." },
+        { title: "Revisar", detail: "Al cierre mira la lista." },
+        { title: "Repetir", detail: "Hazlo igual al día siguiente." },
+      ],
+      primaryKind: "registro",
+      disclaimer: "Es una demostración. No guarda datos ni reemplaza la operación real del negocio.",
+    };
+    const loose = parseStoredSolution(spec);
+    const wrapped = parseStoredSolution({ mode: "guia", spec });
+    assert.equal(loose?.mode, "catalogo");
+    assert.equal(loose?.spec.action, "registro");
+    assert.equal(wrapped?.mode, "catalogo");
+    assert.match(solutionSpecJson(spec) ?? "", /"mode":"catalogo"/);
   });
 
   it("calcula el índice en el servidor, no confía en el navegador", async () => {
@@ -124,6 +211,31 @@ describe("datos de contacto obligatorios", () => {
     const saved = await store.save(complete());
     assert.ok(saved.ok && (await store.get(saved.id))?.contactName === "Carlos Rodríguez");
   });
+
+  it("actualiza el teléfono de la empresa en el mismo registro con el token del navegador", async () => {
+    const store = createSqliteStore(":memory:");
+    const saved = await store.save(complete());
+    assert.ok(saved.ok);
+    if (!saved.ok) return;
+    const updated = await store.save(complete({ phone: "310 555 8899" }), { id: saved.id, editToken: saved.editToken });
+    assert.ok(updated.ok);
+    assert.equal((await store.get(saved.id))?.phone, "310 555 8899");
+    const answers = (await store.get(saved.id))?.answers;
+    assert.equal(answers?.phone, "310 555 8899");
+  });
+
+  it("guarda el teléfono de contacto aparte del teléfono de la empresa", async () => {
+    const store = createSqliteStore(":memory:");
+    const saved = await store.save(complete({ phone: "300 111 2222" }));
+    assert.ok(saved.ok);
+    if (!saved.ok) return;
+    const updated = await store.save(complete({ phone: "300 111 2222", contactPhone: "320 999 8877" }), { id: saved.id, editToken: saved.editToken });
+    assert.ok(updated.ok);
+    const record = await store.get(saved.id);
+    assert.equal(record?.phone, "300 111 2222");
+    assert.equal(record?.contactPhone, "320 999 8877");
+    assert.equal(record?.answers.contactPhone, "320 999 8877");
+  });
 });
 
 describe("horas del plan y seguimiento", () => {
@@ -171,15 +283,22 @@ describe("encuesta nueva en el mismo navegador", () => {
       setItem: (key: string, value: string) => void values.set(key, value),
       removeItem: (key: string) => void values.delete(key),
     };
-    const { patchRadar, radarOf, startNiche } = await import("../lib/radar/store");
+    const { beginFreshDiagnosis, patchRadar, radarOf, startNiche } = await import("../lib/radar/store");
     const { getSiteSnapshot } = await import("../lib/session/site-session");
     patchRadar({ companyName: "Hotel Villa del Sol", recordId: "registro-hotel", recordCode: "RAD-AAAAAA", editToken: "token-hotel", followUpRequested: true });
     startNiche("moda-compraventa");
     const fresh = radarOf(getSiteSnapshot());
     assert.equal(fresh.recordId, undefined);
+    assert.equal(fresh.recordCode, undefined);
     assert.equal(fresh.editToken, undefined);
     assert.equal(fresh.followUpRequested, undefined);
     assert.equal(fresh.activity, "moda-compraventa");
+    patchRadar({ recordId: "otro", recordCode: "RAD-BBBBBB", editToken: "token-otro" });
+    beginFreshDiagnosis();
+    const reset = radarOf(getSiteSnapshot());
+    assert.equal(reset.recordId, undefined);
+    assert.equal(reset.recordCode, undefined);
+    assert.equal(reset.editToken, undefined);
     delete (globalThis as { window?: unknown }).window;
   });
 });

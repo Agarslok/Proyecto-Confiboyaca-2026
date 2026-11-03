@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import type { SectorFrame } from "@/lib/site/sector-gallery";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./retail.module.css";
 
 /* ============================================================================
@@ -128,10 +131,12 @@ function Art({ kind, i, label }: { kind: Kind; i: number; label: string }) {
   );
 }
 
-function Pic({ p, i }: { p: Product; i: number }) {
+function Pic({ p, i, frame }: { p: Product; i: number; frame?: SectorFrame }) {
   const [bad, setBad] = useState(false);
-  useEffect(() => setBad(false), [p.image]);
-  if (p.image && !bad) return <img className={styles.photo} src={p.image} alt={p.title ?? "Producto"} loading="lazy" onError={() => setBad(true)} />;
+  const own = p.image && !p.image.startsWith("data:") ? p.image : undefined;
+  const src = own ?? frame?.desktop;
+  useEffect(() => setBad(false), [src, frame?.mobile]);
+  if (src && !bad) return <SectorImg className={styles.photo} desktop={src} mobile={own ? undefined : frame?.mobile} alt={p.title ?? "Producto"} onError={() => setBad(true)} />;
   return <Art kind={kindFor(p.title, i)} i={i} label={p.title ?? "Producto"} />;
 }
 
@@ -191,6 +196,8 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
   const companyName = (config.companyName ?? "").replace(/\s+/g, " ").trim() || "Tu tienda";
 
   const products = useMemo(() => (copy?.cards ?? []) as unknown as Product[], [copy?.cards]);
+  const sectorFrames = config.sectorPhotos ? [config.sectorPhotos.hero, ...config.sectorPhotos.shots] : [];
+  const frameAt = (i: number) => (sectorFrames.length ? sectorFrames[i % sectorFrames.length] : undefined);
   const navItems = useMemo(() => (copy?.nav ?? []) as string[], [copy?.nav]);
   const benefits = extras.benefits?.length ? extras.benefits : DEFAULT_BENEFITS;
   const freeFrom = extras.freeShippingFrom ?? 150000;
@@ -351,7 +358,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
       <li key={i} className={styles.reveal} data-reveal style={{ "--d": `${(n % 4) * 60}ms` } as CSSProperties}>
         <article className={styles.card}>
           <button type="button" className={styles.cardPic} onClick={() => setView(i)} aria-label={`Ver ${p.title}`} aria-haspopup="dialog">
-            <Pic p={p} i={i} />
+            <Pic p={p} i={i} frame={frameAt(i)} />
             {off ? <span className={styles.off}>-{off}%</span> : p.badge ? <span className={styles.badge}>{p.badge}</span> : null}
           </button>
           <div className={styles.cardBody}>
@@ -403,7 +410,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
                 {suggestions.map(({ p, i }) => (
                   <li key={i} role="option" aria-selected="false">
                     <button type="button" className={styles.sugItem} onMouseDown={(e) => e.preventDefault()} onClick={() => { setSugOpen(false); setView(i); }}>
-                      <span className={styles.sugPic}><Pic p={p} i={i} /></span>
+                      <span className={styles.sugPic}><Pic p={p} i={i} frame={frameAt(i)} /></span>
                       <span className={styles.sugName}>{p.title}</span>
                       <span className={styles.sugPrice}>{p.price}</span>
                     </button>
@@ -454,7 +461,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
             {[0, 1, 2].map((k) => {
               const idx = (slide * 3 + k) % Math.max(1, products.length);
               const p = products[idx];
-              return p ? (<div key={k} className={styles.heroItem} style={{ "--k": k } as CSSProperties}><Pic p={p} i={idx} /></div>) : null;
+              return p ? (<div key={k} className={styles.heroItem} style={{ "--k": k } as CSSProperties}><Pic p={p} i={idx} frame={frameAt(idx)} /></div>) : null;
             })}
           </div>
         </div>
@@ -467,6 +474,8 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
           <button type="button" className={styles.textBtn} onClick={() => setAuto((a) => !a)} aria-pressed={!auto}>{auto ? "Pausar" : "Reanudar"}</button>
         </div>
       </section>
+
+      <SolutionBlock solution={config.solution} tone="retail" site={config} />
 
       {/* Beneficios */}
       <section className={styles.benefits} aria-label="Beneficios">
@@ -492,7 +501,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
                 return (
                   <li key={c} className={styles.reveal} data-reveal style={{ "--d": `${(n % 6) * 60}ms` } as CSSProperties}>
                     <button type="button" className={styles.catTile} onClick={() => pickCat(c)}>
-                      <span className={styles.catPic}><Pic p={products[first] ?? {}} i={first} /></span>
+                      <span className={styles.catPic}><Pic p={products[first] ?? {}} i={first} frame={frameAt(first)} /></span>
                       <span className={styles.catName}>{c}</span>
                       <span className={styles.catCount}>{total} {total === 1 ? "producto" : "productos"}</span>
                     </button>
@@ -616,7 +625,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
       {viewP && view !== null ? (
         <Layer label={viewP.title ?? "Producto"} onClose={() => setView(null)}>
           <div className={styles.viewGrid}>
-            <div className={styles.viewPic}><Pic p={viewP} i={view} /></div>
+            <div className={styles.viewPic}><Pic p={viewP} i={view} frame={frameAt(view)} /></div>
             <div className={styles.viewBody}>
               <span className={styles.cardTag}>{viewP.tag}</span>
               <h3 className={styles.viewTitle}>{viewP.title}</h3>
@@ -664,7 +673,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
                   <ul className={styles.lines}>
                     {lines.map(({ i, n }) => (
                       <li key={i} className={styles.line}>
-                        <span className={styles.linePic}><Pic p={products[i]} i={i} /></span>
+                        <span className={styles.linePic}><Pic p={products[i]} i={i} frame={frameAt(i)} /></span>
                         <span className={styles.lineInfo}>
                           <span className={styles.lineName}>{products[i].title}</span>
                           <span className={styles.cardMeta}>{products[i].price}</span>

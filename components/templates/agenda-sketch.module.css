@@ -1,0 +1,31 @@
+.page { min-height: 100%; }
+
+.bar {
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 8px;
+  background: #14171f;
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.bar button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: 600 13px/1.2 Inter, "DM Sans", sans-serif;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.bar button.on { background: #fff; color: #14171f; }

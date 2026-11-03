@@ -14,8 +14,16 @@ import { createSupabaseStore } from "../lib/store/supabase";
 
 type Row = Record<string, unknown>;
 
-function fakeSupabase(maxRows = 1000, key = "sb_secret_prueba") {
-  const tables: Record<string, Row[]> = { diagnoses: [], diagnoses_backup: [] };
+function fakeSupabase(maxRows = 1000, key = "sb_secret_prueba", missingColumns: string[] = []) {
+  const tables: Record<string, Row[]> = {
+    diagnoses: [],
+    diagnoses_backup: [],
+    radar_industries: [],
+    radar_activities: [],
+    radar_questions: [],
+    diagnosis_answers: [],
+    diagnosis_goals: [],
+  };
   const calls: string[] = [];
 
   function matches(row: Row, params: URLSearchParams): boolean {
@@ -56,6 +64,16 @@ function fakeSupabase(maxRows = 1000, key = "sb_secret_prueba") {
     if (method === "POST") {
       const incoming = [JSON.parse(String(init.body))].flat() as Row[];
       for (const row of incoming) {
+        const missing = table === "diagnoses" ? missingColumns.find((column) => column in row) : undefined;
+        if (missing) {
+          return new Response(
+            JSON.stringify({
+              code: "PGRST204",
+              message: `Could not find the '${missing}' column of 'diagnoses' in the schema cache`,
+            }),
+            { status: 400 },
+          );
+        }
         if (table === "diagnoses" && rows.some((other) => other.id === row.id || other.code === row.code)) {
           return new Response('{"code":"23505"}', { status: 409 });
         }
@@ -66,6 +84,16 @@ function fakeSupabase(maxRows = 1000, key = "sb_secret_prueba") {
     const selected = rows.filter((row) => matches(row, params));
     if (method === "PATCH") {
       const patch = JSON.parse(String(init.body)) as Row;
+      const missing = table === "diagnoses" ? missingColumns.find((column) => column in patch) : undefined;
+      if (missing) {
+        return new Response(
+          JSON.stringify({
+            code: "PGRST204",
+            message: `Could not find the '${missing}' column of 'diagnoses' in the schema cache`,
+          }),
+          { status: 400 },
+        );
+      }
       selected.forEach((row) => Object.assign(row, patch));
       return new Response(JSON.stringify(selected.map((row) => ({ id: row.id }))), { status: 200 });
     }
@@ -113,6 +141,13 @@ describe("almacén en Supabase", () => {
     assert.notEqual(row.edit_token_hash, saved.editToken);
     assert.equal((await store.get(saved.id))?.companyName, "Panadería Carlitos");
     assert.equal((await store.get(saved.code.toLowerCase()))?.id, saved.id);
+    assert.equal(row.industry_id, "alimentos");
+    assert.ok(tables.diagnosis_answers.length >= 10);
+    assert.ok(tables.diagnosis_answers.every((answer) => answer.industry_id === "alimentos"));
+    assert.equal(tables.diagnosis_goals[0]?.goal_id, "costos");
+    assert.equal(tables.radar_industries.length, 14);
+    assert.ok(tables.radar_questions.some((question) => question.industry_id === "alimentos"));
+    assert.ok(tables.radar_questions.some((question) => question.scope === "transversal"));
   });
 
   it("busca, filtra y cuenta con content-range", async () => {
@@ -153,6 +188,16 @@ describe("almacén en Supabase", () => {
   it("con una llave JWT antigua también manda Authorization: Bearer", async () => {
     const { store } = fakeSupabase(1000, "eyJantigua.service.role");
     assert.ok((await store.save(complete())).ok);
+  });
+
+  it("guarda un código RAD aunque falte presentation_action en el esquema", async () => {
+    const { store, tables } = fakeSupabase(1000, "sb_secret_prueba", ["presentation_action"]);
+    const saved = await store.save(complete());
+    assert.ok(saved.ok);
+    if (!saved.ok) return;
+    assert.match(saved.code, /^RAD-[A-Z2-9]{6}$/);
+    assert.equal("presentation_action" in tables.diagnoses[0], false);
+    assert.equal(tables.diagnoses[0].company_name, "Panadería Carlitos");
   });
 
   it("reiniciar copia a la tabla de respaldo y luego borra", async () => {

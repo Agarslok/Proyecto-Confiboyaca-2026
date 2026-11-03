@@ -1,6 +1,24 @@
 import type { Effort } from "@/lib/radar/effort";
+import type { PresentationChoice } from "@/lib/radar/presentation";
 import type { CentralProblem } from "@/lib/radar/solution";
 import type { SectorId } from "@/types/site";
+
+/** Trazos del stand; coinciden con `NicheIconName` en la UI. */
+export type IndustryIconName =
+  | "fashion"
+  | "bakery"
+  | "retail"
+  | "health"
+  | "factory"
+  | "transport"
+  | "farm"
+  | "cattle"
+  | "services"
+  | "hotel"
+  | "mining"
+  | "construction"
+  | "wood"
+  | "compass";
 
 /** Las 6 dimensiones del índice (los ejes del radar). */
 export const DIMENSION_IDS = ["negocio", "datos", "tecnologia", "analitica", "equipo", "estrategia"] as const;
@@ -14,10 +32,12 @@ export const INDUSTRY_IDS = [
   "manufactura",
   "transporte",
   "agro",
+  "pecuaria",
   "servicios",
   "turismo",
   "mineria",
   "construccion",
+  "madera",
   "otra",
 ] as const;
 export type IndustryId = (typeof INDUSTRY_IDS)[number];
@@ -53,7 +73,7 @@ export interface Activity {
 export interface Industry {
   id: IndustryId;
   label: string;
-  icon: string;
+  icon: IndustryIconName;
   /** Plantilla de página web que se le genera a la empresa. */
   template: SectorId;
   vocab: Vocab;
@@ -87,7 +107,10 @@ export interface RadarAnswers {
   contactName: string;
   contactLastName: string;
   email: string;
+  /** Teléfono del negocio (paso inicial del formulario). */
   phone: string;
+  /** Celular o WhatsApp de la persona de contacto (confirmación al final). */
+  contactPhone: string;
   /** Autorización de tratamiento de datos (Ley 1581 de 2012). Obligatoria para guardar. */
   consent: boolean;
   size: SizeId | "";
@@ -161,6 +184,11 @@ export interface RadarResult {
   unsure: number;
   /** El hallazgo más grave y la solución que incorpora la página web. */
   central: CentralProblem | null;
+  /**
+   * Widget, guía o asistente del hueco, elegido con reglas al armar el diagnóstico.
+   * El respaldo ya está escrito; la IA no participa en esta decisión.
+   */
+  presentation: PresentationChoice | null;
   /** Acompañamiento por horas recomendado y el siguiente. */
   plan: "arranque" | "orden" | "crecer";
   nextPlan: "arranque" | "orden" | "crecer" | null;

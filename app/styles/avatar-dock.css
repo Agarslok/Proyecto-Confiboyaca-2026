@@ -439,6 +439,8 @@
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
+}
+
 .ask-head {
   display: flex;
   justify-content: space-between;

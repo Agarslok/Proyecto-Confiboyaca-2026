@@ -3,13 +3,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createRadarSolution } from "@/app/actions/radar";
 import { CaseSpark } from "@/components/radar/CaseSpark";
 import { RadarChart } from "@/components/radar/RadarChart";
 import { InterestButton } from "@/components/radar/InterestButton";
+import { SolutionPresentationBadge } from "@/components/radar/SolutionPresentationBadge";
+import { SolutionQr } from "@/components/radar/SolutionQr";
 import { useSite } from "@/components/site/useSite";
 import { Button } from "@/components/ui/Button";
 import { COURSES, DIMENSIONS, LEVELS, PLANS } from "@/lib/radar/bank";
 import { patchRadar, radarOf } from "@/lib/radar/store";
+import { applySolutionToSiteSession } from "@/lib/site/apply-solution-session";
+import { samplePageHref, solutionPresentationBadge } from "@/lib/site/solution-presentation";
+import { SOLUTION_GUIDE_LIMITS_SUMMARY, SOLUTION_LIMITS_SUMMARY } from "@/lib/radar/solution-limits";
 import type { Finding, RadarResult } from "@/lib/radar/types";
 import type { SiteConfig } from "@/types/site";
 
@@ -53,6 +59,32 @@ function Gauge({ index, level }: { index: number; level: RadarResult["level"] })
   );
 }
 
+function RegenerarSolution() {
+  const radar = radarOf(useSite());
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+  if (!radar.recordId || !radar.editToken) return null;
+  return (
+    <button
+      type="button"
+      className="link-btn"
+      disabled={busy}
+      onClick={() => {
+        setBusy(true);
+        setDone(false);
+        void createRadarSolution(radar.recordId!, radar.editToken!, true)
+          .then((result) => {
+            if (result.ok) applySolutionToSiteSession(result.spec);
+            setDone(result.ok);
+          })
+          .finally(() => setBusy(false));
+      }}
+    >
+      {busy ? "Regenerando la solución…" : done ? "Solución actualizada" : "Regenerar la solución de la página"}
+    </button>
+  );
+}
+
 export function RadarReport({ config }: { config: SiteConfig & { radar: RadarResult } }) {
   const router = useRouter();
   const recordCode = radarOf(useSite()).recordCode;
@@ -64,6 +96,8 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
   const plan = PLANS[result.plan];
   const effort = result.effort;
   const nextPlan = result.nextPlan ? PLANS[result.nextPlan] : null;
+  const solutionBadge = solutionPresentationBadge(config.solution, result.presentation);
+  const pageHref = samplePageHref(recordCode);
   /* El curso de 12 h de IA generativa queda como opción, no como la solución. */
   const course = COURSES.find((item) => item.title.startsWith("IA generativa")) ?? null;
 
@@ -79,6 +113,7 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
           <span className="tag">{result.activityLabel}</span>
           <span className="tag">Eslabón: {result.linkLabel.toLowerCase()}</span>
           {result.sizeLabel ? <span className="tag">{result.sizeLabel}</span> : null}
+          {solutionBadge ? <SolutionPresentationBadge badge={solutionBadge} /> : null}
         </p>
         <p className="fine radar-saved" role="status">
           {recordCode ? (
@@ -89,6 +124,7 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
             "Guardando el diagnóstico…"
           )}
         </p>
+        <p className="fine radar-limits">{SOLUTION_LIMITS_SUMMARY} {SOLUTION_GUIDE_LIMITS_SUMMARY}</p>
       </header>
 
       <section className="radar-hero">
@@ -126,8 +162,9 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
           <div className="radar-central-fix">
             <p className="micro">Solución en su página</p>
             <p className="radar-central-name">{result.central.name}</p>
-            <Button href="/sitio#solucion-consultoria" target="_blank" rel="noopener noreferrer" variant="ghost" className="btn-sm">
-              Ver cómo lo resuelve
+            <p className="fine">En el hueco bajo la portada verá {solutionBadge?.tone === "asistente" ? "un asistente virtual de demostración" : "un módulo interactivo de demostración"}.</p>
+            <Button href={pageHref} target="_blank" rel="noopener noreferrer" variant="ghost" className="btn-sm">
+              Ver la página
             </Button>
           </div>
         </section>
@@ -242,18 +279,26 @@ export function RadarReport({ config }: { config: SiteConfig & { radar: RadarRes
       <section className="card radar-closing" aria-labelledby="radar-closing-title">
         <div>
           <p className="micro accent">Siguiente paso</p>
-          <h2 id="radar-closing-title">¿Quiere que se lo dejemos funcionando?</h2>
+          <h2 id="radar-closing-title">Déjenos su número y nos contactaremos con usted</h2>
           <p className="lead sm">
-            Le llamamos para agendar la primera visita a {config.companyName}. Sin costo y sin compromiso: la usamos para
-            confirmar las horas y mostrarle cómo quedaría.
+            Confirme su celular o WhatsApp. Le escribimos para agendar la primera visita a {config.companyName}, sin costo
+            ni compromiso.
           </p>
           <InterestButton plan={plan.name} />
         </div>
         <div className="radar-closing-side">
-          <Button href="/sitio" target="_blank" rel="noopener noreferrer" variant="ghost" className="btn-block">
-            Ver la página web de muestra
+          <SolutionQr code={recordCode} />
+          <Button
+            href={pageHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="ghost"
+            className="btn-block"
+          >
+            Ver la página
           </Button>
           <Button href="/flyer" variant="ghost" className="btn-block">Descargar el resumen en PDF</Button>
+          <RegenerarSolution />
           <button
             type="button"
             className="link-btn"

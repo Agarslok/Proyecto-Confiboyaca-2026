@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
+import { SectorImg } from "@/components/templates/SectorImg";
+import { SolutionBlock } from "@/components/templates/SolutionBlock";
 import styles from "./agro.module.css";
 
 /* ============================================================================
@@ -135,9 +137,9 @@ const I = {
 
 /* --------------------------- Fotografía con respaldo -------------------------- */
 
-function Photo({ src, alt, className, caption }: { src?: string; alt: string; className: string; caption: string }) {
+function Photo({ src, mobile, alt, className, caption }: { src?: string; mobile?: string; alt: string; className: string; caption: string }) {
   const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  useEffect(() => setFailed(false), [src, mobile]);
 
   if (!src || failed) {
     return (
@@ -146,7 +148,7 @@ function Photo({ src, alt, className, caption }: { src?: string; alt: string; cl
       </div>
     );
   }
-  return <img src={src} alt={alt} className={className} loading="lazy" decoding="async" onError={() => setFailed(true)} />;
+  return <SectorImg desktop={src} mobile={mobile} alt={alt} className={className} onError={() => setFailed(true)} />;
 }
 
 /* ---------------------------- Número que sube al verse ------------------------ */
@@ -385,8 +387,9 @@ export function AgroindustriaTemplate({ config }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [videoFailed, setVideoFailed] = useState(false);
-  const videoSrc = extras.heroVideoUrl ?? MEDIA.video;
-  const posterSrc = extras.heroPoster ?? MEDIA.poster;
+  const videoSrc = extras.heroVideoUrl ?? (config.sectorPhotos?.hero ? undefined : MEDIA.video);
+  const posterSrc = config.sectorPhotos?.hero.desktop ?? extras.heroPoster ?? MEDIA.poster;
+  const posterMobile = extras.heroPoster ? undefined : config.sectorPhotos?.hero.mobile;
 
   useEffect(() => {
     if (prefersReducedMotion()) setPlaying(false);
@@ -406,7 +409,16 @@ export function AgroindustriaTemplate({ config }: Props) {
   /* ------------------------------ Ficha de producto ------------------------- */
   const [openCard, setOpenCard] = useState<number | null>(null);
   const active = openCard !== null ? cards[openCard] : null;
-  const imageFor = (card: AgroCard, i: number) => card.image || productImages[i % productImages.length];
+  const shotAt = (i: number) => {
+    const shots = config.sectorPhotos?.shots ?? [];
+    return shots.length ? shots[i % shots.length] : undefined;
+  };
+  const imageFor = (card: AgroCard, i: number) => {
+    if (card.image) return { src: card.image, mobile: undefined as string | undefined };
+    const shot = shotAt(i);
+    if (shot) return { src: shot.desktop, mobile: shot.mobile };
+    return { src: productImages[i % productImages.length], mobile: undefined as string | undefined };
+  };
 
   /* ------------------------------ Testimonios ------------------------------- */
   const trackRef = useRef<HTMLDivElement>(null);
@@ -526,7 +538,7 @@ export function AgroindustriaTemplate({ config }: Props) {
       <section className={styles.hero} id="inicio" style={heroStyle}>
         <div className={styles.heroMedia} aria-hidden="true">
           {videoFailed || !videoSrc ? (
-            <Photo src={posterSrc} alt="" caption="" className={styles.heroPoster} />
+            <Photo src={posterSrc} mobile={posterMobile} alt="" caption="" className={styles.heroPoster} />
           ) : (
             <video
               ref={videoRef}
@@ -562,13 +574,15 @@ export function AgroindustriaTemplate({ config }: Props) {
           <span className={styles.scrollLine} aria-hidden="true" />
         </button>
 
-        {!videoFailed ? (
+        {videoSrc && !videoFailed ? (
           <button type="button" className={styles.playBtn} onClick={() => setPlaying((p) => !p)} aria-pressed={!playing}>
             {playing ? I.pause : I.play}
             {playing ? "Pausar video" : "Reproducir video"}
           </button>
         ) : null}
       </section>
+
+      <SolutionBlock solution={config.solution} tone="agroindustria" site={config} />
 
       {/* Propósito */}
       <section className={styles.section} id="nosotros">
@@ -630,7 +644,7 @@ export function AgroindustriaTemplate({ config }: Props) {
                 aria-haspopup="dialog"
               >
                 <span className={styles.cardMedia}>
-                  <Photo src={imageFor(card, i)} alt={card.title ?? "Producto"} caption={card.title ?? "Producto"} className={styles.cardImg} />
+                  <Photo src={imageFor(card, i).src} mobile={imageFor(card, i).mobile} alt={card.title ?? "Producto"} caption={card.title ?? "Producto"} className={styles.cardImg} />
                   {card.tag ? <span className={styles.cardTag}>{card.tag}</span> : null}
                 </span>
                 <span className={styles.cardBody}>
@@ -652,7 +666,7 @@ export function AgroindustriaTemplate({ config }: Props) {
       {/* Impacto */}
       {hasSustain ? (
         <section className={styles.impact} id="impacto">
-          <Photo src={extras.impactImage ?? MEDIA.impact} alt="" caption="" className={styles.impactBg} />
+          <Photo src={extras.impactImage ?? shotAt(0)?.desktop ?? MEDIA.impact} mobile={extras.impactImage ? undefined : shotAt(0)?.mobile} alt="" caption="" className={styles.impactBg} />
           <div className={styles.impactShade} aria-hidden="true" />
           <div className={styles.wrap}>
             <div {...reveal()}>
@@ -727,7 +741,7 @@ export function AgroindustriaTemplate({ config }: Props) {
 
       {/* Cierre */}
       <section className={styles.cta}>
-        <Photo src={extras.ctaImage ?? MEDIA.cta} alt="" caption="" className={styles.ctaBg} />
+        <Photo src={extras.ctaImage ?? shotAt(1)?.desktop ?? config.sectorPhotos?.hero.desktop ?? MEDIA.cta} mobile={extras.ctaImage ? undefined : shotAt(1)?.mobile ?? config.sectorPhotos?.hero.mobile} alt="" caption="" className={styles.ctaBg} />
         <h2 className={styles.ctaTitle}>
           Comienza a trabajar con <em>{companyName}</em>
         </h2>
@@ -785,7 +799,7 @@ export function AgroindustriaTemplate({ config }: Props) {
       {active ? (
         <Modal label={active.title ?? "Producto"} onClose={() => setOpenCard(null)} wide>
           <div className={styles.dialogMedia}>
-            <Photo src={imageFor(active, openCard as number)} alt={active.title ?? "Producto"} caption={active.title ?? "Producto"} className={styles.cardImg} />
+            <Photo src={imageFor(active, openCard as number).src} mobile={imageFor(active, openCard as number).mobile} alt={active.title ?? "Producto"} caption={active.title ?? "Producto"} className={styles.cardImg} />
           </div>
           <div className={styles.dialogBody}>
             {active.tag ? <p className={styles.eyebrow} style={{ margin: 0 }}>{active.tag}</p> : null}
