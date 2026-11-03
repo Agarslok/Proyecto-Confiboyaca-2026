@@ -1,5 +1,5 @@
 import { assistantFallback, genericAssistant, isReadyForAssistant } from "@/lib/radar/assistant";
-import { DIMENSIONS } from "@/lib/radar/bank";
+import { DIMENSIONS, industryById } from "@/lib/radar/bank";
 import { solutionVoice } from "@/lib/radar/solution-voice";
 import { SOLUTIONS, solutionKind, type CentralProblem, type SolutionKind } from "@/lib/radar/solution";
 import type { DimensionScore, Finding, IndustryId, LevelId, Vocab } from "@/lib/radar/types";
@@ -251,6 +251,60 @@ export function chooseCatalogAction(input: PresentationInput): SolutionActionId 
 /** Respaldo escrito del paso 2 cuando Gemini no interviene o falla. */
 export function catalogFallback(input: PresentationInput): SolutionSectionSpec {
   return catalogSpec(input, chooseCatalogAction(input));
+}
+
+const FALLBACK_CENTRAL: CentralProblem = {
+  questionId: "datos-registro",
+  kind: "registro",
+  name: "Registro",
+  headline: "Cada pedido queda registrado",
+  problem: "",
+  dimensionLabel: "Datos",
+  customerLead: "",
+  changes: [],
+  also: [],
+  industryId: "",
+};
+
+/** Contexto del diagnóstico para armar textos del catálogo en pantalla. */
+export function presentationInputFromSite(site: {
+  companyName?: string;
+  industryId?: string;
+  activityId?: string;
+  radar?: {
+    activityLabel?: string;
+    central: CentralProblem | null;
+    dimensions: PresentationInput["dimensions"];
+    findings: PresentationInput["findings"];
+  };
+}): PresentationInput | null {
+  if (!site.companyName?.trim() || !site.industryId || !site.radar) return null;
+  const industry = industryById(site.industryId as IndustryId);
+  const activity = industry?.activities.find((item) => item.id === site.activityId);
+  const vocab = industry
+    ? { ...industry.vocab, ...activity?.vocab }
+    : { productos: "productos", clientes: "clientes", punto: "sede" };
+  return {
+    companyName: site.companyName,
+    industryId: site.industryId as IndustryId,
+    activityId: site.activityId ?? "",
+    activityLabel: site.radar.activityLabel || activity?.label || "",
+    vocab,
+    central: site.radar.central ?? { ...FALLBACK_CENTRAL, industryId: site.industryId as IndustryId },
+    dimensions: site.radar.dimensions,
+    findings: site.radar.findings,
+  };
+}
+
+/** Título y subtítulo del hueco: siempre el catálogo sectorial, aunque el spec guardado venga del modelo. */
+export function withCatalogHeadline(
+  spec: SolutionSectionSpec,
+  site?: Parameters<typeof presentationInputFromSite>[0],
+): SolutionSectionSpec {
+  const input = site ? presentationInputFromSite(site) : null;
+  if (!input) return spec;
+  const fresh = catalogSpec(input, spec.action);
+  return { ...spec, visitorTitle: fresh.visitorTitle, businessChange: fresh.businessChange };
 }
 
 function catalogSpec(input: PresentationInput, action: SolutionActionId): SolutionSectionSpec {

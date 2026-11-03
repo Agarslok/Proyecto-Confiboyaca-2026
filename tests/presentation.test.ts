@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { DIMENSIONS } from "../lib/radar/bank";
 import { buildRadarResult, emptyRadarAnswers, screensFor } from "../lib/radar/engine";
-import { catalogAction, chooseCatalogAction, choosePresentation } from "../lib/radar/presentation";
+import { catalogAction, chooseCatalogAction, choosePresentation, withCatalogHeadline } from "../lib/radar/presentation";
 import { SOLUTION_KINDS, type CentralProblem, type SolutionKind } from "../lib/radar/solution";
 import type { DimensionScore, IndustryId, OptionKey, RadarAnswers, Finding } from "../lib/radar/types";
 import { buildSite } from "../lib/site/engine";
@@ -245,5 +245,31 @@ describe("enfoque del hueco sin IA", () => {
       }),
       "registro",
     );
+  });
+
+  it("reemplaza títulos de marketing del modelo por el catálogo sectorial", () => {
+    const answers = answerAll({ industry: "turismo", activity: "turismo-agencia", companyName: "Shop Viajes" }, "A");
+    const site = buildSite({
+      companyName: "Shop Viajes",
+      sectorId: "turismo",
+      activity: "",
+      audience: "",
+      goal: "",
+      otherGoal: "",
+      features: [],
+      radar: answers,
+    });
+    const normalized = withCatalogHeadline(
+      {
+        action: "agenda",
+        visitorTitle: "Shop Viajes cotiza su plan de viaje con usted",
+        businessChange: "Texto inventado por el modelo.",
+        submitLabel: "Confirmar",
+        choices: [{ id: "a", label: "Plan", detail: "Demo", price: 0 }],
+      },
+      site,
+    );
+    assert.equal(normalized.visitorTitle, "Arma tu plan aquí");
+    assert.match(normalized.businessChange, /fecha de salida/i);
   });
 });

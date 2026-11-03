@@ -46,6 +46,7 @@ export const GEMINI_SOLUTION_SYSTEM_LINES = [
   "Usa los productos y clientes de ejemplo del encargo.",
   "En tablas (registro, inventario, solicitudes) las columnas deben servir para operar: agregar, editar y quitar filas (producto, cantidades, destino o estado). No inventes un botón que solo 'envía' sin lista editable.",
   "Escribe en español sencillo, como se le habla a quien visita la página.",
+  "visitorTitle: frase corta en segunda persona (Reserva aquí, Arma tu plan aquí, Compra tu entrada). No uses eslóganes ni el nombre de la empresa en el título.",
   "En modo guía: no prometas software conectado, integraciones desplegadas ni cumplimiento legal; el disclaimer debe aclarar que hace falta revisión humana.",
   "Si action es asistente: no armes una tabla ni una guía de pasos. Escribe una propuesta de cómo la IA entra en ese sector y esa actividad, un saludo y 3 o 4 preguntas cortas que haría un visitante.",
 ] as const;

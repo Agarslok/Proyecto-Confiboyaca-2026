@@ -2,14 +2,23 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
+  agendaConfirmLine,
+  agendaDatePrompt,
+  agendaGuestPrompt,
+  agendaPartyPrompt,
   agendaQuestion,
+  agendaSavedLine,
   assistantHello,
+  demoContextAgenda,
+  demoContextTable,
   fieldQuestion,
   fold,
   isConfirm,
   isRestart,
   matchOption,
   parseParty,
+  tableConfirmLine,
+  tableSavedLine,
   valueMatchesColumn,
 } from "@/lib/site/demo-chat";
 import type { SolutionActionId, SolutionSectionSpec } from "@/lib/site/solution-slot";
@@ -56,6 +65,25 @@ function useDemoTurns(hello: string) {
     [stop],
   );
 
+  const greetIntro = useCallback(
+    (hello: string, context: string, ask: string) => {
+      stop();
+      setTurns([{ role: "bot", text: hello }]);
+      busy.current = true;
+      setTyping(true);
+      timer.current = setTimeout(() => {
+        setTurns((current) => [...current, { role: "bot", text: context }]);
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          setTurns((current) => [...current, { role: "bot", text: ask }]);
+          busy.current = false;
+          setTyping(false);
+        }, pauseMs());
+      }, pauseMs());
+    },
+    [stop],
+  );
+
   const later = useCallback((botTexts: string[], apply?: () => void) => {
     timer.current = setTimeout(() => {
       timer.current = null;
@@ -89,7 +117,7 @@ function useDemoTurns(hello: string) {
     [later],
   );
 
-  return { turns, typing, reply, aside, greet, stop };
+  return { turns, typing, reply, aside, greet, greetIntro, stop };
 }
 
 function ChatPane({
@@ -218,6 +246,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
   const partyName = spec.partyLabel ?? "Personas";
   const listed = listNoun(spec.submitLabel);
   const hello = assistantHello("agenda", companyName ?? "");
+  const context = demoContextAgenda(spec.businessChange, listed);
   const firstAsk = agendaQuestion(spec.submitLabel);
 
   const [dates, setDates] = useState<{ iso: string; label: string }[]>([]);
@@ -226,23 +255,23 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [input, setInput] = useState("");
-  const { turns, typing, reply, aside, greet, stop } = useDemoTurns(hello);
+  const { turns, typing, reply, aside, greetIntro, stop } = useDemoTurns(hello);
 
-  const seed = `${spec.submitLabel}|${choices.map((item) => item.id).join(",")}|${hello}`;
+  const seed = `${spec.submitLabel}|${choices.map((item) => item.id).join(",")}|${hello}|${context}`;
 
   useEffect(() => {
     setDates(upcomingDates(6));
   }, []);
 
   useEffect(() => {
-    greet(hello, firstAsk);
+    greetIntro(hello, context, firstAsk);
     setBookings([]);
     setEditingId(null);
     setDraft(EMPTY_DRAFT);
     setStep("choice");
     setInput("");
     return () => stop();
-  }, [seed, hello, firstAsk, greet, stop]);
+  }, [seed, hello, context, firstAsk, greetIntro, stop]);
 
   function askChoice(userText: string | null, lead: string) {
     const apply = () => setStep("choice");
@@ -251,6 +280,20 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
       return;
     }
     aside(lead, apply);
+  }
+
+  function buildAgendaConfirm(next: Draft): string {
+    const choice = choices.find((item) => item.id === next.choiceId) ?? choices[0];
+    const money = choice && choice.price > 0 ? pesos.format(choice.price * next.party) : undefined;
+    return agendaConfirmLine({
+      choiceLabel: choice?.label ?? "Reserva",
+      choiceDetail: choice?.detail ?? "",
+      dateLabel: next.dateLabel,
+      party: next.party,
+      partyLabel: partyName,
+      guest: next.guest,
+      totalMoney: money,
+    });
   }
 
   function onSend(raw: string) {
@@ -273,7 +316,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
         return;
       }
       if (
-        reply(text, [`${match.label}. ${match.detail} ¿Qué fecha te sirve? Elige una o escríbela.`], () => {
+        reply(text, [agendaDatePrompt(match.label, match.detail)], () => {
           setDraft({ ...EMPTY_DRAFT, choiceId: match.id });
           setStep("date");
         })
@@ -296,7 +339,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
         return;
       }
       if (
-        reply(text, [`¿${partyQuestion(partyName)} Escribe un número entre ${min} y ${max}.`], () => {
+        reply(text, [agendaPartyPrompt(partyName, min, max)], () => {
           setDraft((current) => ({ ...current, date, dateLabel }));
           setStep("party");
         })
@@ -313,7 +356,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
         return;
       }
       if (
-        reply(text, ["¿A nombre de quién queda?"], () => {
+        reply(text, [agendaGuestPrompt(spec.submitLabel, partyName)], () => {
           setDraft((current) => ({ ...current, party }));
           setStep("guest");
         })
@@ -330,7 +373,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
       }
       const next = { ...draft, guest: text };
       if (
-        reply(text, [confirmLine(next)], () => {
+        reply(text, [buildAgendaConfirm(next)], () => {
           setDraft(next);
           setStep("confirm");
         })
@@ -346,6 +389,14 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
         askChoice(text, firstAsk);
         return;
       }
+      const confirmInput = {
+        choiceLabel: choice.label,
+        choiceDetail: choice.detail,
+        dateLabel: draft.dateLabel,
+        party: draft.party,
+        partyLabel: partyName,
+        guest: draft.guest,
+      };
       const updating = editingId;
       const booking: Booking = {
         id: updating ?? newId(),
@@ -358,11 +409,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
       if (
         reply(
           text,
-          [
-            updating
-              ? `Listo. Actualicé esa reserva. Si quieres otra, dilo.`
-              : `Listo. Quedó en ${listed}. Si quieres otra, dilo.`,
-          ],
+          [agendaSavedLine(listed, confirmInput, Boolean(updating))],
           () => {
             setBookings((current) =>
               updating ? current.map((item) => (item.id === updating ? booking : item)) : [...current, booking],
@@ -385,12 +432,6 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
     }
 
     if (reply(text, ["Responde Confirmar para dejarla, o Cambiar para empezar de nuevo."])) setInput("");
-  }
-
-  function confirmLine(next: Draft): string {
-    const choice = choices.find((item) => item.id === next.choiceId) ?? choices[0];
-    const money = choice && choice.price > 0 ? ` Total ${pesos.format(choice.price * next.party)}.` : "";
-    return `Quedaría así: ${choice?.label ?? "Reserva"} · ${next.dateLabel} · ${next.party} ${partyName.toLowerCase()} · ${next.guest}.${money} ¿La confirmo?`;
   }
 
   const chips =
@@ -434,7 +475,7 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
       <div className={styles.bookings}>
         <h3 className={styles.editorTitle}>{`${listed[0]?.toUpperCase() ?? ""}${listed.slice(1)}`}</h3>
         {bookings.length === 0 ? (
-          <p className={styles.empty}>{`Todavía no hay ${listed}. Responde en el chat para agregar una.`}</p>
+          <p className={styles.empty}>{`Todavía no hay ${listed}. Cuando confirmes en el chat, aparece aquí con fecha, ${partyName.toLowerCase()} y nombre.`}</p>
         ) : (
           <ul className={styles.bookingList}>
             {bookings.map((item) => {
@@ -495,12 +536,6 @@ export function AgendaChat({ spec, companyName }: { spec: SolutionSectionSpec; c
   );
 }
 
-function partyQuestion(label: string): string {
-  const word = label.toLowerCase();
-  const feminine = /(as|a)$/.test(word) || /personas|toneladas|unidades|piezas|citas|visitas|entradas/.test(word);
-  return feminine ? `Cuántas ${word}` : `Cuántos ${word}`;
-}
-
 function partyChips(min: number, max: number): string[] {
   const values = [min, min + 1, min + 2, Math.min(max, Math.max(min, 4))];
   return [...new Set(values.filter((value) => value >= min && value <= max))].map(String);
@@ -526,8 +561,9 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
   const columns = spec.columns ?? [];
   const action = spec.action === "agenda" ? "registro" : spec.action;
   const hello = assistantHello(TABLE_KIND[action], companyName ?? "");
-  const firstAsk = fieldQuestion(columns[0] ?? "dato");
-  const seed = JSON.stringify({ columns, rows: spec.rows ?? [], hello, firstAsk });
+  const context = demoContextTable(action, spec.businessChange, columns);
+  const firstAsk = fieldQuestion(columns[0] ?? "dato", { action, columns });
+  const seed = JSON.stringify({ columns, rows: spec.rows ?? [], hello, context, firstAsk });
 
   const [rows, setRows] = useState<string[][]>(() => (spec.rows ?? []).map((row) => padRow(columns, row)));
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -535,11 +571,17 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
   const [phase, setPhase] = useState<"field" | "confirm" | "idle">("field");
   const [draft, setDraft] = useState<string[]>([]);
   const [input, setInput] = useState("");
-  const { turns, typing, reply, aside, greet, stop } = useDemoTurns(hello);
+  const { turns, typing, reply, aside, greetIntro, stop } = useDemoTurns(hello);
 
   useEffect(() => {
-    const parsed = JSON.parse(seed) as { columns: string[]; rows: string[][]; hello: string; firstAsk: string };
-    greet(parsed.hello, parsed.firstAsk);
+    const parsed = JSON.parse(seed) as {
+      columns: string[];
+      rows: string[][];
+      hello: string;
+      context: string;
+      firstAsk: string;
+    };
+    greetIntro(parsed.hello, parsed.context, parsed.firstAsk);
     setRows(parsed.rows.map((row) => padRow(parsed.columns, row)));
     setEditIndex(null);
     setCursor(0);
@@ -547,7 +589,7 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
     setPhase("field");
     setInput("");
     return () => stop();
-  }, [seed, greet, stop]);
+  }, [seed, greetIntro, stop]);
 
   if (columns.length === 0) return null;
 
@@ -586,7 +628,7 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
         const saved = draft;
         const index = editIndex;
         if (
-          reply(text, [index != null ? "Listo. Actualicé ese registro. Si quieres otro, dilo." : "Listo. Ya quedó anotado. Si quieres otro, dilo."], () => {
+          reply(text, [tableSavedLine(columns, saved, index != null)], () => {
             setRows((current) =>
               index != null ? current.map((row, rowIndex) => (rowIndex === index ? saved : row)) : [...current, saved],
             );
@@ -617,7 +659,7 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
     const following = cursor + 1;
     if (following < columns.length) {
       if (
-        reply(text, [fieldQuestion(columns[following] ?? "dato")], () => {
+        reply(text, [fieldQuestion(columns[following] ?? "dato", { action, columns })], () => {
           setDraft(next);
           setCursor(following);
         })
@@ -627,7 +669,7 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
       return;
     }
     if (
-      reply(text, [`Quedaría así: ${next.join(" · ")}. ¿Lo confirmo?`], () => {
+      reply(text, [tableConfirmLine(columns, next)], () => {
         setDraft(next);
         setPhase("confirm");
       })
@@ -655,7 +697,11 @@ export function TableChat({ spec, companyName }: { spec: SolutionSectionSpec; co
       <div className={styles.bookings}>
         <h3 className={styles.editorTitle}>{TABLE_TITLE[action]}</h3>
         {rows.length === 0 ? (
-          <p className={styles.empty}>Todavía no hay nada anotado. Responde en el chat para agregar el primero.</p>
+          <p className={styles.empty}>
+            Todavía no hay filas nuevas tuyas. Al confirmar en el chat, cada registro aparece aquí con{" "}
+            {columns.slice(0, 2).join(" y ").toLowerCase()}
+            {columns.length > 2 ? "…" : ""}.
+          </p>
         ) : (
           <ul className={styles.bookingList}>
             {rows.map((row, index) => (

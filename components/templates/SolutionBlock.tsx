@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import styles from "./solution-slot.module.css";
-import { catalogSecond } from "@/lib/radar/presentation";
-import type { IndustryId } from "@/lib/radar/types";
+import { catalogSecond, presentationInputFromSite, withCatalogHeadline } from "@/lib/radar/presentation";
 import type { SolutionHoleSpec, SolutionSectionSpec } from "@/lib/site/solution-slot";
 import type { SiteConfig, TemplateId } from "@/types/site";
 import { SolutionAssistantSlot } from "@/components/templates/SolutionAssistantSlot";
@@ -14,21 +13,9 @@ function companionOf(
   site?: Pick<SiteConfig, "companyName" | "industryId" | "activityId" | "radar">,
 ): { spec: SolutionSectionSpec; note: string } | null {
   if (solution.action === "asistente") return null;
-  const radar = site?.radar;
-  if (!radar) return null;
-  return catalogSecond(
-    {
-      companyName: site?.companyName ?? "",
-      industryId: (site?.industryId || "") as IndustryId | "",
-      activityId: site?.activityId ?? "",
-      activityLabel: radar.activityLabel,
-      vocab: { productos: "productos", clientes: "clientes", punto: "sede" },
-      central: radar.central,
-      dimensions: radar.dimensions,
-      findings: radar.findings,
-    },
-    solution.action,
-  );
+  const input = site ? presentationInputFromSite(site) : null;
+  if (!input) return null;
+  return catalogSecond(input, solution.action);
 }
 
 /** Segundo bloque bajo la portada: spec guardado, o placeholder mientras no hay diagnóstico. */
@@ -59,16 +46,16 @@ export function SolutionBlock({
     return wrap(<SolutionAssistantSlot spec={solution} tone={tone} site={site} />);
   }
   const companion = companionOf(solution, site);
+  const primary = withCatalogHeadline(solution, site);
   return wrap(
     <>
-      <SolutionSlot spec={solution} tone={tone} companyName={site?.companyName} headingId={titleId} />
+      <SolutionSlot spec={primary} tone={tone} companyName={site?.companyName} headingId={titleId} />
       {companion ? (
         <SolutionSlot
-          spec={companion.spec}
+          spec={withCatalogHeadline(companion.spec, site)}
           tone={tone}
           companyName={site?.companyName}
           headingId={companionId}
-          kicker="También para este negocio"
           bridge={companion.note}
         />
       ) : null}

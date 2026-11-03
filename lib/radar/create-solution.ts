@@ -47,7 +47,20 @@ export function applyFallbacks(input: {
     if (input.catalogFallback?.action === "asistente") return { spec: input.catalogFallback, source: "catalogo" };
     return { spec: genericAssistant(input.brief.companyName), source: "minimo" };
   }
-  if (input.modelSpec && input.modelSpec.action !== "asistente") return { spec: input.modelSpec, source: "modelo" };
+  if (input.modelSpec && input.modelSpec.action !== "asistente") {
+    const spec = input.modelSpec as SolutionSectionSpec;
+    if (input.catalogFallback && input.catalogFallback.action !== "asistente") {
+      return {
+        spec: {
+          ...spec,
+          visitorTitle: input.catalogFallback.visitorTitle,
+          businessChange: input.catalogFallback.businessChange,
+        },
+        source: "modelo",
+      };
+    }
+    return { spec, source: "modelo" };
+  }
   if (
     input.catalogFallback &&
     input.catalogFallback.action !== "asistente" &&

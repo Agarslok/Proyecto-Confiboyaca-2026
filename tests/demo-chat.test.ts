@@ -1,6 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { agendaQuestion, assistantHello, exampleCell, fieldQuestion, isConfirm, matchOption, parseCommaFields, parseParty, valueMatchesColumn } from "../lib/site/demo-chat";
+import {
+  agendaConfirmLine,
+  agendaPartyPrompt,
+  agendaQuestion,
+  assistantHello,
+  demoContextTable,
+  exampleCell,
+  fieldQuestion,
+  isConfirm,
+  matchOption,
+  parseCommaFields,
+  parseParty,
+  solutionSlotKicker,
+  tableConfirmLine,
+  valueMatchesColumn,
+} from "../lib/site/demo-chat";
 
 test("elige una opción escrita o parecida", () => {
   const options = [
@@ -22,17 +37,38 @@ test("pide número en cantidad y acepta un código en el número de solicitud", 
   assert.equal(valueMatchesColumn("Cantidad", "doce"), false);
   assert.equal(valueMatchesColumn("Número", "SOL-1042"), true);
   assert.equal(valueMatchesColumn("Estado", "Recibida"), true);
-  assert.equal(exampleCell("Número", 0), "1042");
+  assert.equal(exampleCell("Número", 0), "SOL-1042");
+  assert.equal(exampleCell("Mesa", 0), "4");
 });
 
 test("saluda con la empresa y pregunta un campo a la vez", () => {
   assert.match(assistantHello("registro", "Laguna Verde"), /asistente de registro en Laguna Verde/);
-  assert.equal(agendaQuestion("Confirmar reserva"), "¿Qué tipo de reserva quieres hacer?");
-  assert.equal(agendaQuestion("Confirmar reunión"), "¿Qué tipo de reunión quieres agendar?");
-  assert.equal(agendaQuestion("Confirmar toma"), "¿Qué toma quieres agendar?");
-  assert.equal(fieldQuestion("Huésped"), "¿Qué huésped anoto?");
+  assert.match(assistantHello("registro", "Laguna Verde"), /lista de al lado/);
+  assert.match(agendaQuestion("Confirmar reserva"), /reserva/);
+  assert.match(agendaQuestion("Confirmar reunión"), /reunión/);
+  assert.match(agendaQuestion("Confirmar toma"), /toma/);
+  assert.equal(fieldQuestion("Huésped"), "¿A nombre de quién va la estadía?");
   assert.equal(fieldQuestion("Noches"), "¿Cuántas noches?");
-  assert.equal(fieldQuestion("Solicitud"), "¿Cuál es el número?");
+  assert.match(fieldQuestion("Mesa"), /mesa/);
+  assert.equal(fieldQuestion("Solicitud", { action: "solicitudes" }), "¿Cuál es el número de la solicitud? (por ejemplo SOL-1042)");
+});
+
+test("resume filas y da contexto de tabla", () => {
+  assert.match(
+    demoContextTable("registro", "Huésped, habitación y noches quedan en la misma lista.", ["Huésped", "Habitación", "Noches"]),
+    /Huésped, Habitación, Noches/,
+  );
+  assert.match(tableConfirmLine(["Mesa", "Comensales", "Cliente"], ["4", "2", "Ana"]), /mesa 4/);
+  assert.match(tableConfirmLine(["Mesa", "Comensales", "Cliente"], ["4", "2", "Ana"]), /2 comensales/);
+  assert.match(agendaPartyPrompt("Comensales", 1, 8), /Cuántas comensales/);
+  assert.match(agendaConfirmLine({ choiceLabel: "Mesa terraza", choiceDetail: "", dateLabel: "vie 3 nov", party: 2, partyLabel: "Comensales", guest: "Ana" }), /2 comensales/);
+});
+
+test("encabezado del hueco según la acción del catálogo", () => {
+  assert.equal(solutionSlotKicker("agenda"), "Chat para agendar con un asistente");
+  assert.equal(solutionSlotKicker("registro"), "Chat para llevar el registro con un asistente");
+  assert.equal(solutionSlotKicker("inventario"), "Chat para consultar inventario con un asistente");
+  assert.equal(solutionSlotKicker("solicitudes"), "Chat para atender solicitudes con un asistente");
 });
 
 test("lee la cantidad y la confirmación", () => {

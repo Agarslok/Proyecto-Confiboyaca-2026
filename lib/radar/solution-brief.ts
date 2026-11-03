@@ -64,7 +64,7 @@ function modelPromptFor(mode: "catalogo" | "asistente"): string {
   if (mode === "asistente") {
     return "Rellena el asistente: visitorTitle para quien visita, businessChange y focus con cómo la IA entra en este sector y esta actividad, greeting, role y 3 o 4 starters que un visitante haría. Disclaimer de demostración. No toques menú, portada, pie ni fotos.";
   }
-  return "Rellena el widget con el lenguaje de esta actividad: hotel reserva habitación, experiencia o plan no menciona habitaciones, restaurante reserva mesa, salud o servicios agenda cita, y campo, mina o tienda toma un pedido con fecha. No uses «agenda tu visita» si el negocio no va al sitio del cliente. Si es tabla, las columnas son campos de esa operación porque el visitante agrega, edita y quita filas. Precios de demostración. No toques menú, portada, pie ni fotos.";
+  return "Rellena el widget con el lenguaje de esta actividad: hotel reserva habitación, experiencia o plan no menciona habitaciones, restaurante reserva mesa, salud o servicios agenda cita, y campo, mina o tienda toma un pedido con fecha. visitorTitle como en el catálogo (Reserva aquí, Arma tu plan aquí), sin eslóganes ni el nombre de la empresa en el título. No uses «agenda tu visita» si el negocio no va al sitio del cliente. Si es tabla, las columnas son campos de esa operación porque el visitante agrega, edita y quita filas. Precios de demostración. No toques menú, portada, pie ni fotos.";
 }
 
 /** Entre 3 y 5 respuestas. Primero los hallazgos que más pesan. */
