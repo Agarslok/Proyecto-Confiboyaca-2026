@@ -77,7 +77,7 @@ export function ExternadoHomePage() {
           </div>
         </div>
         <p className="w-meta">
-          <Icon.clock /> Unos 4 minutos · Preguntas según tu industria · Sin lenguaje técnico
+          <Icon.clock /> Unos 6 minutos · Preguntas según tu industria · Sin lenguaje técnico
         </p>
         <button type="button" className="scroll-cue" onClick={() => onSection("como-funciona")}>
           <span>Desliza para entender qué es la IA</span>

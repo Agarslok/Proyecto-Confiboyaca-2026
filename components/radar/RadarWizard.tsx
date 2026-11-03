@@ -26,7 +26,8 @@ import { getSiteSnapshot, saveSiteConfig } from "@/lib/session/site-session";
 import { parseSiteBrief } from "@/lib/validation/site";
 
 const KEYS: OptionKey[] = ["A", "B", "C", "D"];
-const SECONDS_PER_QUESTION = 14;
+/** Medido con el banco de preguntas: unos 6 min en total para quien lo llena por primera vez en el celular. */
+const SECONDS_PER_QUESTION = 21;
 const ADVANCE_MS = 320;
 
 function sectionsOf(screens: Screen[]): string[] {

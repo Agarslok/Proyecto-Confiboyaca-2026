@@ -28,7 +28,8 @@ const KINDS: { kind: SolutionKind; problem: string }[] = [
   { kind: "indicadores", problem: "Decido a ojo" },
 ];
 
-function before(kind: SolutionKind, industry: IndustryId): string[] {
+/** Cómo se ve hoy el problema, en el cuaderno del negocio (también lo usa el pitch). */
+export function before(kind: SolutionKind, industry: IndustryId): string[] {
   const [a, b] = SAMPLES[industry].items;
   const [c1] = SAMPLES[industry].customers;
   switch (kind) {
