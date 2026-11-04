@@ -4,8 +4,9 @@
 
 [build]
   command = "npm run build"
-  # No poner `publish` aquí: lo gestiona @netlify/plugin-nextjs.
-  # En el panel de Netlify, Publish directory debe quedar VACÍO (no raíz del repo).
+  # El runtime de Next.js valida que publish sea `.next` (tiene BUILD_ID),
+  # no la raíz del repo. No cambiar esto en el panel de Netlify.
+  publish = ".next"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

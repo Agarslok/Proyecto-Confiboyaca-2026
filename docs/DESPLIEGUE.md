@@ -22,7 +22,7 @@ En Netlify los datos **no** pueden quedar en un archivo (no hay disco que se con
 1. **Add new site → Import an existing project → GitHub** y elija `Agarslok/Proyecto-Confiboyaca-2026`.
 2. En **Branch to deploy** / **Production branch** deje **`main`**. Cada `git push` a `main` vuelve a publicar el sitio. (Desarrollo en otra rama: haga merge a `main` antes de la feria o cambie temporalmente la rama de producción en Netlify.)
 3. El comando y la versión de Node ya están en `netlify.toml`; no hace falta cambiarlos.
-4. **Build settings → Publish directory:** **vacío obligatorio.** Borre cualquier valor (`/`, `.`, nombre del repo o `.netlify/static`). Si apunta a la raíz del repo, falla *publish directory cannot be the same as the base directory*; si apunta a `.netlify/static`, falla *publish directory was not found* (esa carpeta la crea el runtime, no usted). **Build command:** `npm run build` (o déjelo en blanco si Netlify ya lo detecta). **Base directory:** vacío salvo monorepo.
+4. **Build settings:** no hace falta tocarlos. `netlify.toml` fija **Publish directory** en `.next` (el plugin de Next.js lo exige; la raíz del repo produce *publish directory cannot be the same as the base directory*). Si el panel muestra otra carpeta, cámbiela a **`.next`** y guarde.
 5. Antes de publicar, en **Site configuration → Environment variables**, agregue:
 
 | Variable | Valor |
