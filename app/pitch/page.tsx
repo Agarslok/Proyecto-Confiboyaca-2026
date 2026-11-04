@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { PitchDeck } from "@/features/pitch/components/pitch-deck";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Pitch",
-  description: "Presentación guiada sobre inteligencia artificial aplicada a la empresa.",
+  title: "IA sin morir en el intento",
+  description:
+    "Pitch del Radar IA · Departamento de Matemáticas, Universidad Externado de Colombia",
 };
 
+/** Presentación embebida (HTML standalone en /public/pitch). Regenerar con `node scripts/sync-pitch-html.mjs`. */
 export default function PitchPage() {
-  return <PitchDeck />;
+  redirect("/pitch/pitch-ia-sin-morir.html");
 }

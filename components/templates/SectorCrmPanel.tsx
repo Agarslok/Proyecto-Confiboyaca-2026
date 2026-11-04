@@ -174,28 +174,44 @@ export function SectorCrmPanel({
 
   return (
     <div className={styles.crm}>
-      <aside className={styles.crmNav} aria-label="Tablas del negocio">
+      <header className={styles.crmNav} aria-label="Tablas del negocio">
         <p className={styles.crmNavTitle}>{catalog.sectorLabel}</p>
-        <ul className={styles.crmNavList}>
+        <ul className={styles.crmNavList} role="tablist" aria-label="Elegir tabla">
           {entities.map((entity) => (
-            <li key={entity.id}>
+            <li key={entity.id} role="presentation">
               <button
                 type="button"
+                role="tab"
                 className={`${styles.crmNavBtn}${entity.id === active.id ? ` ${styles.crmNavBtnOn}` : ""}`}
-                aria-current={entity.id === active.id ? "true" : undefined}
+                aria-selected={entity.id === active.id}
                 onClick={() => setActiveId(entity.id)}
               >
                 <span className={styles.crmNavLabel}>{entity.label}</span>
-                <span className={styles.crmNavMeta}>{meaningfulRows(entity).length} registros</span>
+                <span className={styles.crmNavMeta}>{meaningfulRows(entity).length}</span>
               </button>
             </li>
           ))}
         </ul>
+        <label className={styles.crmNavSelectWrap}>
+          <span className={styles.crmNavSelectLabel}>Tabla</span>
+          <select
+            className={styles.crmNavSelect}
+            value={active.id}
+            aria-label="Tabla de la base de datos"
+            onChange={(event) => setActiveId(event.target.value)}
+          >
+            {entities.map((entity) => (
+              <option key={entity.id} value={entity.id}>
+                {entity.label} ({meaningfulRows(entity).length})
+              </option>
+            ))}
+          </select>
+        </label>
         <p className={styles.crmNavFoot}>
-          Tipo de registro = tabla activa. Cada fila guardada alimenta el dashboard. Persistencia en este navegador
-          (localStorage).
+          Tipo de registro = tabla activa. Cada fila guardada alimenta el dashboard y se copia a la base de la empresa
+          (con respaldo). En este navegador también queda una copia local.
         </p>
-      </aside>
+      </header>
 
       <div className={styles.crmMain}>
         <header className={styles.crmHead}>
@@ -296,7 +312,7 @@ export function SectorCrmPanel({
                   return (
                   <tr key={`${active.id}-${rowIndex}`}>
                     {active.columns.map((column) => (
-                      <td key={column.key}>
+                      <td key={column.key} data-label={column.label}>
                         <CrmFieldSelect
                           column={column}
                           value={row[column.key] ?? ""}
@@ -307,14 +323,16 @@ export function SectorCrmPanel({
                         />
                       </td>
                     ))}
-                    <td className={styles.crmMetaCell}>{meta?.status ?? "—"}</td>
-                    <td className={styles.crmMetaCell}>
+                    <td className={styles.crmMetaCell} data-label="Estado">
+                      {meta?.status ?? "—"}
+                    </td>
+                    <td className={styles.crmMetaCell} data-label="Registrado">
                       {meta ? formatRecordedAt(meta.recordedAt) : "—"}
                       {meta ? (
                         <span className={styles.crmMetaSource}>{meta.source === "assistant" ? "Asistente" : "Manual"}</span>
                       ) : null}
                     </td>
-                    <td className={styles.crmRowActions}>
+                    <td className={styles.crmRowActions} data-label="Acciones">
                       <button
                         type="button"
                         className={styles.crmRowRemove}

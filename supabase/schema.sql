@@ -8,6 +8,8 @@
 --   diagnosis_answers                                    una fila por pregunta respondida
 --   diagnosis_goals                                      objetivos marcados
 --   diagnoses_backup                                     copia al reiniciar la base
+--   ops_workspaces                                       operación vigente de cada empresa (CRM + chat)
+--   ops_workspaces_backup                                copia de cada guardado (no se borra al actualizar)
 --
 -- No hay una tabla por sector: industry_id filtra alimentos, moda, salud, etc.
 -- El código RAD-… es el identificador público de la solución (/s/RAD-XXXXXX).
@@ -155,3 +157,36 @@ alter table public.radar_activities enable row level security;
 alter table public.radar_questions enable row level security;
 alter table public.diagnosis_answers enable row level security;
 alter table public.diagnosis_goals enable row level security;
+
+-- Operación de cada empresa (asistente, base de datos y cupo). Una fila vigente
+-- y una copia por cada guardado, para no perder lo que la empresa fue llenando.
+create table if not exists public.ops_workspaces (
+  workspace_id   text primary key,
+  company_name   text not null default '',
+  industry_id    text not null default '',
+  activity_id    text not null default '',
+  record_code    text not null default '',
+  crm            jsonb not null default '{}'::jsonb,
+  chat           jsonb not null default '{}'::jsonb,
+  updated_at     timestamptz not null default now()
+);
+
+create index if not exists ops_workspaces_company on public.ops_workspaces (company_name);
+create index if not exists ops_workspaces_updated on public.ops_workspaces (updated_at desc);
+
+create table if not exists public.ops_workspaces_backup (
+  backup_id      text primary key,
+  workspace_id   text not null,
+  company_name   text not null default '',
+  industry_id    text not null default '',
+  activity_id    text not null default '',
+  record_code    text not null default '',
+  crm            jsonb not null default '{}'::jsonb,
+  chat           jsonb not null default '{}'::jsonb,
+  saved_at       timestamptz not null default now()
+);
+
+create index if not exists ops_workspaces_backup_workspace on public.ops_workspaces_backup (workspace_id, saved_at desc);
+
+alter table public.ops_workspaces enable row level security;
+alter table public.ops_workspaces_backup enable row level security;

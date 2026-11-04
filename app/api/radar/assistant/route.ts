@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { askBusinessAssistant, assistantContextFromAnswers, type AssistantTurn } from "@/lib/radar/ask-assistant";
 import type { AssistantChatContext } from "@/lib/radar/assistant";
+import { sanitizeAssistantContext, sanitizeAssistantPayload } from "@/lib/radar/assistant-payload";
 import { getDiagnosisStore } from "@/lib/store/diagnoses";
 import { isAssistantSolution } from "@/lib/site/solution-slot";
 
 const turnSchema = z.object({
   role: z.enum(["user", "assistant"]),
-  text: z.string().trim().min(1).max(1200),
+  text: z.string().trim().min(1).max(4000),
 });
 
 const contextSchema = z.object({
@@ -40,11 +41,11 @@ const contextSchema = z.object({
               key: z.string().trim().max(40),
               label: z.string().trim().max(80),
               slot: z.enum(["who", "when", "howMany", "what"]),
-              options: z.array(z.string().trim().max(80)).max(16).default([]),
+              options: z.array(z.string().trim().max(120)).max(24).default([]),
             }),
           )
           .max(4),
-        rows: z.array(z.record(z.string().max(40), z.string().max(80))).max(12).optional(),
+        rows: z.array(z.record(z.string().max(40), z.string().max(500))).max(12).optional(),
       }),
     )
     .max(8)
@@ -71,11 +72,17 @@ export async function POST(request: Request) {
     const tooLong = parsed.error.issues.some((issue) => issue.code === "too_big" && issue.path.join(".") === "question");
     const message = tooLong
       ? "Escriba una pregunta de hasta 500 caracteres."
-      : "No se pudo enviar el mensaje al asistente. Recargue la página e intente de nuevo.";
+      : "Los datos del asistente no pudieron validarse. Recargue la página e intente de nuevo.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const context = await resolveContext(parsed.data.code, parsed.data.context);
+  const clientContext = parsed.data.context ? sanitizeAssistantContext(parsed.data.context as AssistantChatContext) : undefined;
+  const history = sanitizeAssistantPayload({
+    context: clientContext ?? ({ companyName: "El negocio", index: 0, level: "bajo", findings: [] } as AssistantChatContext),
+    history: parsed.data.history as AssistantTurn[],
+  }).history;
+
+  const context = await resolveContext(parsed.data.code, clientContext);
   if (!context) {
     return NextResponse.json({ error: "Falta el contexto de este negocio." }, { status: 400 });
   }
@@ -83,8 +90,8 @@ export async function POST(request: Request) {
   try {
     const result = await askBusinessAssistant({
       question: parsed.data.question,
-      history: parsed.data.history as AssistantTurn[],
-      context,
+      history,
+      context: sanitizeAssistantContext(context),
     });
     return NextResponse.json({ answer: result.answer, engine: result.engine });
   } catch (error) {

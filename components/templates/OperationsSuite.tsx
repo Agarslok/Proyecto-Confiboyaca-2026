@@ -8,6 +8,7 @@ import {
   commitAndPersist,
   crmSessionKey,
   readCrmSession,
+  snapshotCrmRows,
   writeCrmSession,
   type CommitResult,
   type CrmEntityState,
@@ -22,7 +23,14 @@ import {
   SESSION_REACTIVATE_PASSWORD,
   writeOpsChatSession,
 } from "@/lib/assistant/session-quota";
-import { workspaceScope } from "@/lib/assistant/workspace";
+import {
+  markOpsCloudLocal,
+  markOpsCloudSynced,
+  opsCloudLocalStamp,
+  pullOpsCloud,
+  pushOpsCloud,
+} from "@/lib/assistant/ops-cloud";
+import { workspaceId, workspaceScope } from "@/lib/assistant/workspace";
 import { operationsThemeVars } from "@/lib/site/operations-theme";
 import type { SiteConfig } from "@/types/site";
 import { SectorCrmPanel } from "@/components/templates/SectorCrmPanel";
@@ -56,6 +64,9 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
   const [quotaUsed, setQuotaUsed] = useState(0);
   const [reactivateOpen, setReactivateOpen] = useState(false);
   const [pendingStarter, setPendingStarter] = useState<string | null>(null);
+  const [cloudRevision, setCloudRevision] = useState(0);
+  const cloudReady = useRef(false);
+  const syncTimer = useRef(0);
   const remaining = quotaRemaining(quotaUsed);
   const quotaPct = Math.min(100, Math.round((quotaUsed / SESSION_QUOTA) * 100));
   const quotaTone = remaining <= 0 ? "empty" : remaining <= 40 ? "low" : "ok";
@@ -86,6 +97,54 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
     return () => window.removeEventListener("storage", onStorage);
   }, [crmKey, loadFromStorage]);
 
+  const companyId = workspaceId(config.recordCode, scope);
+
+  const pushCloud = useCallback(() => {
+    if (!cloudReady.current) return;
+    markOpsCloudLocal(companyId);
+    window.clearTimeout(syncTimer.current);
+    syncTimer.current = window.setTimeout(() => {
+      const crm = readCrmSession(crmKey) ?? snapshotCrmRows(crmRef.current);
+      const chat = readOpsChatSession(chatKey) ?? { used: 0, thread: [] };
+      void pushOpsCloud({
+        workspaceId: companyId,
+        companyName: config.companyName,
+        industryId: pack.industryId,
+        activityId: pack.activityId,
+        recordCode: config.recordCode,
+        crm,
+        chat,
+      }).then((result) => {
+        if (!result.ok) setStorageError(result.message);
+      });
+    }, 400);
+  }, [chatKey, companyId, config.companyName, config.recordCode, crmKey, pack.activityId, pack.industryId]);
+
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const remote = await pullOpsCloud(companyId).catch(() => null);
+      if (!live) return;
+      const localStamp = opsCloudLocalStamp(companyId);
+      const remoteStamp = remote ? Date.parse(remote.updatedAt) : 0;
+      if (remote && Number.isFinite(remoteStamp) && remoteStamp >= localStamp) {
+        const base = cloneCrmCatalog(pack.crmCatalog);
+        const next = applyCrmSnapshot(base, remote.crm);
+        writeCrmSession(crmKey, next);
+        crmRef.current = next;
+        setCrmEntities(next);
+        writeOpsChatSession(chatKey, remote.chat);
+        markOpsCloudSynced(companyId, remote.updatedAt);
+        setCloudRevision((value) => value + 1);
+      }
+      cloudReady.current = true;
+      if (!remote || localStamp > remoteStamp) pushCloud();
+    })();
+    return () => {
+      live = false;
+    };
+  }, [chatKey, companyId, crmKey, pack.crmCatalog, pushCloud]);
+
   /** Cambios de la base de datos (celdas, filas manuales): se guarda primero, se muestra después. */
   const saveEntities = useCallback(
     (next: CrmEntityState[]): boolean => {
@@ -96,9 +155,10 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
       setStorageError(null);
       crmRef.current = next;
       setCrmEntities(next);
+      pushCloud();
       return true;
     },
-    [crmKey],
+    [crmKey, pushCloud],
   );
 
   /** Registro desde el asistente: validar → guardar → recién entonces confirmar. */
@@ -110,12 +170,13 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
         crmRef.current = result.entities;
         setCrmEntities(result.entities);
         setFocusLabel(result.tableLabel);
+        pushCloud();
       } else if (!result.ok && result.reason === "storage") {
         setStorageError(result.message);
       }
       return result;
     },
-    [crmKey],
+    [crmKey, pushCloud],
   );
 
   const tryInAssistant = useCallback((starter: string) => {
@@ -169,7 +230,7 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
               {storageError}
             </p>
           ) : null}
-          <div hidden={tab !== "asistente"}>
+          <div hidden={tab !== "asistente"} className={styles.panelAssistantWrap}>
             <TourismAssistantChat
               spec={pack.assistant}
               site={config}
@@ -190,9 +251,11 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
               onReactivate={() => setReactivateOpen(true)}
               pendingStarter={pendingStarter}
               onPendingStarterHandled={() => setPendingStarter(null)}
+              cloudRevision={cloudRevision}
+              onPersisted={pushCloud}
             />
           </div>
-          <div hidden={tab !== "registros"} className={styles.panel}>
+          <div hidden={tab !== "registros"} className={`${styles.panel} ${styles.panelRegistros}`}>
             <SectorCrmPanel
               catalog={pack.crmCatalog}
               entities={crmEntities}

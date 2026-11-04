@@ -100,6 +100,20 @@
   overflow: visible;
 }
 
+.panelAssistantWrap {
+  min-height: calc(100dvh - 10rem);
+}
+
+.panelAssistantWrap:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 10rem);
+}
+
+.panelAssistantWrap:not([hidden]) .assistantShell {
+  flex: 1 1 auto;
+}
+
 .panelArea > [hidden] {
   display: none !important;
 }
@@ -123,12 +137,15 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: min(480px, 68vh);
-  height: auto;
+  /* Casi toda la ventana: conversación grande; scroll solo dentro de .chatLog */
+  height: calc(100dvh - 10rem);
+  min-height: max(720px, calc(100dvh - 10rem));
+  max-height: none;
   padding: clamp(8px, 2vw, 16px) clamp(8px, 2vw, 20px) clamp(12px, 2vw, 20px);
 }
 
 .assistantHead {
+  flex: 0 0 auto;
   text-align: center;
   padding: 8px 12px 4px;
 }
@@ -258,6 +275,7 @@
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+  overflow: hidden;
   padding: 18px 18px 16px;
   border-radius: 18px;
   background: linear-gradient(
@@ -275,12 +293,32 @@
 
 .chatLog {
   flex: 1 1 auto;
-  min-height: 200px;
-  overflow: visible;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(246, 244, 232, 0.5) rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 4px 4px 8px;
+  padding: 4px 6px 8px 4px;
+}
+
+.chatLog::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatLog::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.chatLog::-webkit-scrollbar-thumb {
+  background: rgba(246, 244, 232, 0.45);
+  border-radius: 999px;
 }
 
 .bubbleRow {
@@ -345,6 +383,7 @@
 }
 
 .chatStarters {
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -375,6 +414,7 @@
 }
 
 .voiceHint {
+  flex: 0 0 auto;
   margin: 0;
   text-align: center;
   font-size: 13px;
@@ -382,6 +422,7 @@
 }
 
 .chatComposer {
+  flex: 0 0 auto;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
@@ -469,6 +510,7 @@
 }
 
 .assistantFine {
+  flex: 0 0 auto;
   margin: 0;
   text-align: center;
   font-size: 11px;
@@ -558,6 +600,7 @@
 }
 
 .quotaLockedBox {
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1158,13 +1201,101 @@
   }
 }
 
-@media (max-width: 800px) {
-  .crm {
-    grid-template-columns: 1fr;
+.panelRegistros {
+  padding: 0;
+}
+
+.crmNavSelectWrap {
+  display: none;
+  margin-top: 0;
+}
+
+.crmNavSelectLabel {
+  display: none;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ops-crm-muted, var(--ops-head-muted, #494b52));
+}
+
+.crmNavSelect {
+  width: 100%;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ops-crm-active-border, rgba(83, 70, 240, 0.28));
+  background: #fff;
+  color: var(--ops-crm-ink, var(--obsidian));
+}
+
+.crmNavSelect:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ops-accent-soft, rgba(83, 70, 240, 0.15));
+}
+
+@media (max-width: 520px) {
+  .crmTableWrap {
+    border: none;
+    border-radius: 0;
   }
-  .crmNav {
-    border-right: none;
-    border-bottom: var(--rule);
+  .crmTable thead {
+    display: none;
+  }
+  .crmTable tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    padding: 12px 12px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(18, 54, 47, 0.1);
+    background: var(--ops-crm-nav-bg, rgba(18, 54, 47, 0.03));
+  }
+  .crmTable tbody tr:last-child {
+    margin-bottom: 0;
+  }
+  .crmTable td {
+    display: grid;
+    grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(18, 54, 47, 0.06);
+  }
+  .crmTable td:last-child {
+    border-bottom: none;
+    padding-top: 10px;
+  }
+  .crmTable td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ops-crm-muted, var(--ops-head-muted, #494b52));
+  }
+  .crmTable td.crmEmpty {
+    display: block;
+    grid-template-columns: unset;
+  }
+  .crmTable td.crmEmpty::before {
+    content: none;
+  }
+  .crmRowActions {
+    text-align: left;
+    padding-right: 0;
+  }
+  .crmRowActions::before {
+    align-self: center;
+  }
+  .crmMetaCell {
+    white-space: normal;
+  }
+  .crmCellSelect {
+    padding: 10px 10px;
+    background: #fff;
+    border-color: rgba(18, 54, 47, 0.1);
   }
 }
 
@@ -1519,6 +1650,82 @@
   font-weight: 600;
 }
 
+@media (max-width: 800px) {
+  .panelRegistros {
+    padding: 0;
+  }
+
+  .crm,
+  .panelRegistros .crm {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+    min-height: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .crmNav {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-right: none;
+    border-bottom: var(--rule);
+    padding: 12px 14px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: var(--ops-shell-bg, #fffdf8);
+  }
+
+  .crmNavTitle {
+    margin: 0 0 10px;
+  }
+
+  .crmNavList,
+  .crmNavFoot {
+    display: none;
+  }
+
+  .crmNavSelectWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+  }
+
+  .crmNavSelectLabel {
+    display: block;
+  }
+
+  .crmNavSelect {
+    width: 100%;
+  }
+
+  .crmMain {
+    width: 100%;
+    padding: 14px 12px 18px;
+  }
+
+  .crmHead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .crmAddBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .crmTableLead,
+  .crmTableType {
+    display: none;
+  }
+}
+
 .opsTryTabs {
   display: flex;
   flex-direction: column;
@@ -1544,12 +1751,140 @@
 }
 
 @media (max-width: 640px) {
-  .tab {
-    flex: 1 1 100%;
-    border-right: none;
-    border-bottom: var(--rule);
+  .operations {
+    padding: var(--section) max(12px, var(--gutter));
   }
-  .tab:last-child {
+
+  .triple {
+    border-radius: 14px;
+  }
+
+  .panelArea {
+    min-height: 0;
+  }
+
+  .panel {
+    padding: 12px 10px 16px;
+  }
+
+  .panelRegistros {
+    padding: 0;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-bottom: var(--ops-shell-border, var(--rule));
+  }
+
+  .tab {
+    flex: none;
+    padding: 12px 8px;
+    border-right: var(--ops-shell-border, var(--rule));
     border-bottom: none;
+    font-size: 13px;
+  }
+
+  .tab:last-child {
+    border-right: none;
+  }
+
+  .tabDesc {
+    display: none;
+  }
+
+  .quota {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .quotaCopy {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .assistantShell {
+    height: calc(100dvh - 6.5rem);
+    min-height: calc(100dvh - 6.5rem);
+    max-height: none;
+    padding: 6px 4px 10px;
+  }
+
+  .assistantHead {
+    padding: 4px 8px 2px;
+  }
+
+  .assistantTitle {
+    font-size: 1.15rem;
+  }
+
+  .assistantSub {
+    display: none;
+  }
+
+  .assistantOrient {
+    display: none;
+  }
+
+  .assistantFine {
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .chatFrame {
+    padding: 14px 12px;
+    border-radius: 14px;
+  }
+
+  .chatComposer {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    border-radius: 16px;
+    padding: 10px;
+  }
+
+  .chatSend {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .dashToolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashPeriodToggle {
+    display: flex;
+    width: 100%;
+  }
+
+  .dashPeriodBtn {
+    flex: 1 1 0;
+    text-align: center;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .trendControls {
+    grid-template-columns: 1fr;
+  }
+
+  .recentList {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
   }
 }

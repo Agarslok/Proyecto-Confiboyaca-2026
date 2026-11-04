@@ -12,6 +12,7 @@ import {
   type AssistantEngine,
 } from "@/lib/assistant/session-quota";
 import { samplesFor, type AssistantChatContext } from "@/lib/radar/assistant";
+import { sanitizeAssistantPayload } from "@/lib/radar/assistant-payload";
 import { companyNameHint } from "@/lib/assistant/company-context";
 import type { SolutionAssistantSpec } from "@/lib/site/solution-slot";
 import type { SiteConfig } from "@/types/site";
@@ -84,6 +85,8 @@ export function TourismAssistantChat({
   scope,
   pendingStarter,
   onPendingStarterHandled,
+  cloudRevision = 0,
+  onPersisted,
 }: {
   spec: SolutionAssistantSpec;
   site: SiteConfig;
@@ -107,6 +110,10 @@ export function TourismAssistantChat({
   orientationLine?: string;
   pendingStarter?: string | null;
   onPendingStarterHandled?: () => void;
+  /** Cambia cuando la copia de Supabase reemplaza la conversación local. */
+  cloudRevision?: number;
+  /** Tras guardar la conversación en el navegador, para copiarla a la base. */
+  onPersisted?: () => void;
 }) {
   const company = site.companyName.trim() || companyFallback;
   const title = `Habla con el asistente de ${company}`;
@@ -134,8 +141,8 @@ export function TourismAssistantChat({
 
   useEffect(() => {
     const log = logRef.current;
-    const last = log?.lastElementChild;
-    if (last) last.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (!log) return;
+    log.scrollTo({ top: log.scrollHeight, behavior: "smooth" });
   }, [thread, asking]);
 
   useEffect(() => {
@@ -161,7 +168,14 @@ export function TourismAssistantChat({
   useEffect(() => {
     const saved = readOpsChatSession(storageKey);
     writeOpsChatSession(storageKey, { used: Math.max(saved?.used ?? 0, quotaUsed), thread });
-  }, [quotaUsed, storageKey, thread]);
+    onPersisted?.();
+  }, [onPersisted, quotaUsed, storageKey, thread]);
+
+  useEffect(() => {
+    if (!cloudRevision) return;
+    const saved = readOpsChatSession(storageKey);
+    if (saved?.thread.length) setThread(saved.thread);
+  }, [cloudRevision, storageKey]);
 
   useEffect(() => {
     if (!pendingStarter?.trim() || locked) return;
@@ -197,14 +211,15 @@ export function TourismAssistantChat({
         .filter((turn) => turn.text !== opening)
         .slice(-8)
         .map((turn) => ({ role: turn.role, text: turn.text }));
+      const payload = sanitizeAssistantPayload({ context, history });
       const response = await fetch("/api/radar/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           question: text,
-          history,
+          history: payload.history,
           code: site.recordCode,
-          context,
+          context: payload.context,
         }),
       });
       const data = (await response.json()) as { answer?: string; error?: string; engine?: AssistantEngine };
