@@ -73,7 +73,7 @@ export function contentForTemplate(templateId: TemplateId, companyName: string):
       };
     case "agroindustria":
       return {
-        nav: ["PRODUCTOS", "CAMPO", "SOSTENIBILIDAD", "CONTACTO"],
+        nav: ["PRODUCTOS", "CAMPO", "CONTACTO"],
         heroKicker: "Del campo a la mesa",
         heroLead: `${name} comunica origen, calidad y sostenibilidad con la estética Arva: verdes profundos, crema y pastels.`,
         aboutTitle: "Productos y origen",

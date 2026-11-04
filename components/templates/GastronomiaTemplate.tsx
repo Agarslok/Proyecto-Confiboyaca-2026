@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { OperationsSuite } from "@/components/templates/OperationsSuite";
 import styles from "./gastronomia.module.css";
 
 /* ============================================================================
@@ -389,7 +389,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
   const since = extras.since ?? 1996;
   const statement = extras.statement ?? copy?.statement ?? "El espíritu de la cocina boyacense";
 
-  const sectionIds = useMemo(() => ["inicio", "carta", "bebidas", "eventos", "nosotros", "opiniones", "reservas", "contacto-demo"], []);
+  const sectionIds = useMemo(() => ["inicio", "carta", "eventos", "opiniones", "contacto-demo"], []);
   const target = useCallback((label: string, i: number) => targetFor(label, i, sectionIds), [sectionIds]);
 
   /* Estado de interfaz */
@@ -518,7 +518,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
             ))}
           </nav>
           <div className={styles.topActions}>
-            <button type="button" className={`${styles.btn} ${styles.hideSm}`} onClick={() => goTo("reservas")}>
+            <button type="button" className={`${styles.btn} ${styles.hideSm}`} onClick={() => goTo("contacto-demo")}>
               Reservar mesa
             </button>
             <button type="button" className={styles.menuBtn} onClick={() => setMenu(true)} aria-haspopup="dialog" aria-expanded={menu}>
@@ -550,7 +550,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
           ))}
         </ul>
         <div className={styles.menuFoot}>
-          <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("reservas")}>
+          <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("contacto-demo")}>
             {copy.contactCta}
           </button>
           <span className={styles.menuSmall}>{phone}</span>
@@ -589,7 +589,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
                   <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("carta")}>
                     Ver la carta
                   </button>
-                  <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("reservas")}>
+                  <button type="button" className={`${styles.btn} ${styles.btnLight}`} onClick={() => goTo("contacto-demo")}>
                     {copy.contactCta}
                   </button>
                 </div>
@@ -599,7 +599,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      <SolutionBlock solution={config.solution} tone="gastronomia" site={config} />
+      <OperationsSuite config={config} />
 
       {/* Cinta de platos */}
       {marquee.length ? (
@@ -618,25 +618,6 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
           </div>
         </div>
       ) : null}
-
-      {/* Espíritu */}
-      <section className={styles.spirit} id="nosotros">
-        <div className={styles.wrap}>
-          <div className={styles.spiritGrid}>
-            <div {...reveal()}>
-              <p className={styles.caption}>Nuestra historia</p>
-              <h2 className={styles.h2}>{copy.aboutTitle}</h2>
-            </div>
-            <div {...reveal(1)}>
-              <p className={styles.bodyLg}>{statement}</p>
-              <p className={styles.body}>{copy.aboutBody}</p>
-              <button type="button" className={styles.btn} onClick={() => goTo("carta")}>
-                Conocer la carta
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Carta */}
       <section className={styles.section} id="carta">
@@ -683,14 +664,6 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
               </li>
             ))}
           </ul>
-          <div className={styles.actions}>
-            <button type="button" className={styles.btn} onClick={() => goTo("bebidas")}>
-              Ver bebidas
-            </button>
-            <button type="button" className={styles.btn} onClick={() => goTo("reservas")}>
-              Reservar mesa
-            </button>
-          </div>
         </div>
       </section>
 
@@ -728,33 +701,6 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      {/* Bebidas */}
-      <section className={styles.section} id="bebidas">
-        <div className={styles.wrap}>
-          <div className={styles.drinkGrid}>
-            <div {...reveal()}>
-              <p className={styles.caption}>Para acompañar</p>
-              <h2 className={styles.h2}>Bebidas</h2>
-              <div className={styles.drinkImg}>
-                <Scene kind="glass" seed={2} label="Bebida de la casa" />
-              </div>
-            </div>
-            <ul className={styles.drinkList}>
-              {drinks.map((d, i) => (
-                <li key={d.title} className={styles.reveal} data-reveal style={{ "--d": `${(i % 6) * 60}ms` } as CSSProperties}>
-                  <div className={styles.drinkRow}>
-                    <span className={styles.drinkName}>{d.title}</span>
-                    <span className={styles.leader} aria-hidden="true" />
-                    <span className={styles.dishPrice}>{d.price}</span>
-                  </div>
-                  {d.text ? <p className={styles.drinkText}>{d.text}</p> : null}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
       {/* Opiniones */}
       <section className={`${styles.section} ${styles.linen}`} id="opiniones">
         <div className={styles.wrap}>
@@ -783,163 +729,6 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
             ))}
           </ul>
           {usingDemoReviews ? <p className={styles.sample}>Opiniones de ejemplo. Reemplázalas por reseñas reales de tus clientes.</p> : null}
-        </div>
-      </section>
-
-      {/* Reservas */}
-      <section className={styles.section} id="reservas">
-        <div className={styles.wrap}>
-          <div className={styles.reserveGrid}>
-            <div {...reveal()}>
-              <p className={styles.caption}>Reservas</p>
-              <h2 className={styles.h2}>Reserva tu mesa en {companyName}</h2>
-              <p className={styles.body}>Elige día, hora y cuántas personas son. Es una demostración: no se envía ni se cobra nada.</p>
-              {picked.length ? (
-                <div className={styles.pickedBox}>
-                  <p className={styles.caption}>Platos que quieres probar</p>
-                  <div className={styles.chips}>
-                    {picked.map((i) => (
-                      <button key={i} type="button" className={styles.chip} onClick={() => togglePick(i)} aria-label={`Quitar ${dishes[i]?.title}`}>
-                        {dishes[i]?.title} {I.close}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div {...reveal(1)}>
-              {sent ? (
-                <div className={styles.confirm} role="status">
-                  <p className={styles.caption}>Reserva lista</p>
-                  <h3 className={styles.confirmTitle}>Gracias, {r.who.trim().split(" ")[0]}.</h3>
-                  <dl className={styles.summary}>
-                    <div className={styles.sumRow}>
-                      <dt>Restaurante</dt>
-                      <dd>{companyName}</dd>
-                    </div>
-                    {places.length > 1 ? (
-                      <div className={styles.sumRow}>
-                        <dt>Sede</dt>
-                        <dd>{places[r.place]?.name}</dd>
-                      </div>
-                    ) : null}
-                    <div className={styles.sumRow}>
-                      <dt>Día</dt>
-                      <dd>{dateLabel}</dd>
-                    </div>
-                    <div className={styles.sumRow}>
-                      <dt>Hora</dt>
-                      <dd>{r.time}</dd>
-                    </div>
-                    <div className={styles.sumRow}>
-                      <dt>Personas</dt>
-                      <dd>{r.people}</dd>
-                    </div>
-                    {picked.length ? (
-                      <div className={styles.sumRow}>
-                        <dt>Platos</dt>
-                        <dd>{picked.map((i) => dishes[i]?.title).join(", ")}</dd>
-                      </div>
-                    ) : null}
-                  </dl>
-                  <p className={styles.help}>Te llamaríamos al {r.phone.trim()} para confirmar. Esto es solo una demostración.</p>
-                  <div className={styles.actions}>
-                    <button type="button" className={styles.btn} onClick={() => setSent(false)}>
-                      Cambiar reserva
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <form className={styles.form} onSubmit={submitReserve} noValidate>
-                  {places.length > 1 ? (
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="gas-r-place">
-                        Sede
-                      </label>
-                      <select id="gas-r-place" className={styles.input} value={r.place} onChange={(e) => setF("place", Number(e.target.value))}>
-                        {places.map((p, i) => (
-                          <option key={p.name} value={i}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  ) : null}
-                  <div className={styles.row2}>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="gas-r-date">
-                        Día
-                      </label>
-                      <input id="gas-r-date" type="date" min={todayStr} className={`${styles.input}${rErr.date ? ` ${styles.inputBad}` : ""}`} value={r.date} onChange={(e) => setF("date", e.target.value)} aria-invalid={rErr.date ? true : undefined} />
-                      {rErr.date ? <p className={styles.error} role="alert">{rErr.date}</p> : null}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="gas-r-time">
-                        Hora
-                      </label>
-                      <select id="gas-r-time" className={styles.input} value={r.time} onChange={(e) => setF("time", e.target.value)}>
-                        {times.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <span className={styles.label} id="gas-people-label">
-                      Personas
-                    </span>
-                    <div className={styles.stepper} role="group" aria-labelledby="gas-people-label">
-                      <button type="button" className={styles.stepBtn} onClick={() => setF("people", Math.max(1, r.people - 1))} aria-label="Una persona menos" disabled={r.people <= 1}>
-                        −
-                      </button>
-                      <output className={styles.stepVal} aria-live="polite">
-                        {r.people}
-                      </output>
-                      <button type="button" className={styles.stepBtn} onClick={() => setF("people", Math.min(12, r.people + 1))} aria-label="Una persona más" disabled={r.people >= 12}>
-                        +
-                      </button>
-                      <span className={styles.help}>{r.people >= 12 ? "Para grupos grandes, escríbenos." : "Hasta 12 personas."}</span>
-                    </div>
-                  </div>
-
-                  <div className={styles.row2}>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="gas-r-who">
-                        Tu nombre
-                      </label>
-                      <input id="gas-r-who" className={`${styles.input}${rErr.who ? ` ${styles.inputBad}` : ""}`} value={r.who} onChange={(e) => setF("who", e.target.value)} autoComplete="name" aria-invalid={rErr.who ? true : undefined} />
-                      {rErr.who ? <p className={styles.error} role="alert">{rErr.who}</p> : null}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="gas-r-phone">
-                        Teléfono
-                      </label>
-                      <input id="gas-r-phone" type="tel" className={`${styles.input}${rErr.phone ? ` ${styles.inputBad}` : ""}`} value={r.phone} onChange={(e) => setF("phone", e.target.value)} autoComplete="tel" aria-invalid={rErr.phone ? true : undefined} />
-                      {rErr.phone ? <p className={styles.error} role="alert">{rErr.phone}</p> : null}
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="gas-r-notes">
-                      <span>Notas (alergias, cumpleaños…)</span>
-                      <span className={styles.count}>{r.notes.length}/300</span>
-                    </label>
-                    <textarea id="gas-r-notes" rows={3} maxLength={300} className={styles.input} value={r.notes} onChange={(e) => setF("notes", e.target.value)} />
-                  </div>
-
-                  <div className={styles.actions}>
-                    <button type="submit" className={`${styles.btn} ${styles.btnSolid}`}>
-                      {copy.contactCta}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
         </div>
       </section>
 
@@ -1031,7 +820,7 @@ export function GastronomiaTemplate({ config }: { config: SiteConfig }) {
                 className={styles.btn}
                 onClick={() => {
                   setOpenDish(null);
-                  goTo("reservas");
+                  goTo("contacto-demo");
                 }}
               >
                 Reservar mesa {I.arrow}

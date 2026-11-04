@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { OperationsSuite } from "@/components/templates/OperationsSuite";
 import styles from "./servicios.module.css";
 
 /* ============================================================================
@@ -118,7 +118,7 @@ function targetFor(label: string, index: number, ids: string[]): string {
     [/pago|plan|precio|seguro|eps/, "pagos"],
     [/opinion|testimon|resena/, "opiniones"],
     [/pregunta|faq|ayuda/, "preguntas"],
-    [/agend|cita|reserv/, "agenda"],
+    [/agend|cita|reserv/, "contacto-demo"],
     [/contact/, "contacto-demo"],
   ];
   for (const [re, id] of rules) if (re.test(t) && ids.includes(id)) return id;
@@ -344,7 +344,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
   const setF = <K extends keyof typeof b>(k: K, v: (typeof b)[K]) => { setB((s) => ({ ...s, [k]: v })); if (bErr[k as string]) setBErr((e) => ({ ...e, [k as string]: "" })); };
   useEffect(() => { if (!svcModes.includes(b.mode)) setB((s) => ({ ...s, mode: svcModes[0] })); }, [b.service, svcModes.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const startBooking = (i: number) => { setB((s) => ({ ...s, service: i, time: "" })); setBStep(1); setBooked(false); setOpen(null); goTo("agenda"); };
+  const startBooking = (i: number) => { setB((s) => ({ ...s, service: i, time: "" })); setBStep(1); setBooked(false); setOpen(null); goTo("contacto-demo"); };
   const dateLabel = (d: Date) => d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long" });
 
   const nextStep = () => {
@@ -407,7 +407,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
           </nav>
           <div className={styles.headBtns}>
             <a className={styles.phoneLink} href={`tel:${phone.replace(/\s/g, "")}`}>{I.phone}<span>{phone}</span></a>
-            <button type="button" className={`${styles.btn} ${styles.btnCoral} ${styles.btnSm}`} onClick={() => goTo("agenda")}>{copy.contactCta}</button>
+            <button type="button" className={`${styles.btn} ${styles.btnCoral} ${styles.btnSm}`} onClick={() => goTo("contacto-demo")}>{copy.contactCta}</button>
             <button type="button" className={styles.burger} onClick={() => setMenu(true)} aria-label="Abrir menú" aria-haspopup="dialog">{I.menu}</button>
           </div>
         </div>
@@ -418,7 +418,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
           <div className={styles.menuBody}>
             <p className={styles.menuTitle}>{companyName}</p>
             <ul>{navItems.map((item, i) => (<li key={`${item}-${i}`}><button type="button" className={styles.menuLink} onClick={() => goTo(target(item, i))}>{item}{I.arrow}</button></li>))}</ul>
-            <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("agenda")}>{copy.contactCta}</button>
+            <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("contacto-demo")}>{copy.contactCta}</button>
             <a className={styles.phoneLink} href={`tel:${phone.replace(/\s/g, "")}`}>{I.phone}<span>{phone}</span></a>
           </div>
         </Layer>
@@ -439,7 +439,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
           <h1 className={styles.title} style={titleStyle}>{companyName}</h1>
           <p className={styles.lead}>{copy.heroLead}</p>
           <div className={styles.heroBtns}>
-            <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("agenda")}>{copy.contactCta} {I.arrow}</button>
+            <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => goTo("contacto-demo")}>{copy.contactCta} {I.arrow}</button>
             <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => goTo("servicios")}>Ver servicios</button>
           </div>
 
@@ -466,7 +466,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
         <p className={styles.urgent}>¿Es una urgencia? Esta página no es para emergencias. Llama al <strong>{emergency}</strong> o ve al servicio de urgencias más cercano.</p>
       </section>
 
-      <SolutionBlock solution={config.solution} tone="servicios" site={config} />
+      <OperationsSuite config={config} />
 
       {/* Pilares (como las 3 tarjetas de Kindbody) */}
       <section className={styles.pillars} aria-label="Por qué elegirnos">
@@ -545,17 +545,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      {/* Cifras */}
-      <section className={styles.statsBand} aria-label="Cifras">
-        <div className={styles.wrap}>
-          <ul className={styles.stats}>
-            {stats.map((s) => (<li key={s.label} className={styles.stat}><CountUp stat={s} /><span className={styles.statLabel}>{s.label}</span></li>))}
-          </ul>
-          {usingDemoStats ? <p className={styles.sample}>Cifras de ejemplo. Reemplázalas con las de tu centro.</p> : null}
-        </div>
-      </section>
-
-      {/* Cifras */}
+      {/* Equipo */}
       <section className={`${styles.section} ${styles.alt}`} id="equipo">
         <div className={styles.wrap}>
           <div {...reveal(0, styles.head)}>
@@ -595,26 +585,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
               <h3 className={styles.h3}>{places[place].name}</h3>
               <p className={styles.body}>{places[place].address}</p>
               <ul className={styles.hours}>{places[place].hours.map((h) => (<li key={h}>{h}</li>))}</ul>
-              <button type="button" className={`${styles.btn} ${styles.btnDark}`} onClick={() => { setB((s) => ({ ...s, mode: places[place].virtual ? "virtual" : "presencial" })); goTo("agenda"); }}>Agendar aquí {I.arrow}</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pagos */}
-      <section className={`${styles.section} ${styles.alt}`} id="pagos">
-        <div className={styles.wrap}>
-          <div {...reveal(0, styles.head)}>
-            <div><p className={styles.kicker}>Pagos y seguros</p><h2 className={styles.h2}>Cuidarte no debería ser complicado</h2></div>
-          </div>
-          <div className={styles.payGrid}>
-            <div className={styles.payTabs} role="tablist" aria-label="Formas de pago">
-              {pays.map((p, i) => (<button key={p.title} type="button" role="tab" aria-selected={pay === i} className={`${styles.payTab}${pay === i ? ` ${styles.payOn}` : ""}`} onClick={() => setPay(i)}>{p.title}</button>))}
-            </div>
-            <div className={styles.payCard} role="tabpanel" key={pay}>
-              <h3 className={styles.h3}>{pays[pay].title}</h3>
-              <p className={styles.body}>{pays[pay].text}</p>
-              <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => goTo("agenda")}>Agendar y consultar cobertura</button>
+              <button type="button" className={`${styles.btn} ${styles.btnDark}`} onClick={() => { setB((s) => ({ ...s, mode: places[place].virtual ? "virtual" : "presencial" })); goTo("contacto-demo"); }}>Agendar aquí {I.arrow}</button>
             </div>
           </div>
         </div>
@@ -639,143 +610,6 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      {/* Preguntas */}
-      <section className={`${styles.section} ${styles.alt}`} id="preguntas">
-        <div className={styles.wrap}>
-          <div className={styles.faqGrid}>
-            <div {...reveal()}><p className={styles.kicker}>Preguntas frecuentes</p><h2 className={styles.h2}>¿Tienes dudas?</h2><p className={styles.body} style={{ marginTop: 16 }}>Si no encuentras tu respuesta, escríbenos a <a className={styles.inlineLink} href={`mailto:${email}`}>{email}</a>.</p></div>
-            <ul className={styles.faqList}>
-              {faqs.map((f, i) => (
-                <li key={f.q} className={styles.faqItem}>
-                  <h3 className={styles.faqH}>
-                    <button type="button" id={`sal-faq-b-${i}`} className={styles.faqBtn} aria-expanded={faq === i} aria-controls={`sal-faq-${i}`} onClick={() => setFaq(faq === i ? null : i)}>
-                      <span>{f.q}</span><span className={`${styles.faqIcon}${faq === i ? ` ${styles.faqIconOn}` : ""}`}>{I.plus}</span>
-                    </button>
-                  </h3>
-                  <div id={`sal-faq-${i}`} role="region" aria-labelledby={`sal-faq-b-${i}`} className={`${styles.faqBody}${faq === i ? ` ${styles.faqBodyOn}` : ""}`}>
-                    <div><p>{f.a}</p></div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Agenda */}
-      <section className={`${styles.section} ${styles.agenda}`} id="agenda">
-        <div className={styles.wrap}>
-          <div className={styles.agendaGrid}>
-            <div {...reveal()}>
-              <p className={`${styles.kicker} ${styles.kickerLight}`}>Agenda tu cita</p>
-              <h2 className={`${styles.h2} ${styles.h2Light}`}>Hablemos. Estamos para ti en {companyName}.</h2>
-              <p className={`${styles.body} ${styles.bodyLight}`}>Reserva en dos pasos. Es una demostración: no se guarda ni se envía nada, y no te pedimos datos de salud.</p>
-              <p className={`${styles.small} ${styles.bodyLight}`}>¿Prefieres llamar? <a className={styles.inlineLinkLight} href={`tel:${phone.replace(/\s/g, "")}`}>{phone}</a></p>
-            </div>
-
-            <div {...reveal(1, styles.book)}>
-              {booked ? (
-                <div className={styles.done} role="status">
-                  <span className={styles.doneIcon}>{I.check}</span>
-                  <h3 className={styles.doneBig}>¡Listo, {b.who.trim().split(" ")[0]}!</h3>
-                  <dl className={styles.summary}>
-                    <div className={styles.sumRow}><dt>Servicio</dt><dd>{svc?.title}</dd></div>
-                    <div className={styles.sumRow}><dt>Modalidad</dt><dd>{b.mode === "virtual" ? "Virtual" : "Presencial"}</dd></div>
-                    <div className={styles.sumRow}><dt>Día</dt><dd>{dateLabel(days[b.day])}</dd></div>
-                    <div className={styles.sumRow}><dt>Hora</dt><dd>{b.time}</dd></div>
-                  </dl>
-                  <p className={styles.small}>Te contactaríamos al {b.phone.trim()} para confirmar. Esto es solo una demostración.</p>
-                  <div className={styles.bookBtns}>
-                    <button type="button" className={`${styles.btn} ${styles.btnDark}`} onClick={downloadIcs}>Agregar a mi calendario</button>
-                    <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => { setBooked(false); setBStep(1); setB((s) => ({ ...s, time: "", consent: false })); }}>Nueva cita</button>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={submitBooking} noValidate>
-                  <ol className={styles.stepper} aria-label="Pasos">
-                    {["Servicio y hora", "Tus datos"].map((t, i) => (<li key={t} className={`${styles.stepDot}${bStep >= i + 1 ? ` ${styles.stepOn}` : ""}`} aria-current={bStep === i + 1 ? "step" : undefined}><span>{i + 1}</span>{t}</li>))}
-                  </ol>
-
-                  {bStep === 1 ? (
-                    <div className={styles.fields}>
-                      <div className={styles.field}>
-                        <label className={styles.label} htmlFor="sal-b-service">Servicio</label>
-                        <select id="sal-b-service" className={styles.input} value={b.service} onChange={(e) => { setF("service", Number(e.target.value)); setF("time", ""); }}>
-                          {services.map((s, i) => (<option key={i} value={i}>{s.title} · {s.price}</option>))}
-                        </select>
-                      </div>
-                      <div className={styles.field}>
-                        <span className={styles.label} id="sal-mode-l">Modalidad</span>
-                        <div className={styles.seg} role="group" aria-labelledby="sal-mode-l">
-                          {svcModes.map((m) => (<button key={m} type="button" className={`${styles.segBtn}${b.mode === m ? ` ${styles.segOn}` : ""}`} aria-pressed={b.mode === m} onClick={() => setF("mode", m)}>{m === "virtual" ? "Virtual" : "Presencial"}</button>))}
-                        </div>
-                      </div>
-                      <div className={styles.field}>
-                        <span className={styles.label} id="sal-day-l">Día</span>
-                        <div className={styles.days} role="group" aria-labelledby="sal-day-l">
-                          {days.map((d, i) => (
-                            <button key={dayKey(d)} type="button" className={`${styles.day}${b.day === i ? ` ${styles.dayOn}` : ""}`} aria-pressed={b.day === i} onClick={() => { setF("day", i); setF("time", ""); }}>
-                              <span>{d.toLocaleDateString("es-CO", { weekday: "short" }).replace(".", "")}</span><strong>{d.getDate()}</strong>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className={styles.field}>
-                        <span className={styles.label} id="sal-time-l">Hora</span>
-                        <div className={styles.slots} role="group" aria-labelledby="sal-time-l">
-                          {slots.map((t) => {
-                            const off = taken(days[b.day], t);
-                            return (<button key={t} type="button" disabled={off} className={`${styles.slot}${b.time === t ? ` ${styles.slotOn}` : ""}`} aria-pressed={b.time === t} onClick={() => setF("time", t)}>{t}</button>);
-                          })}
-                        </div>
-                        {bErr.time ? <p className={styles.error} role="alert" id="sal-b-time" tabIndex={-1}>{bErr.time}</p> : <p className={styles.help}>Los horarios grisáceos ya están ocupados (ejemplo).</p>}
-                      </div>
-                      <button type="button" className={`${styles.btn} ${styles.btnCoral} ${styles.btnFull}`} onClick={nextStep}>Continuar {I.arrow}</button>
-                    </div>
-                  ) : (
-                    <div className={styles.fields}>
-                      <p className={styles.recap}><strong>{svc?.title}</strong> · {b.mode === "virtual" ? "Virtual" : "Presencial"} · {dateLabel(days[b.day])}, {b.time}<button type="button" className={styles.linkBtn} onClick={() => setBStep(1)}>Cambiar</button></p>
-                      <div className={styles.field}>
-                        <label className={styles.label} htmlFor="sal-b-who">Nombre completo</label>
-                        <input id="sal-b-who" className={`${styles.input}${bErr.who ? ` ${styles.inputBad}` : ""}`} value={b.who} onChange={(e) => setF("who", e.target.value)} autoComplete="name" aria-invalid={bErr.who ? true : undefined} />
-                        {bErr.who ? <p className={styles.error} role="alert">{bErr.who}</p> : null}
-                      </div>
-                      <div className={styles.row2}>
-                        <div className={styles.field}>
-                          <label className={styles.label} htmlFor="sal-b-phone">Teléfono / WhatsApp</label>
-                          <input id="sal-b-phone" type="tel" className={`${styles.input}${bErr.phone ? ` ${styles.inputBad}` : ""}`} value={b.phone} onChange={(e) => setF("phone", e.target.value)} autoComplete="tel" aria-invalid={bErr.phone ? true : undefined} />
-                          {bErr.phone ? <p className={styles.error} role="alert">{bErr.phone}</p> : null}
-                        </div>
-                        <div className={styles.field}>
-                          <label className={styles.label} htmlFor="sal-b-email">Correo (opcional)</label>
-                          <input id="sal-b-email" type="email" className={`${styles.input}${bErr.email ? ` ${styles.inputBad}` : ""}`} value={b.email} onChange={(e) => setF("email", e.target.value)} autoComplete="email" aria-invalid={bErr.email ? true : undefined} />
-                          {bErr.email ? <p className={styles.error} role="alert">{bErr.email}</p> : null}
-                        </div>
-                      </div>
-                      <div className={styles.field}>
-                        <label className={styles.label} htmlFor="sal-b-reason">Algo que quieras contarnos (opcional)</label>
-                        <textarea id="sal-b-reason" rows={2} maxLength={200} className={styles.input} value={b.reason} onChange={(e) => setF("reason", e.target.value)} placeholder="Ej.: prefiero horario de la mañana" />
-                        <p className={styles.help}>Por tu privacidad, no escribas aquí información clínica.</p>
-                      </div>
-                      <div className={styles.field}>
-                        <label className={styles.check}>
-                          <input id="sal-b-consent" type="checkbox" checked={b.consent} onChange={(e) => setF("consent", e.target.checked)} aria-invalid={bErr.consent ? true : undefined} />
-                          <span>Autorizo que {companyName} me contacte para confirmar mi cita (demostración).</span>
-                        </label>
-                        {bErr.consent ? <p className={styles.error} role="alert">{bErr.consent}</p> : null}
-                      </div>
-                      <div className={styles.bookBtns}>
-                        <button type="submit" className={`${styles.btn} ${styles.btnCoral}`}>Reservar cita</button>
-                        <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => setBStep(1)}>Volver</button>
-                      </div>
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* Pie */}
       <footer className={styles.footer} id="contacto-demo">
@@ -803,7 +637,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
         </div>
       </footer>
 
-      <button type="button" className={`${styles.stickyBook}`} onClick={() => goTo("agenda")}>{copy.contactCta} {I.arrow}</button>
+      <button type="button" className={`${styles.stickyBook}`} onClick={() => goTo("contacto-demo")}>{copy.contactCta} {I.arrow}</button>
       <button type="button" className={`${styles.backTop}${showTop ? ` ${styles.backTopOn}` : ""}`} onClick={() => window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" })} aria-label="Volver arriba" tabIndex={showTop ? 0 : -1}>↑</button>
 
       {openSvc && open !== null ? (
@@ -834,7 +668,7 @@ export function SaludTemplate({ config }: { config: SiteConfig }) {
             <h3 className={styles.dlgTitle}>{team[member].name}</h3>
             <p className={styles.body}>{team[member].bio}</p>
             <div className={styles.bookBtns}>
-              <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => { setMember(null); goTo("agenda"); }}>{copy.contactCta}</button>
+              <button type="button" className={`${styles.btn} ${styles.btnCoral}`} onClick={() => { setMember(null); goTo("contacto-demo"); }}>{copy.contactCta}</button>
               <button type="button" className={`${styles.btn} ${styles.btnLine}`} onClick={() => setMember(null)}>Cerrar</button>
             </div>
           </div>

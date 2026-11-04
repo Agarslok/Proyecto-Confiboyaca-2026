@@ -1,11 +1,7 @@
-import type { Metadata } from "next";
-import { SolutionCatalogSketch } from "@/components/templates/SolutionCatalogSketch";
+import { redirect } from "next/navigation";
+import { SHOWCASE_HUB_PATH } from "@/lib/site/operations-showcase";
 
-export const metadata: Metadata = {
-  title: "Boceto · catálogo de soluciones",
-  description: "Combina plantilla sectorial y tipo de solución en el hueco bajo la portada.",
-};
-
-export default function SolutionCatalogPage() {
-  return <SolutionCatalogSketch />;
+/** El catálogo antiguo (agenda/registro/inventario) fue reemplazado por la vitrina operativa única. */
+export default function LegacySolucionesCatalogPage() {
+  redirect(SHOWCASE_HUB_PATH);
 }

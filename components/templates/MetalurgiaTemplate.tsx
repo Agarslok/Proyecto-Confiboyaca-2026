@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react"
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { OperationsSuite } from "@/components/templates/OperationsSuite";
 import styles from "./metalurgia.module.css";
 
 /* ============================================================================
@@ -414,7 +414,6 @@ export function MetalurgiaTemplate({ config }: Props) {
   const steps = extras.steps?.length ? extras.steps : DEFAULT_STEPS;
   const stats = extras.stats?.length ? extras.stats : DEFAULT_STATS;
   const usingDemoStats = !extras.stats?.length;
-  const materials = extras.quoteMaterials?.length ? extras.quoteMaterials : DEFAULT_MATERIALS;
   const email = extras.email ?? "ventas@ejemplo.co";
   const phone = extras.phone ?? "+57 300 000 0000";
   const hasStatement = Boolean(copy?.statement);
@@ -424,7 +423,7 @@ export function MetalurgiaTemplate({ config }: Props) {
     if (hasStatement) ids.push("mision");
     ids.push("nosotros");
     if (caps.length) ids.push("capacidades");
-    ids.push("proceso", "cifras", "noticias", "cotizar", "contacto-demo");
+    ids.push("proceso", "cifras", "contacto-demo");
     return ids;
   }, [hasStatement, caps.length]);
   const target = useCallback((label: string, i: number) => targetFor(label, i, sectionIds), [sectionIds]);
@@ -525,35 +524,6 @@ export function MetalurgiaTemplate({ config }: Props) {
   /* ------------------------------- Proceso ---------------------------------- */
   const [step, setStep] = useState(0);
 
-  /* ------------------------------- Noticias --------------------------------- */
-  const [openNews, setOpenNews] = useState<number | null>(null);
-  const news = openNews !== null ? cards[openNews] : null;
-
-  /* ------------------------------ Cotización -------------------------------- */
-  const [q, setQ] = useState({ type: "", material: materials[0], qty: "", term: "", who: "", company: "", contact: "", notes: "" });
-  const [qErr, setQErr] = useState<Record<string, string>>({});
-  const [sent, setSent] = useState(false);
-
-  const setField = (k: keyof typeof q, v: string) => {
-    setQ((s) => ({ ...s, [k]: v }));
-    if (qErr[k]) setQErr((e) => ({ ...e, [k]: "" }));
-  };
-
-  const submitQuote = (e: FormEvent) => {
-    e.preventDefault();
-    const errs: Record<string, string> = {};
-    const qty = Number(q.qty);
-    if (!q.qty || !Number.isFinite(qty) || qty < 1) errs.qty = "Escribe una cantidad de 1 en adelante.";
-    if (q.who.trim().length < 2) errs.who = "Escribe tu nombre.";
-    if (!/^\S+@\S+\.\S+$/.test(q.contact.trim()) && !/^[+\d][\d\s()-]{6,}$/.test(q.contact.trim())) errs.contact = "Escribe un correo o un teléfono válido.";
-    setQErr(errs);
-    if (Object.keys(errs).length) {
-      window.setTimeout(() => document.getElementById(`met-q-${Object.keys(errs)[0]}`)?.focus(), 0);
-      return;
-    }
-    setSent(true);
-  };
-
   const year = new Date().getFullYear();
   const reveal = (n = 0) => ({
     className: styles.reveal,
@@ -575,7 +545,7 @@ export function MetalurgiaTemplate({ config }: Props) {
             <span className={styles.logoText}>{companyName}</span>
           </button>
           <div className={styles.topActions}>
-            <button type="button" className={`${styles.btn} ${styles.btnYellow} ${styles.btnSm} ${styles.hideSm}`} onClick={() => goTo("cotizar")}>
+            <button type="button" className={`${styles.btn} ${styles.btnYellow} ${styles.btnSm} ${styles.hideSm}`} onClick={() => goTo("contacto-demo")}>
               {copy.contactCta}
             </button>
             <button type="button" className={styles.menuBtn} onClick={() => setMenu(true)} aria-expanded={menu} aria-haspopup="dialog">
@@ -620,7 +590,7 @@ export function MetalurgiaTemplate({ config }: Props) {
             </a>
             <span className={styles.menuContact}>{phone}</span>
             <div className={styles.menuBtns}>
-              <button type="button" className={`${styles.btn} ${styles.btnYellow}`} onClick={() => goTo("cotizar")}>
+              <button type="button" className={`${styles.btn} ${styles.btnYellow}`} onClick={() => goTo("contacto-demo")}>
                 {copy.contactCta}
               </button>
             </div>
@@ -650,7 +620,7 @@ export function MetalurgiaTemplate({ config }: Props) {
           <h1 className={styles.title}>{companyName}</h1>
           <p className={styles.lead}>{copy.heroLead}</p>
           <div className={styles.heroCtas}>
-            <button type="button" className={`${styles.btn} ${styles.btnYellow}`} onClick={() => goTo("cotizar")}>
+            <button type="button" className={`${styles.btn} ${styles.btnYellow}`} onClick={() => goTo("contacto-demo")}>
               {copy.contactCta} {I.arrow}
             </button>
             <button type="button" className={`${styles.btn} ${styles.btnLineLight}`} onClick={() => goTo(caps.length ? "capacidades" : "proceso")}>
@@ -671,7 +641,7 @@ export function MetalurgiaTemplate({ config }: Props) {
         </div>
       </section>
 
-      <SolutionBlock solution={config.solution} tone="metalurgia" site={config} />
+      <OperationsSuite config={config} />
 
       {/* Banda de declaración */}
       {hasStatement ? (
@@ -732,7 +702,7 @@ export function MetalurgiaTemplate({ config }: Props) {
                 </span>
                 <h3 className={styles.capTitle}>{caps[cap].title}</h3>
                 <p className={styles.capText}>{caps[cap].text}</p>
-                <button type="button" className={`${styles.btn} ${styles.btnBlack}`} onClick={() => goTo("cotizar")}>
+                <button type="button" className={`${styles.btn} ${styles.btnBlack}`} onClick={() => goTo("contacto-demo")}>
                   Cotizar esta capacidad {I.arrow}
                 </button>
               </div>
@@ -815,170 +785,6 @@ export function MetalurgiaTemplate({ config }: Props) {
         </div>
       </section>
 
-      {/* Noticias */}
-      <section className={styles.dark} id="noticias">
-        <div className={styles.wrap}>
-          <div className={`${styles.sectionHead} ${styles.reveal}`} data-reveal>
-            <div>
-              <p className={styles.tag}>Noticias de ejemplo</p>
-              <h2 className={`${styles.h2} ${styles.h2Light}`}>Novedades de {companyName}</h2>
-            </div>
-          </div>
-          <ul className={styles.newsList}>
-            {cards.map((c, i) => (
-              <li key={`${c.title ?? "n"}-${i}`} className={`${styles.reveal}`} data-reveal style={{ "--d": `${(i % 4) * 70}ms` } as CSSProperties}>
-                <button type="button" className={styles.newsItem} onClick={() => setOpenNews(i)} aria-haspopup="dialog">
-                  <span className={styles.newsMeta}>{c.tag}</span>
-                  <span className={styles.newsTitle}>{c.title}</span>
-                  <span className={styles.newsMeta}>
-                    {c.location}
-                    {c.price ? ` · ${c.price}` : ""}
-                  </span>
-                  <span className={styles.newsArrow}>{I.arrow}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className={styles.newsCta}>
-            <a className={`${styles.btn} ${styles.btnYellow}`} href="#contacto-demo">
-              {copy.contactCta} {I.arrow}
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* Cotización */}
-      <section className={styles.light} id="cotizar">
-        <div className={styles.wrap}>
-          <div className={styles.quoteGrid}>
-            <div {...reveal()}>
-              <p className={styles.tagDark}>Cotización</p>
-              <h2 className={styles.h2}>Cuéntanos qué pieza necesitas</h2>
-              <p className={styles.bodyDark} style={{ marginTop: 20 }}>
-                Dinos el material, la cantidad y el plazo. Te respondemos con precio y tiempo de entrega. No pedimos pago en este paso.
-              </p>
-            </div>
-
-            <div {...reveal(1)}>
-              {sent ? (
-                <div className={styles.confirm} role="status">
-                  <p className={styles.tagDark}>Solicitud lista</p>
-                  <h3 className={styles.confirmTitle}>Gracias, {q.who.trim().split(" ")[0]}.</h3>
-                  <dl className={styles.summary}>
-                    <div className={styles.row}>
-                      <dt>Capacidad</dt>
-                      <dd>{q.type || "Por definir"}</dd>
-                    </div>
-                    <div className={styles.row}>
-                      <dt>Material</dt>
-                      <dd>{q.material}</dd>
-                    </div>
-                    <div className={styles.row}>
-                      <dt>Cantidad</dt>
-                      <dd>{Number(q.qty).toLocaleString("es-CO")} piezas</dd>
-                    </div>
-                    <div className={styles.row}>
-                      <dt>Plazo</dt>
-                      <dd>{q.term || "Sin fecha"}</dd>
-                    </div>
-                  </dl>
-                  <p className={styles.help}>Esto es una demostración: la solicitud no se envió a ningún lugar. Te escribiríamos a {q.contact.trim()}.</p>
-                  <div className={styles.formActions}>
-                    <button type="button" className={`${styles.btn} ${styles.btnBlack}`} onClick={() => setSent(false)}>
-                      Editar solicitud
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <form className={styles.quoteForm} onSubmit={submitQuote} noValidate>
-                  <div className={styles.row2}>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-type">
-                        Capacidad
-                      </label>
-                      <select id="met-q-type" className={styles.input} value={q.type} onChange={(e) => setField("type", e.target.value)}>
-                        <option value="">Aún no lo sé</option>
-                        {caps.map((c) => (
-                          <option key={c.title} value={c.title}>
-                            {c.title}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-material">
-                        Material
-                      </label>
-                      <select id="met-q-material" className={styles.input} value={q.material} onChange={(e) => setField("material", e.target.value)}>
-                        {materials.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className={styles.row2}>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-qty">
-                        Cantidad de piezas
-                      </label>
-                      <input id="met-q-qty" type="number" inputMode="numeric" min={1} className={`${styles.input}${qErr.qty ? ` ${styles.inputBad}` : ""}`} value={q.qty} onChange={(e) => setField("qty", e.target.value)} aria-invalid={qErr.qty ? true : undefined} />
-                      {qErr.qty ? <p className={styles.error} role="alert">{qErr.qty}</p> : null}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-term">
-                        Fecha límite (opcional)
-                      </label>
-                      <input id="met-q-term" type="date" className={styles.input} value={q.term} onChange={(e) => setField("term", e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div className={styles.row2}>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-who">
-                        Tu nombre
-                      </label>
-                      <input id="met-q-who" className={`${styles.input}${qErr.who ? ` ${styles.inputBad}` : ""}`} value={q.who} onChange={(e) => setField("who", e.target.value)} autoComplete="name" aria-invalid={qErr.who ? true : undefined} />
-                      {qErr.who ? <p className={styles.error} role="alert">{qErr.who}</p> : null}
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.fieldLabel} htmlFor="met-q-company">
-                        Empresa (opcional)
-                      </label>
-                      <input id="met-q-company" className={styles.input} value={q.company} onChange={(e) => setField("company", e.target.value)} autoComplete="organization" />
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="met-q-contact">
-                      Correo o teléfono
-                    </label>
-                    <input id="met-q-contact" className={`${styles.input}${qErr.contact ? ` ${styles.inputBad}` : ""}`} value={q.contact} onChange={(e) => setField("contact", e.target.value)} autoComplete="email" aria-invalid={qErr.contact ? true : undefined} />
-                    {qErr.contact ? <p className={styles.error} role="alert">{qErr.contact}</p> : null}
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="met-q-notes">
-                      <span>Detalles (medidas, plano, norma)</span>
-                      <span className={styles.count}>{q.notes.length}/500</span>
-                    </label>
-                    <textarea id="met-q-notes" rows={3} className={styles.input} value={q.notes} maxLength={500} onChange={(e) => setField("notes", e.target.value)} />
-                  </div>
-
-                  <div className={styles.formActions}>
-                    <button type="submit" className={`${styles.btn} ${styles.btnBlack}`}>
-                      Solicitar cotización {I.arrow}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Pie */}
       <footer className={styles.footer} id="contacto-demo">
         <div className={styles.wrap}>
@@ -1025,32 +831,6 @@ export function MetalurgiaTemplate({ config }: Props) {
       <button type="button" className={`${styles.backTop}${showTop ? ` ${styles.backTopOn}` : ""}`} onClick={toTop} aria-label="Volver arriba" tabIndex={showTop ? 0 : -1}>
         {I.up}
       </button>
-
-      {news ? (
-        <Modal label={news.title ?? "Noticia"} onClose={() => setOpenNews(null)} wide>
-          <div className={styles.dialogBody}>
-            {news.tag ? <p className={styles.tag}>{news.tag}</p> : null}
-            <h3 className={styles.dialogTitle}>{news.title}</h3>
-            <p className={styles.dialogText}>
-              {news.description ?? `Texto de ejemplo de ${companyName}. Aquí va el contenido de la noticia: qué pasó, quién participó y qué significa para tus clientes.`}
-            </p>
-            <dl className={styles.summary}>
-              {news.location ? (
-                <div className={styles.rowLight}>
-                  <dt>Dato</dt>
-                  <dd>{news.location}</dd>
-                </div>
-              ) : null}
-              {news.price ? (
-                <div className={styles.rowLight}>
-                  <dt>Detalle</dt>
-                  <dd>{news.price}</dd>
-                </div>
-              ) : null}
-            </dl>
-          </div>
-        </Modal>
-      ) : null}
 
     </div>
   );

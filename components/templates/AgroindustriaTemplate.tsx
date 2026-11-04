@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { OperationsSuite } from "@/components/templates/OperationsSuite";
 import styles from "./agro.module.css";
 
 /* ============================================================================
@@ -301,15 +301,8 @@ export function AgroindustriaTemplate({ config }: Props) {
   const tags = useMemo(() => Array.from(new Set(cards.map((c) => c.tag).filter(Boolean))) as string[], [cards]);
 
   const sections = useMemo(() => {
-    const list = [
-      { id: "inicio" },
-      { id: "nosotros" },
-      { id: "productos" },
-    ];
-    if (hasSustain) list.push({ id: "impacto" });
-    list.push({ id: "socios" }, { id: "contacto-demo" });
-    return list;
-  }, [hasSustain]);
+    return [{ id: "inicio" }, { id: "nosotros" }, { id: "productos" }, { id: "contacto-demo" }];
+  }, []);
 
   /* ------------------------------- Scroll ----------------------------------- */
   const [scrolled, setScrolled] = useState(false);
@@ -582,7 +575,7 @@ export function AgroindustriaTemplate({ config }: Props) {
         ) : null}
       </section>
 
-      <SolutionBlock solution={config.solution} tone="agroindustria" site={config} />
+      <OperationsSuite config={config} />
 
       {/* Propósito */}
       <section className={styles.section} id="nosotros">
@@ -660,82 +653,6 @@ export function AgroindustriaTemplate({ config }: Props) {
               </button>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* Impacto */}
-      {hasSustain ? (
-        <section className={styles.impact} id="impacto">
-          <Photo src={extras.impactImage ?? shotAt(0)?.desktop ?? MEDIA.impact} mobile={extras.impactImage ? undefined : shotAt(0)?.mobile} alt="" caption="" className={styles.impactBg} />
-          <div className={styles.impactShade} aria-hidden="true" />
-          <div className={styles.wrap}>
-            <div {...reveal()}>
-              <p className={`${styles.eyebrow} ${styles.eyebrowLight}`}>Sostenibilidad</p>
-              <h2 className={styles.impactTitle}>Nuestro impacto</h2>
-              <p className={styles.impactText}>{copy.sustainability}</p>
-            </div>
-            <div className={styles.stats}>
-              {stats.map((s) => (
-                <div key={s.label}>
-                  <CountUp stat={s} />
-                  <span className={styles.statLabel}>{s.label}</span>
-                </div>
-              ))}
-            </div>
-            {usingDemoStats ? <p className={styles.sample}>Cifras de ejemplo. Reemplázalas con las de tu empresa.</p> : null}
-          </div>
-        </section>
-      ) : null}
-
-      {/* Socios */}
-      <section className={styles.section} id="socios">
-        <div className={styles.wrap}>
-          <div className={`${styles.sectionHead} ${styles.reveal}`} data-reveal>
-            <div>
-              <p className={styles.eyebrow}>Socios</p>
-              <h2 className={styles.h2}>
-                Lo que dicen quienes
-                <br />
-                trabajan con nosotros
-              </h2>
-            </div>
-            <div className={styles.arrows}>
-              <button type="button" className={styles.roundBtn} onClick={() => slide(-1)} disabled={!canPrev} aria-label="Anterior">
-                {I.left}
-              </button>
-              <button type="button" className={styles.roundBtn} onClick={() => slide(1)} disabled={!canNext} aria-label="Siguiente">
-                {I.rightBig}
-              </button>
-            </div>
-          </div>
-
-          <div className={styles.quotes} ref={trackRef} onScroll={syncArrows} tabIndex={0} aria-label="Testimonios">
-            {quotes.map((q) => (
-              <figure key={q.name} className={styles.quote}>
-                <blockquote className={styles.quoteText} style={{ margin: 0 }}>
-                  “{q.quote}”
-                </blockquote>
-                <figcaption className={styles.quoteWho}>
-                  <span className={styles.avatar} aria-hidden="true">
-                    {q.name
-                      .split(" ")
-                      .map((p) => p[0])
-                      .slice(0, 2)
-                      .join("")}
-                  </span>
-                  <span>
-                    <span className={styles.quoteName}>{q.name}</span>
-                    <span className={styles.quoteRole}>{q.role}</span>
-                  </span>
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-          {usingDemoQuotes ? (
-            <p className={styles.help} style={{ marginTop: 18 }}>
-              Testimonios de ejemplo. Reemplázalos con los de tus clientes.
-            </p>
-          ) : null}
         </div>
       </section>
 

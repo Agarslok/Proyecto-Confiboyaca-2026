@@ -1,5 +1,6 @@
 import { SAMPLES } from "@/lib/radar/bank";
 import { ASSISTANT_DISCLAIMER } from "@/lib/radar/solution-limits";
+import { activityProfile } from "@/lib/ops/sector/profile-builder";
 import type { Finding, IndustryId, LevelId, Vocab } from "@/lib/radar/types";
 import type { SolutionAssistantSpec } from "@/lib/site/solution-slot";
 
@@ -45,10 +46,7 @@ export function assistantFallback(input: {
     ),
     role: clean(`Asistente de ${name}`, 80),
     focus: clean(assistantFocus(input.industryId, input.activityId, input.vocab, activity), 240),
-    greeting: clean(
-      `Hola, soy el asistente de ${name}. Puedo ayudarte con ${input.vocab.productos} y con lo que suelen preguntar ${input.vocab.clientes} en ${input.vocab.punto}.`,
-      240,
-    ),
+    greeting: clean(`Hola, soy el asistente de ${name}. Dime qué quieres anotar o consultar.`, 160),
     starters: assistantStarters(input.industryId, input.activityId, input.vocab),
     disclaimer: ASSISTANT_DISCLAIMER,
   };
@@ -63,7 +61,7 @@ export function genericAssistant(companyName = "el negocio"): SolutionAssistantS
     businessChange: "El negocio ya puede usar IA en el día a día: un asistente responde con el contexto de esta operación.",
     role: clean(`Asistente de ${name}`, 80),
     focus: "La IA entra como un mostrador que nunca cierra: responde con los productos, horarios y datos que ya tiene el negocio.",
-    greeting: clean(`Hola, soy el asistente de ${name}. Pregúntame lo que necesites de este negocio.`, 240),
+    greeting: clean(`Hola, soy el asistente de ${name}. Dime qué quieres anotar o consultar.`, 160),
     starters: [
       "¿Qué pueden hacer por mí hoy?",
       "¿Cómo usa este negocio la inteligencia artificial?",
@@ -123,6 +121,18 @@ export type AssistantChatContext = {
   productos: string;
   clientes: string;
   punto: string;
+  /** Resumen de tablas CRM y cifras (base de datos / dashboard). */
+  opsBrief?: string;
+  /** Pista inferida del nombre comercial (panadería, carnicería, etc.). */
+  companyNameHint?: string;
+  /** Rol operativo, operaciones y vocabulario del perfil sectorial. */
+  opsProfileGuidance?: string;
+  /** Tablas con columnas quién / cuándo / cuántos / qué. */
+  opsTables?: {
+    tableLabel: string;
+    columns: { key: string; label: string; slot: "who" | "when" | "howMany" | "what"; options: string[] }[];
+    rows?: Record<string, string>[];
+  }[];
 };
 
 export function samplesFor(industryId: string | undefined): { items: string[]; customers: string[] } {
@@ -187,6 +197,9 @@ function assistantFocus(industryId: IndustryId | "", activityId: string, vocab: 
 }
 
 function assistantStarters(industryId: IndustryId | "", activityId: string, vocab: Vocab): string[] {
+  if (industryId && activityId && !(industryId === "turismo" && activityId === "turismo-hotel")) {
+    return activityProfile(industryId, activityId).initialQuestions;
+  }
   switch (activityId) {
     case "madera-bosque":
       return [
@@ -214,9 +227,9 @@ function assistantStarters(industryId: IndustryId | "", activityId: string, voca
       ];
     case "turismo-hotel":
       return [
-        "¿Hay habitación este fin de semana?",
-        "¿Qué incluye el plan?",
-        "¿A qué hora es el check-in?",
+        "Hoy llegan 4 huéspedes a habitación doble",
+        "¿Cuántas reservas tengo esta semana?",
+        "Quedan 2 suites libres para el fin de semana",
       ];
     default:
       break;
@@ -224,33 +237,33 @@ function assistantStarters(industryId: IndustryId | "", activityId: string, voca
   switch (industryId) {
     case "alimentos":
       return [
-        `¿Qué ${vocab.productos} tienen hoy?`,
-        "¿Puedo dejar un pedido para recoger?",
-        "¿Qué se está pidiendo más esta semana?",
+        `Hoy piden 4 ${vocab.productos}`,
+        "¿Cuántos pedidos tengo esta semana?",
+        `Quedan 2 ${vocab.productos} para recoger`,
       ];
     case "comercio":
       return [
-        `¿Tienen este ${vocab.productos} en ${vocab.punto}?`,
-        "¿Qué se está agotando?",
-        "¿Me ayudan a armar un pedido?",
+        `Hoy venden 4 ${vocab.productos}`,
+        "¿Cuánto stock tengo hoy?",
+        `Quedan 2 unidades de ${vocab.productos}`,
       ];
     case "salud":
       return [
-        "¿Cómo agendo una cita?",
-        "¿Qué debo llevar a la consulta?",
-        "¿En qué horarios atienden?",
+        "Hoy llegan 4 pacientes a consulta",
+        "¿Cuántas citas tengo esta semana?",
+        "Quedan 2 cupos mañana",
       ];
     case "servicios":
       return [
-        "¿Qué servicios ofrecen esta semana?",
-        "¿Cómo dejo una solicitud?",
-        "¿En cuánto tiempo responden?",
+        "Hoy entra una solicitud urgente",
+        "¿Cuántas solicitudes tengo abiertas?",
+        "Quedan 2 turnos libres",
       ];
     default:
       return [
-        `¿Qué ${vocab.productos} puedo pedir hoy?`,
-        `¿Cómo atienden a ${vocab.clientes}?`,
-        "¿Cómo usa este negocio la inteligencia artificial?",
+        `Hoy registran 4 ${vocab.productos}`,
+        "¿Cuántos registros tengo esta semana?",
+        `Quedan 2 ${vocab.productos} disponibles`,
       ];
   }
 }

@@ -27,6 +27,28 @@ const contextSchema = z.object({
   productos: z.string().trim().max(60).default("productos"),
   clientes: z.string().trim().max(60).default("clientes"),
   punto: z.string().trim().max(60).default("sede"),
+  opsBrief: z.string().trim().max(4000).optional(),
+  opsProfileGuidance: z.string().trim().max(1200).optional(),
+  companyNameHint: z.string().trim().max(400).optional(),
+  opsTables: z
+    .array(
+      z.object({
+        tableLabel: z.string().trim().max(80),
+        columns: z
+          .array(
+            z.object({
+              key: z.string().trim().max(40),
+              label: z.string().trim().max(80),
+              slot: z.enum(["who", "when", "howMany", "what"]),
+              options: z.array(z.string().trim().max(80)).max(16).default([]),
+            }),
+          )
+          .max(4),
+        rows: z.array(z.record(z.string().max(40), z.string().max(80))).max(12).optional(),
+      }),
+    )
+    .max(8)
+    .optional(),
 });
 
 const bodySchema = z.object({
@@ -46,7 +68,11 @@ export async function POST(request: Request) {
 
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Escriba una pregunta de hasta 500 caracteres." }, { status: 400 });
+    const tooLong = parsed.error.issues.some((issue) => issue.code === "too_big" && issue.path.join(".") === "question");
+    const message = tooLong
+      ? "Escriba una pregunta de hasta 500 caracteres."
+      : "No se pudo enviar el mensaje al asistente. Recargue la página e intente de nuevo.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   const context = await resolveContext(parsed.data.code, parsed.data.context);
@@ -55,12 +81,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const answer = await askBusinessAssistant({
+    const result = await askBusinessAssistant({
       question: parsed.data.question,
       history: parsed.data.history as AssistantTurn[],
       context,
     });
-    return NextResponse.json({ answer });
+    return NextResponse.json({ answer: result.answer, engine: result.engine });
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo consultar al asistente.";
     const status = message.includes("GEMINI_API_KEY") ? 503 : 502;
@@ -78,7 +104,21 @@ async function resolveContext(
       const record = await (await getDiagnosisStore()).get(label);
       if (record) {
         const spec = record.solutionSpec && isAssistantSolution(record.solutionSpec) ? record.solutionSpec : null;
-        return assistantContextFromAnswers(record.answers, spec);
+        const fromStore = assistantContextFromAnswers(record.answers, spec);
+        // Las filas vivas vienen del navegador: solo se aceptan si son del mismo sector
+        // que el negocio guardado con ese código; si no, se usa el catálogo del servidor.
+        const sameSector =
+          !!fallback &&
+          (fallback.industryId ?? "") === (fromStore.industryId ?? "") &&
+          (fallback.activityId ?? "") === (fromStore.activityId ?? "");
+        return {
+          ...fromStore,
+          opsBrief: sameSector ? (fallback?.opsBrief ?? fromStore.opsBrief) : fromStore.opsBrief,
+          opsTables: sameSector ? (fallback?.opsTables ?? fromStore.opsTables) : fromStore.opsTables,
+          opsProfileGuidance: sameSector
+            ? (fallback?.opsProfileGuidance ?? fromStore.opsProfileGuidance)
+            : fromStore.opsProfileGuidance,
+        };
       }
     } catch {
       /* Si el almacén no está, se usa el contexto de la página. */

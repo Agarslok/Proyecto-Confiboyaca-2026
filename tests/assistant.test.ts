@@ -149,13 +149,18 @@ describe("asistente virtual cuando el diagnóstico ya está listo", () => {
     const prompt = assistantSystemPrompt(context);
     assert.match(prompt, /Panadería Carlitos/);
     assert.match(prompt, /Alimentos/);
+    assert.match(prompt, /ANOTAR/);
+    assert.match(prompt, /CONSULTAR/);
+    assert.match(prompt, /Perfecto/);
+    assert.match(prompt, /Cifras:/);
     assert.equal(prompt.includes("3001234567"), false);
     assert.equal(prompt.includes("carlos@ejemplo.co"), false);
+    assert.ok(prompt.length < 4000);
 
     const previousKey = process.env.GEMINI_API_KEY;
     process.env.GEMINI_API_KEY = "test-key";
     let body = "";
-    const answer = await askBusinessAssistant(
+    const reply = await askBusinessAssistant(
       { question: "¿Qué pan hay hoy?", history: [], context },
       {
         fetchImpl: async (_url, init) => {
@@ -167,7 +172,8 @@ describe("asistente virtual cuando el diagnóstico ya está listo", () => {
         },
       },
     );
-    assert.match(answer, /almojábana/i);
+    assert.match(reply.answer, /almojábana/i);
+    assert.equal(reply.engine, "gemini");
     process.env.GEMINI_API_KEY = previousKey;
     assert.match(body, /Panadería Carlitos/);
     assert.match(body, /¿Qué pan hay hoy\?/);

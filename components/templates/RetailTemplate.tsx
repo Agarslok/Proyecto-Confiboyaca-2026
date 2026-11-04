@@ -5,7 +5,7 @@ import type { CSSProperties, FormEvent, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import type { SectorFrame } from "@/lib/site/sector-gallery";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { OperationsSuite } from "@/components/templates/OperationsSuite";
 import styles from "./retail.module.css";
 
 /* ============================================================================
@@ -475,7 +475,7 @@ export function RetailTemplate({ config }: { config: SiteConfig }) {
         </div>
       </section>
 
-      <SolutionBlock solution={config.solution} tone="retail" site={config} />
+      <OperationsSuite config={config} />
 
       {/* Beneficios */}
       <section className={styles.benefits} aria-label="Beneficios">

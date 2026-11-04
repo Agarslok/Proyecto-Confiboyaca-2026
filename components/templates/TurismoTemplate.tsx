@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { CSSProperties, FormEvent, ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SiteConfig } from "@/types/site";
 import type { SectorFrame } from "@/lib/site/sector-gallery";
 import { SectorImg } from "@/components/templates/SectorImg";
-import { SolutionBlock } from "@/components/templates/SolutionBlock";
+import { TourismOperationsSuite } from "@/components/templates/TourismOperationsSuite";
 import styles from "./turismo.module.css";
 
 /* ============================================================================
@@ -115,12 +115,6 @@ const prefersReducedMotion = () =>
   typeof window.matchMedia === "function" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-const isoToday = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
-};
-
 /* Nombre en una o dos líneas, repartido para que el titular quede parejo */
 function splitName(name: string): string[] {
   const words = name.trim().split(/\s+/);
@@ -147,7 +141,7 @@ function targetFor(label: string, index: number, ids: string[]): string {
     [/habita|cuarto|suite|aloja|caba/, "habitaciones"],
     [/boyac|destino|experien|explor|cerca/, "boyaca"],
     [/diario|blog|journal|noticias/, "diario"],
-    [/reserv|disponib|book/, "reservas"],
+    [/reserv|disponib|book/, "contacto-demo"],
     [/contact/, "contacto-demo"],
   ];
   for (const [re, id] of rules) if (re.test(t) && ids.includes(id)) return id;
@@ -484,7 +478,7 @@ export function TurismoTemplate({ config }: Props) {
   const usingDemoCopy = !extras.nearby?.length || !extras.journal?.length;
   const email = extras.email ?? "reservas@ejemplo.co";
 
-  const sectionIds = useMemo(() => ["inicio", "hotel", "habitaciones", "boyaca", "diario", "reservas", "contacto-demo"], []);
+  const sectionIds = useMemo(() => ["inicio", "hotel", "habitaciones", "diario", "contacto-demo"], []);
   const target = useCallback((label: string, i: number) => targetFor(label, i, sectionIds), [sectionIds]);
 
   /* --------------------------- Titular ajustado al ancho -------------------- */
@@ -639,45 +633,6 @@ export function TurismoTemplate({ config }: Props) {
   /* ----------------------------- Boyacá (índice) ---------------------------- */
   const [openNear, setOpenNear] = useState(0);
 
-  /* ------------------------------- Reserva ---------------------------------- */
-  const today = isoToday();
-  const [stay, setStay] = useState({ from: "", to: "", guests: 2, room: "", who: "", contact: "" });
-  const [stayErrors, setStayErrors] = useState<Record<string, string>>({});
-  const [sent, setSent] = useState(false);
-
-  const nights = useMemo(() => {
-    if (!stay.from || !stay.to) return 0;
-    const diff = (new Date(stay.to).getTime() - new Date(stay.from).getTime()) / 86400000;
-    return Math.round(diff);
-  }, [stay.from, stay.to]);
-
-  const submitStay = (e: FormEvent) => {
-    e.preventDefault();
-    const errs: Record<string, string> = {};
-    if (!stay.from) errs.from = "Elige el día de llegada.";
-    else if (stay.from < today) errs.from = "La llegada no puede ser un día que ya pasó.";
-    if (!stay.to) errs.to = "Elige el día de salida.";
-    else if (stay.from && stay.to <= stay.from) errs.to = "La salida debe ser después de la llegada.";
-    if (stay.who.trim().length < 2) errs.who = "Escribe tu nombre.";
-    if (!/^\S+@\S+\.\S+$/.test(stay.contact.trim()) && !/^[+\d][\d\s()-]{6,}$/.test(stay.contact.trim()))
-      errs.contact = "Escribe un correo o un teléfono válido.";
-    setStayErrors(errs);
-    if (Object.keys(errs).length) {
-      const first = Object.keys(errs)[0];
-      window.setTimeout(() => document.getElementById(`tur-stay-${first}`)?.focus(), 0);
-      return;
-    }
-    setSent(true);
-  };
-
-  const setField = (k: keyof typeof stay, v: string | number) => {
-    setStay((s) => ({ ...s, [k]: v }));
-    if (stayErrors[k]) setStayErrors((e) => ({ ...e, [k]: "" }));
-  };
-
-  const fmtDate = (iso: string) =>
-    new Date(iso + "T12:00:00").toLocaleDateString("es-CO", { weekday: "short", day: "numeric", month: "long" });
-
   /* --------------------------------- Vista ---------------------------------- */
   const year = new Date().getFullYear();
   const reveal = (n = 0) => ({
@@ -718,7 +673,7 @@ export function TurismoTemplate({ config }: Props) {
           </button>
 
           <div className={styles.barActions}>
-            <button type="button" className={styles.textBtn} onClick={() => goTo("reservas")}>
+            <button type="button" className={styles.textBtn} onClick={() => goTo("contacto-demo")}>
               Reservar ↗
             </button>
           </div>
@@ -744,7 +699,7 @@ export function TurismoTemplate({ config }: Props) {
           ))}
         </ul>
         <div className={styles.sheetFoot}>
-          <button type="button" className={`${styles.btn} ${styles.btnSolid}`} onClick={() => goTo("reservas")}>
+          <button type="button" className={`${styles.btn} ${styles.btnSolid}`} onClick={() => goTo("contacto-demo")}>
             {copy.contactCta}
           </button>
         </div>
@@ -774,7 +729,7 @@ export function TurismoTemplate({ config }: Props) {
         <div className={styles.heroRow}>
           <p className={styles.lead}>{copy.heroLead}</p>
           <div className={styles.heroCtas}>
-            <button type="button" className={`${styles.btn} ${styles.btnSolid}`} onClick={() => goTo("reservas")}>
+            <button type="button" className={`${styles.btn} ${styles.btnSolid}`} onClick={() => goTo("contacto-demo")}>
               {copy.contactCta}
             </button>
             <button type="button" className={styles.btn} onClick={() => goTo("habitaciones")}>
@@ -818,7 +773,7 @@ export function TurismoTemplate({ config }: Props) {
         </div>
       </div>
 
-      <SolutionBlock solution={config.solution} tone="turismo" site={config} />
+      <TourismOperationsSuite config={config} />
 
       {/* El hotel */}
       <section className={styles.section} id="hotel">
@@ -887,40 +842,6 @@ export function TurismoTemplate({ config }: Props) {
         </div>
       </section>
 
-      {/* Boyacá (on location) */}
-      <section className={styles.location} id="boyaca">
-        <div className={styles.locationMedia} aria-hidden="true">
-          <Photo src={extras.locationImage ?? roomShot(0)?.desktop ?? config.sectorPhotos?.hero.desktop} mobile={extras.locationImage ? undefined : roomShot(0)?.mobile ?? config.sectorPhotos?.hero.mobile} kind="paramo" seed={21} alt="Paisaje de Boyacá" className={styles.locationImg} />
-          <div className={styles.locationShade} />
-        </div>
-        <div className={styles.locationIn}>
-          <div {...reveal()}>
-            <p className={`${styles.label} ${styles.labelLight}`}>En el lugar</p>
-            <h2 className={`${styles.h2} ${styles.h2Light}`}>Boyacá, a pocos pasos de tu puerta</h2>
-          </div>
-          <ul className={styles.index}>
-            {nearby.map((n, i) => {
-              const open = openNear === i;
-              return (
-                <li key={n.title} className={styles.indexItem}>
-                  <button type="button" className={styles.indexBtn} aria-expanded={open} aria-controls={`tur-near-${i}`} onClick={() => setOpenNear(open ? -1 : i)}>
-                    <span className={styles.indexNum}>{String(i + 1).padStart(2, "0")}</span>
-                    <span className={styles.indexTitle}>{n.title}</span>
-                    <span className={styles.indexMeta}>{n.meta}</span>
-                    <span className={styles.indexIcon} aria-hidden="true">
-                      {open ? I.minus : I.plus}
-                    </span>
-                  </button>
-                  <div className={`${styles.indexPanel}${open ? ` ${styles.indexPanelOpen}` : ""}`} id={`tur-near-${i}`} role="region">
-                    <p>{n.text}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
       {/* Diario */}
       <section className={styles.section} id="diario">
         <div className={`${styles.sectionHead} ${styles.reveal}`} data-reveal>
@@ -940,141 +861,6 @@ export function TurismoTemplate({ config }: Props) {
           ))}
         </div>
       </section>
-
-      {/* Reservas */}
-      <section className={styles.section} id="reservas">
-        <div className={styles.bookGrid}>
-          <div {...reveal()}>
-            <p className={styles.label}>Reservas</p>
-            <h2 className={styles.h2}>Cuéntanos cuándo quieres venir</h2>
-            <p className={styles.body} style={{ marginTop: 20 }}>
-              Elige tus fechas y te respondemos con disponibilidad y precio. No pedimos pago en este paso.
-            </p>
-          </div>
-
-          <div {...reveal(1)}>
-            {sent ? (
-              <div className={styles.confirm} role="status">
-                <p className={styles.label}>Solicitud lista</p>
-                <h3 className={styles.confirmTitle}>Gracias, {stay.who.trim().split(" ")[0]}.</h3>
-                <dl className={styles.summary}>
-                  <div className={styles.factRow}>
-                    <dt>Llegada</dt>
-                    <dd>{fmtDate(stay.from)}</dd>
-                  </div>
-                  <div className={styles.factRow}>
-                    <dt>Salida</dt>
-                    <dd>{fmtDate(stay.to)}</dd>
-                  </div>
-                  <div className={styles.factRow}>
-                    <dt>Noches</dt>
-                    <dd>{nights}</dd>
-                  </div>
-                  <div className={styles.factRow}>
-                    <dt>Huéspedes</dt>
-                    <dd>{stay.guests}</dd>
-                  </div>
-                  <div className={styles.factRow}>
-                    <dt>Habitación</dt>
-                    <dd>{stay.room || "Aún no lo sé"}</dd>
-                  </div>
-                </dl>
-                <p className={styles.help}>Esto es una demostración: la solicitud no se envió a ningún lugar. Te escribiríamos a {stay.contact.trim()}.</p>
-                <div className={styles.formActions}>
-                  <button type="button" className={styles.btn} onClick={() => setSent(false)}>
-                    Editar solicitud
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form className={styles.bookForm} onSubmit={submitStay} noValidate>
-                <div className={styles.row2}>
-                  <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="tur-stay-from">
-                      Llegada
-                    </label>
-                    <input id="tur-stay-from" type="date" min={today} className={`${styles.input}${stayErrors.from ? ` ${styles.inputBad}` : ""}`} value={stay.from} onChange={(e) => setField("from", e.target.value)} aria-invalid={stayErrors.from ? true : undefined} />
-                    {stayErrors.from ? <p className={styles.error} role="alert">{stayErrors.from}</p> : null}
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="tur-stay-to">
-                      Salida
-                    </label>
-                    <input id="tur-stay-to" type="date" min={stay.from || today} className={`${styles.input}${stayErrors.to ? ` ${styles.inputBad}` : ""}`} value={stay.to} onChange={(e) => setField("to", e.target.value)} aria-invalid={stayErrors.to ? true : undefined} />
-                    {stayErrors.to ? <p className={styles.error} role="alert">{stayErrors.to}</p> : null}
-                  </div>
-                </div>
-
-                <div className={styles.row2}>
-                  <div className={styles.field}>
-                    <span className={styles.fieldLabel} id="tur-guests-l">
-                      Huéspedes
-                    </span>
-                    <div className={styles.stepper} role="group" aria-labelledby="tur-guests-l">
-                      <button type="button" className={styles.stepBtn} onClick={() => setField("guests", Math.max(1, stay.guests - 1))} disabled={stay.guests <= 1} aria-label="Menos huéspedes">
-                        {I.minus}
-                      </button>
-                      <output className={styles.stepVal} aria-live="polite">
-                        {stay.guests}
-                      </output>
-                      <button type="button" className={styles.stepBtn} onClick={() => setField("guests", Math.min(8, stay.guests + 1))} disabled={stay.guests >= 8} aria-label="Más huéspedes">
-                        {I.plus}
-                      </button>
-                    </div>
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.fieldLabel} htmlFor="tur-stay-room">
-                      Habitación
-                    </label>
-                    <select id="tur-stay-room" className={styles.input} value={stay.room} onChange={(e) => setField("room", e.target.value)}>
-                      <option value="">Aún no lo sé</option>
-                      {cards.map((c) => (
-                        <option key={c.title} value={c.title}>
-                          {c.title}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel} htmlFor="tur-stay-who">
-                    Tu nombre
-                  </label>
-                  <input id="tur-stay-who" className={`${styles.input}${stayErrors.who ? ` ${styles.inputBad}` : ""}`} value={stay.who} onChange={(e) => setField("who", e.target.value)} autoComplete="name" aria-invalid={stayErrors.who ? true : undefined} />
-                  {stayErrors.who ? <p className={styles.error} role="alert">{stayErrors.who}</p> : null}
-                </div>
-
-                <div className={styles.field}>
-                  <label className={styles.fieldLabel} htmlFor="tur-stay-contact">
-                    Correo o teléfono
-                  </label>
-                  <input id="tur-stay-contact" className={`${styles.input}${stayErrors.contact ? ` ${styles.inputBad}` : ""}`} value={stay.contact} onChange={(e) => setField("contact", e.target.value)} autoComplete="email" aria-invalid={stayErrors.contact ? true : undefined} />
-                  {stayErrors.contact ? <p className={styles.error} role="alert">{stayErrors.contact}</p> : null}
-                </div>
-
-                <div className={styles.formActions}>
-                  <button type="submit" className={`${styles.btn} ${styles.btnSolid}`}>
-                    Consultar disponibilidad
-                  </button>
-                  {nights > 0 ? (
-                    <span className={styles.caption}>
-                      {nights} {nights === 1 ? "noche" : "noches"}
-                    </span>
-                  ) : null}
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Cierre */}
-      <div className={styles.ctaRow}>
-        <a className={styles.cta} href="#contacto-demo">
-          {copy.contactCta} <span className={styles.ctaArrow} aria-hidden="true">↗</span>
-        </a>
-      </div>
 
       {/* Pie */}
       <footer className={styles.footer} id="contacto-demo">
@@ -1155,12 +941,11 @@ export function TurismoTemplate({ config }: Props) {
                 type="button"
                 className={`${styles.btn} ${styles.btnSolid}`}
                 onClick={() => {
-                  setField("room", active.title ?? "");
                   setOpenCard(null);
-                  window.setTimeout(() => goTo("reservas"), 60);
+                  window.setTimeout(() => goTo("contacto-demo"), 60);
                 }}
               >
-                Reservar esta opción
+                Consultar disponibilidad
               </button>
             </div>
           </div>

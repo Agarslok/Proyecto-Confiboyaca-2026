@@ -1,7 +1,22 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { opsBriefFromSector, opsTablesFromSector } from "@/lib/assistant/ops-brief";
+import {
+  quotaRemaining,
+  quotaSpendForTurn,
+  readOpsChatSession,
+  sessionStorageKey,
+  SESSION_QUOTA,
+  SESSION_REACTIVATE_PASSWORD,
+  writeOpsChatSession,
+  type AssistantEngine,
+} from "@/lib/assistant/session-quota";
+import { workspaceScope } from "@/lib/assistant/workspace";
+import { activityProfile, compactProfileGuidance } from "@/lib/ops/sector/profile-builder";
 import { samplesFor, type AssistantChatContext } from "@/lib/radar/assistant";
+import type { IndustryId } from "@/lib/radar/types";
+import { SessionReactivateModal } from "@/components/templates/SessionReactivateModal";
 import type { SolutionAssistantSpec } from "@/lib/site/solution-slot";
 import type { SiteConfig } from "@/types/site";
 import type { TemplateId } from "@/types/site";
@@ -22,9 +37,24 @@ export function SolutionAssistantSlot({
   const [question, setQuestion] = useState("");
   const [thread, setThread] = useState<Turn[]>([{ role: "assistant", text: spec.greeting }]);
   const [asking, setAsking] = useState(false);
+  const [quotaUsed, setQuotaUsed] = useState(0);
+  const [reactivateOpen, setReactivateOpen] = useState(false);
   const askingRef = useRef(false);
   const logRef = useRef<HTMLDivElement>(null);
+  const storageKey = sessionStorageKey(site?.recordCode, workspaceScope(site?.industryId, site?.activityId));
   const context = chatContext(spec, site);
+  const remaining = quotaRemaining(quotaUsed);
+  const locked = remaining <= 0;
+
+  useEffect(() => {
+    const saved = readOpsChatSession(storageKey);
+    if (saved?.used) setQuotaUsed(saved.used);
+  }, [storageKey]);
+
+  useEffect(() => {
+    const saved = readOpsChatSession(storageKey);
+    writeOpsChatSession(storageKey, { used: Math.max(saved?.used ?? 0, quotaUsed), thread });
+  }, [quotaUsed, storageKey, thread]);
 
   useEffect(() => {
     const log = logRef.current;
@@ -33,7 +63,7 @@ export function SolutionAssistantSlot({
 
   async function send(raw?: string) {
     const text = (raw ?? question).trim();
-    if (!text || askingRef.current) return;
+    if (!text || askingRef.current || locked) return;
     askingRef.current = true;
     setAsking(true);
     setThread((prev) => [...prev, { role: "user", text }]);
@@ -53,11 +83,11 @@ export function SolutionAssistantSlot({
           context,
         }),
       });
-      const data = (await response.json()) as { answer?: string; error?: string };
-      setThread((prev) => [
-        ...prev,
-        { role: "assistant", text: data.answer || data.error || "No se pudo consultar al asistente." },
-      ]);
+      const data = (await response.json()) as { answer?: string; error?: string; engine?: AssistantEngine };
+      const answer = data.answer || data.error || "No se pudo consultar al asistente.";
+      const engine: AssistantEngine = data.engine === "gemini" ? "gemini" : "local";
+      setThread((prev) => [...prev, { role: "assistant", text: answer }]);
+      setQuotaUsed((used) => Math.min(SESSION_QUOTA, used + quotaSpendForTurn({ engine, question: text, answer })));
     } catch {
       setThread((prev) => [...prev, { role: "assistant", text: "No se pudo consultar al asistente." }]);
     } finally {
@@ -75,6 +105,14 @@ export function SolutionAssistantSlot({
             {spec.visitorTitle}
           </h2>
           <p className={slotStyles.change}>{spec.businessChange}</p>
+          <p className={styles.quotaLine} aria-live="polite">
+            Cupo de esta sesión: {remaining <= 0 ? "agotado" : `${remaining} de ${SESSION_QUOTA}`}
+            {remaining <= 0 ? (
+              <button type="button" className={styles.quotaReactivate} onClick={() => setReactivateOpen(true)}>
+                Reactivar
+              </button>
+            ) : null}
+          </p>
         </header>
 
         <div className={styles.layout}>
@@ -84,7 +122,7 @@ export function SolutionAssistantSlot({
             <p className={styles.disclaimer}>{spec.disclaimer}</p>
           </aside>
 
-          <div className={styles.chat}>
+          <div className={styles.chatPanel}>
             <div className={styles.log} ref={logRef} role="log" aria-live="polite" aria-relevant="additions">
               {thread.map((turn, index) => (
                 <p key={`${turn.role}-${index}`} className={turn.role === "user" ? styles.user : styles.bot}>
@@ -96,7 +134,7 @@ export function SolutionAssistantSlot({
             </div>
             <div className={styles.starters}>
               {spec.starters.map((starter) => (
-                <button key={starter} type="button" className={styles.chip} disabled={asking} onClick={() => void send(starter)}>
+                <button key={starter} type="button" className={styles.chip} disabled={asking || locked} onClick={() => void send(starter)}>
                   {starter}
                 </button>
               ))}
@@ -117,16 +155,28 @@ export function SolutionAssistantSlot({
                 onChange={(event) => setQuestion(event.target.value)}
                 maxLength={500}
                 placeholder="Escribe una pregunta…"
-                disabled={asking}
+                disabled={asking || locked}
                 autoComplete="off"
               />
-              <button type="submit" className={`${slotStyles.submit} ${styles.send}`} disabled={asking || !question.trim()}>
+              <button type="submit" className={`${slotStyles.submit} ${styles.send}`} disabled={asking || locked || !question.trim()}>
                 {asking ? "Enviando…" : "Enviar"}
               </button>
             </form>
           </div>
         </div>
       </div>
+      <SessionReactivateModal
+        open={reactivateOpen}
+        onClose={() => setReactivateOpen(false)}
+        onConfirm={(password) => {
+          if (password.trim() !== SESSION_REACTIVATE_PASSWORD) return false;
+          const saved = readOpsChatSession(storageKey);
+          writeOpsChatSession(storageKey, { used: 0, thread: saved?.thread ?? thread });
+          setQuotaUsed(0);
+          setReactivateOpen(false);
+          return true;
+        }}
+      />
     </section>
   );
 }
@@ -154,5 +204,19 @@ function chatContext(
     productos: radar?.presentation?.vocab.productos ?? "productos",
     clientes: radar?.presentation?.vocab.clientes ?? "clientes",
     punto: radar?.presentation?.vocab.punto ?? "sede",
+    opsBrief: opsBriefFromSector({
+      companyName: site?.companyName || "El negocio",
+      industryId: site?.industryId,
+      activityId: site?.activityId,
+    }),
+    opsTables: opsTablesFromSector({
+      companyName: site?.companyName || "El negocio",
+      industryId: site?.industryId,
+      activityId: site?.activityId,
+    }),
+    opsProfileGuidance:
+      site?.industryId
+        ? compactProfileGuidance(activityProfile(site.industryId as IndustryId, site.activityId || ""))
+        : undefined,
   };
 }
