@@ -4,17 +4,20 @@ export type AssistantHistoryTurn = { role: "user" | "assistant"; text: string };
 
 const clip = (value: string, max: number) => value.trim().slice(0, max);
 
+export function sanitizeAssistantHistory(history: AssistantHistoryTurn[]): AssistantHistoryTurn[] {
+  return history.slice(-8).map((turn) => ({
+    role: turn.role,
+    text: clip(turn.text, 4000),
+  }));
+}
+
 /** Ajusta contexto e historial a los límites del API (evita 400 por filas o mensajes largos). */
 export function sanitizeAssistantPayload(input: {
   context: AssistantChatContext;
   history: AssistantHistoryTurn[];
 }): { context: AssistantChatContext; history: AssistantHistoryTurn[] } {
   const context = sanitizeAssistantContext(input.context);
-  const history = input.history.slice(-8).map((turn) => ({
-    role: turn.role,
-    text: clip(turn.text, 4000),
-  }));
-  return { context, history };
+  return { context, history: sanitizeAssistantHistory(input.history) };
 }
 
 export function sanitizeAssistantContext(context: AssistantChatContext): AssistantChatContext {

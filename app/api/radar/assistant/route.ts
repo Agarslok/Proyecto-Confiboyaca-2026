@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { askBusinessAssistant, assistantContextFromAnswers, type AssistantTurn } from "@/lib/radar/ask-assistant";
 import type { AssistantChatContext } from "@/lib/radar/assistant";
-import { sanitizeAssistantContext, sanitizeAssistantPayload } from "@/lib/radar/assistant-payload";
+import { sanitizeAssistantContext, sanitizeAssistantHistory } from "@/lib/radar/assistant-payload";
 import { getDiagnosisStore } from "@/lib/store/diagnoses";
 import { isAssistantSolution } from "@/lib/site/solution-slot";
 
@@ -77,10 +77,7 @@ export async function POST(request: Request) {
   }
 
   const clientContext = parsed.data.context ? sanitizeAssistantContext(parsed.data.context as AssistantChatContext) : undefined;
-  const history = sanitizeAssistantPayload({
-    context: clientContext ?? ({ companyName: "El negocio", index: 0, level: "bajo", findings: [] } as AssistantChatContext),
-    history: parsed.data.history as AssistantTurn[],
-  }).history;
+  const history = sanitizeAssistantHistory(parsed.data.history as AssistantTurn[]);
 
   const context = await resolveContext(parsed.data.code, clientContext);
   if (!context) {

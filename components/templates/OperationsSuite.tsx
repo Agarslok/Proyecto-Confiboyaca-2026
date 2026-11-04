@@ -109,9 +109,9 @@ export function OperationsSuite({ config }: { config: SiteConfig }) {
       void pushOpsCloud({
         workspaceId: companyId,
         companyName: config.companyName,
-        industryId: pack.industryId,
-        activityId: pack.activityId,
-        recordCode: config.recordCode,
+        industryId: pack.industryId ?? "",
+        activityId: pack.activityId ?? "",
+        recordCode: config.recordCode ?? "",
         crm,
         chat,
       }).then((result) => {
