@@ -1,5 +1,5 @@
-# Netlify: en Build & deploy → Branches, la rama de producción debe ser
-# solucion-implementada (main solo tiene README; si despliega main verá Page not found).
+# Netlify: rama de producción = main (cada push a main redeploy).
+# Si el build falla, el sitio muestra Page not found hasta un deploy Published.
 # Variables secretas: panel → Environment variables. Pasos: docs/DESPLIEGUE.md
 
 [build]

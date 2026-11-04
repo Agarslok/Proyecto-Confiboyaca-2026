@@ -20,7 +20,7 @@ En Netlify los datos **no** pueden quedar en un archivo (no hay disco que se con
 ## 2. Netlify
 
 1. **Add new site → Import an existing project → GitHub** y elija `Agarslok/Proyecto-Confiboyaca-2026`.
-2. En **Branch to deploy** elija `solucion-implementada` (rama actual del proyecto) o la rama que vayan a publicar. Si el build falla, Netlify deja el sitio en **Page not found** hasta que un deploy termine bien.
+2. En **Branch to deploy** / **Production branch** deje **`main`**. Cada `git push` a `main` vuelve a publicar el sitio. (Desarrollo en otra rama: haga merge a `main` antes de la feria o cambie temporalmente la rama de producción en Netlify.)
 3. El comando y la versión de Node ya están en `netlify.toml`; no hace falta cambiarlos.
 4. Antes de publicar, en **Site configuration → Environment variables**, agregue:
 

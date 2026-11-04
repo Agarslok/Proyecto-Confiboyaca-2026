@@ -1,13 +1,13 @@
 # Confi
 
-Aplicación de la feria: **pitch** (presentación con avatar) y **stand** (Radar IA + página de muestra).
+Aplicación de la feria: **pitch** (presentación «IA sin morir en el intento») y **stand** (Radar IA + página de muestra). Proyecto integrador Boyacá · Ciencia de Datos, Universidad Externado de Colombia.
 
 ## Rutas principales
 
 | Ruta | Responsabilidad |
 | --- | --- |
 | `/` | Elige **Pitch** o **Stand**. |
-| `/pitch` | Presentación de siete diapositivas; la sexta integra avatar + consultor (Gemini/Tavus con variables de entorno). |
+| `/pitch` | Presentación «IA sin morir en el intento» (HTML en `/pitch/pitch-ia-sin-morir.html`). |
 | `/consultoria` | **Stand:** landing Radar IA (misma que en `prueba/radar-ia`). |
 | `/stand` | Redirige a `/consultoria`. |
 | `/diagnostico` | Formulario Radar IA por industria. |
