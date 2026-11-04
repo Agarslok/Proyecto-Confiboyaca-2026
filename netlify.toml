@@ -1,7 +1,6 @@
-# Netlify detecta Next.js y aplica su adaptador automáticamente.
-# Variables secretas (contraseña, llaves de Supabase): en el panel de Netlify,
-# Site configuration → Environment variables. Nunca en este archivo.
-# Pasos completos: docs/DESPLIEGUE.md
+# Netlify: en Build & deploy → Branches, la rama de producción debe ser
+# solucion-implementada (main solo tiene README; si despliega main verá Page not found).
+# Variables secretas: panel → Environment variables. Pasos: docs/DESPLIEGUE.md
 
 [build]
   command = "npm run build"
