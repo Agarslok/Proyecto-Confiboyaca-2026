@@ -4,6 +4,8 @@
 
 [build]
   command = "npm run build"
+  # Anula el panel si Publish directory = raíz del repo (rompe @netlify/plugin-nextjs).
+  publish = ".netlify/static"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

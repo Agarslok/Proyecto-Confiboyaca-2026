@@ -22,7 +22,8 @@ En Netlify los datos **no** pueden quedar en un archivo (no hay disco que se con
 1. **Add new site → Import an existing project → GitHub** y elija `Agarslok/Proyecto-Confiboyaca-2026`.
 2. En **Branch to deploy** / **Production branch** deje **`main`**. Cada `git push` a `main` vuelve a publicar el sitio. (Desarrollo en otra rama: haga merge a `main` antes de la feria o cambie temporalmente la rama de producción en Netlify.)
 3. El comando y la versión de Node ya están en `netlify.toml`; no hace falta cambiarlos.
-4. Antes de publicar, en **Site configuration → Environment variables**, agregue:
+4. **Build settings → Publish directory:** déjelo **vacío** (no `/`, no `.`, no la raíz del repo). Si ahí aparece la carpeta del repositorio, el plugin Next.js falla con *publish directory cannot be the same as the base directory*. El archivo `netlify.toml` fuerza `.netlify/static`; aun así conviene vaciar el campo en el panel para evitar conflictos.
+5. Antes de publicar, en **Site configuration → Environment variables**, agregue:
 
 | Variable | Valor |
 |---|---|
@@ -40,7 +41,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
 
 Use una contraseña y un secreto **distintos** a los de su `.env.local`.
 
-5. **Deploy**. Al terminar, abra `https://<su-sitio>.netlify.app` y `https://<su-sitio>.netlify.app/consultor`.
+6. **Deploy**. Al terminar, abra `https://<su-sitio>.netlify.app` y `https://<su-sitio>.netlify.app/consultor`.
 
 ## 3. Comprobar
 
